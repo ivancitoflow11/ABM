@@ -1,0 +1,97 @@
+﻿@model IEnumerable<ABM.Models.ListaUsuariosViewModel>
+
+@{
+    ViewBag.Title = "ListaUsuarios";
+}
+@{
+    var successMessage = TempData["SuccessMessage"] as string;
+}
+
+
+@if (!string.IsNullOrEmpty(successMessage))
+{
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            alert("@successMessage");
+        });
+    </script>
+}
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="card mb-4">
+            <input type="hidden" id="IdSistema" value="@ViewBag.ID" />
+            @* <a asp-controller="Home" asp-action="ListaRoles" class="btn btn-orange">Modificar Permisos</a> *@
+            <div class="card-body">
+                <h4 class="mt-5 text-center" style="margin-top:50px;">Usuarios</h4>
+                <div class="col-lg-12 table-responsive">
+                    <table id="zero_config" class="table table-bordered table-hover" style="width:100%; table-layout: auto;">
+                        <thead>
+                            <tr>
+                                <th style="white-space: nowrap;">Nombre</th>
+                                <th style="white-space: nowrap;">Apellidos</th>
+                                <th style="white-space: nowrap;">RUT</th>
+                                <th style="white-space: nowrap;">Teléfono</th>
+                                <th style="white-space: nowrap;">Correo</th>
+                                <th style="white-space: nowrap;">Usuario</th>
+                                <th style="white-space: nowrap;">Acciones</th>
+                            </tr>
+
+                        </thead>
+                        @if (Model != null)
+                        {
+                            <tbody>
+                                @foreach (var item in Model)
+                                {
+                                    <tr>
+                                        <td style="white-space: nowrap;">@item.nombre</td>
+                                        <td style="white-space: nowrap;">@item.apellidos</td>
+                                        <td style="white-space: nowrap;">@item.rut</td>
+                                        <td style="white-space: nowrap;">@item.telefono</td>
+                                        <td style="white-space: nowrap;">@item.correo</td>
+                                        <td style="white-space: nowrap;">@item.nombre</td>
+                                        <td style="white-space: nowrap;">
+                                            <a asp-controller="Acceso" asp-action="EditarUsuario" asp-route-id="@item.IdUsuario" class="btn btn-primary btn-sm">
+                                                <i class="fas fa-edit"></i> Editar
+                                            </a>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        }
+                    </table>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
+</div>
+
+
+@section scripts {
+    <script src="/js/vendor.min.js"></script>
+    <script src="/libs/datatables.net/js/jquery.dataTables.min.js"></script>
+    <script src="/js/dataTables.buttons.min.js"></script>
+    <script src="/js/jszip.min.js"></script>
+    <script src="/js/pdfmake.min.js"></script>
+    <script src="/js/vfs_fonts.js"></script>
+    <script src="/js/buttons.html5.min.js"></script>
+    <script src="/js/buttons.print.min.js"></script>
+    <script src="/js/datatable/datatable-advanced.init.js" asp-append-version="true"></script>
+    @* <script src="/js/datatable/datatable-basic.init.js"></script> *@
+
+    <!-- Import Js Files -->
+    @* <script src="/js/breadcrumb/breadcrumbChart.js"></script>
+<script src="/libs/apexcharts/dist/apexcharts.min.js"></script> *@
+
+    @* <script src="https://cdn.datatables.net/buttons/2.4.2/js/dataTables.buttons.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/pdfmake.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/vfs_fonts.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.html5.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.print.min.js"></script> *@
+
+}

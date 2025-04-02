@@ -1,0 +1,185 @@
+﻿@model IEnumerable<ABM.Models.AuditoriaFirmas>
+
+@{
+    ViewData["Title"] = "Auditoría de Firmas";
+
+    // Obtener la fecha actual
+    var fechaActual = DateTime.Now;
+
+    // Lista de opciones desde diciembre 2024 hasta el mes actual, en orden descendente
+    var opcionesFecha = new List<(int Mes, int Anio, string Nombre)>();
+
+    for (int anio = fechaActual.Year; anio >= 2024; anio--) // Inicia desde el año actual hacia atrás
+    {
+        int mesInicio = (anio == 2024) ? 12 : 1;
+        int mesFin = (anio == fechaActual.Year) ? fechaActual.Month : 12;
+
+        for (int mes = mesFin; mes >= mesInicio; mes--) // Inicia desde el mes más reciente hacia atrás
+        {
+            string nombreMes = new DateTime(anio, mes, 1).ToString("MMMM", new System.Globalization.CultureInfo("es-ES"));
+            opcionesFecha.Add((mes, anio, $"{nombreMes} {anio}"));
+        }
+    }
+
+    // Obtener la fecha seleccionada desde ViewBag
+    int mesSeleccionado = ViewBag.MesSeleccionado ?? fechaActual.Month;
+    int anioSeleccionado = ViewBag.AnioSeleccionado ?? fechaActual.Year;
+    string nombreMesSeleccionado = new DateTime(anioSeleccionado, mesSeleccionado, 1).ToString("MMMM", new System.Globalization.CultureInfo("es-ES"));
+    string periodoSeleccionado = $"{nombreMesSeleccionado} {anioSeleccionado}";
+}
+
+
+<link rel="stylesheet" href="~/css/botones.css" asp-append-version="true" />
+<br />
+<br />
+<div class="container mt-4">
+    <div class="card shadow">
+        <div class="card-header bg-primary text-white text-center">
+            <h4 class="text-white">Auditoría de Firmas</h4>
+        </div>
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-6">
+                    <label for="fecha" class="form-label">Seleccione un periodo:</label>
+                    <select name="fecha" id="fecha" class="form-select">
+                        @foreach (var opcion in opcionesFecha)
+                        {
+                            string valor = $"{opcion.Mes}-{opcion.Anio}";
+                            bool seleccionado = (opcion.Mes == mesSeleccionado && opcion.Anio == anioSeleccionado);
+                            <option value="@valor" selected="@(seleccionado)">@opcion.Nombre</option>
+                        }
+                    </select>
+                </div>
+
+                <div class="col-md-6 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary w-100"><i class="fas fa-search"></i> Filtrar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <br />
+
+    <div class="d-flex justify-content-end mb-3">
+        <div class="dropdown">
+            <button class="btn btn-info dropdown-toggle" type="button" id="dropdownExportar" data-bs-toggle="dropdown" aria-expanded="false">
+                <i class="fas fa-file-export"></i> Exportar
+            </button>
+            <ul class="dropdown-menu" aria-labelledby="dropdownExportar">
+                <li><a class="dropdown-item" href="#" id="btnExportExcel"><i class="fa-solid fa-file-excel text-success"></i> Exportar a Excel</a></li>
+                <li><a class="dropdown-item" href="#" id="btnExportPDF"><i class="fa-solid fa-file-pdf text-danger"></i> Exportar a PDF</a></li>
+            </ul>
+        </div>
+    </div>
+
+    <h4 class="text-center text-primary">Firmas periodo @periodoSeleccionado</h4> 
+    @if (Model.Any())
+    {
+        <div class="table-responsive">
+            <table id="exportar" class="table table-bordered table-hover shadow-sm">
+                <thead class="bg-primary">
+                    <tr>
+                        <th class="text-white text-center">Gerencia</th>
+                        <th class="text-white text-center">Sistema</th>
+                        <th class="text-white text-center">Estado de Firma</th>
+                        <th class="text-white text-center">Responsable de Firma</th> <!-- Nueva columna -->
+                        <th class="text-white text-center">Fecha de Firma</th> <!-- Nueva columna -->
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model)
+                    {
+                        <tr>
+                            <td class="text-center">@item.Nom_Gerencia</td>
+                            <td class="text-center">@item.Sistema</td>
+                            <td class="text-center">
+                                @if (item.EstadoFirma == "Firmado")
+                                {
+                                    <span class="badge bg-success">Firmado</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-danger">No Firmado</span>
+                                }
+                            </td>
+                            <td class="text-center">
+                                @(string.IsNullOrEmpty(item.ResponsableFirma) ? "N/A" : item.ResponsableFirma) <!-- Mostrar responsable o N/A -->
+                            </td>
+                            <td class="text-center">
+                                @(item.FechaFirma.HasValue ? item.FechaFirma.Value.ToString("dd-MM-yyyy") : "N/A") <!-- Mostrar fecha o N/A -->
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+
+            </table>
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-info text-center mt-4">
+            <i class="fas fa-info-circle"></i> No hay registros de firmas en el periodo seleccionado.
+        </div>
+    }
+</div>
+
+@section scripts {
+<script src="/js/vendor.min.js"></script>
+<script src="/libs/datatables.net/js/jquery.dataTables.min.js"></script>
+<script src="/js/dataTables.buttons.min.js"></script>
+<script src="/js/jszip.min.js"></script>
+<script src="/js/pdfmake.min.js"></script>
+<script src="/js/vfs_fonts.js"></script>
+<script src="/js/buttons.html5.min.js"></script>
+<script src="/js/buttons.print.min.js"></script>
+<script src="/js/datatable/datatable-advanced.init.js" asp-append-version="true"></script>
+
+    <script>
+        $(document).ready(function () {
+            // Obtener el periodo seleccionado desde la vista
+            var periodoSeleccionado = "@periodoSeleccionado";
+
+            var table = $("#exportar").DataTable({
+                dom: "Bfrtip", // Solo botones de exportación
+                paging: false, // Sin paginación
+                ordering: false, // Sin ordenamiento
+                searching: false, // Sin buscador
+                info: false, // Sin información extra
+                buttons: [
+                    {
+                        extend: 'excel',
+                        text: 'Exportar a Excel',
+                        className: 'd-none', // Ocultar el botón original
+                        title: 'Revisión de Firmas - ' + periodoSeleccionado, // Título dinámico
+                        filename: 'Revisión_de_Firmas_' + periodoSeleccionado.replace(/\s+/g, '_') // Nombre del archivo sin espacios
+                    },
+                    {
+                        extend: 'pdf',
+                        text: 'Exportar a PDF',
+                        className: 'd-none', // Ocultar el botón original
+                        orientation: 'landscape', // Orientación horizontal
+                        pageSize: 'LEGAL', // Tamaño de página
+                        title: 'Revisión de Firmas - ' + periodoSeleccionado, // Título dinámico
+                        filename: 'Revisión_de_Firmas_' + periodoSeleccionado.replace(/\s+/g, '_'), // Nombre del archivo sin espacios
+                        customize: function (doc) {
+                            doc.defaultStyle.fontSize = 8;
+                            doc.content[1].table.widths = Array(doc.content[1].table.body[0].length + 1).join('*').split('');
+                            doc.pageMargins = [10, 10, 10, 10];
+                        }
+                    }
+                ]
+            });
+
+            // Asignar funciones a los botones del menú desplegable
+            $("#btnExportExcel").on("click", function () {
+                table.button('.buttons-excel').trigger();
+            });
+
+            $("#btnExportPDF").on("click", function () {
+                table.button('.buttons-pdf').trigger();
+            });
+        });
+    </script>
+
+
+}

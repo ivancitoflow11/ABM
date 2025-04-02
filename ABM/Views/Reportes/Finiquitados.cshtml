@@ -1,0 +1,153 @@
+﻿@model ReportesViewModel
+@*
+    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+*@
+@{
+}
+<link rel="stylesheet" href="~/css/botones.css" asp-append-version="true" />
+<div class="pt-5">
+
+    <h4 class="mt-5">Usuarios Finiquitados</h4>
+
+    <div class=" mt-4">
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        Filtro
+                    </div>
+                    <div class="card-body text-left">
+                        <form method="post" asp-action="Finiquitados">
+                            <div class="form-group">
+                                <label for="sistemaSelect">Seleccione Sistema</label>
+                                <select asp-for="sistema" class="selectpicker form-control">
+                                    <option disabled selected>Seleccione...</option>
+                                    @if (Model.ListaSistemas.Any() && Model.ListaSistemas != null)
+                                    {
+                                        @foreach (Abm_Sistema item in Model.ListaSistemas)
+                                        {
+                                            <option value="@item.sistema">@item.sistema</option>
+                                        }
+                                    }
+
+                                </select>
+
+                            </div>
+                            <button type="submit" class="btn btn-primary ml-2 mt-2">Filtrar</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card mb-4">
+                    <div class="card-header bg-primary text-white">
+                        Listado
+                    </div>
+                    <div class="card-body table-responsive">
+                        <table id="file_export4" class="table table-striped table-bordered nowrap" style="width:100%; align-content:center; justify-content:center;text-align:center; table-layout: auto;">
+                            <thead>
+                                <tr>
+                                    <th scope="col" style="white-space: nowrap;">Rut</th>
+                                    <th scope="col" style="white-space: nowrap;">DV</th>
+                                    <th scope="col" style="white-space: nowrap;">Nombre Usuario</th>
+                                    <th scope="col" style="white-space: nowrap;">Cargo</th>
+                                    <th scope="col" style="white-space: nowrap;">Perfil</th>
+                               
+                                    <th scope="col" style="white-space: nowrap;">Estado</th>
+                                    <th scope="col" style="white-space: nowrap;">Fecha Finiquito</th>
+                                    <th scope="col" style="white-space: nowrap;">Negocio</th>
+                                    <th scope="col" style="white-space: nowrap;">Sistema</th>
+                                    <th scope="col" style="white-space: nowrap;">Fecha AD</th>
+                                    <th scope="col" style="white-space: nowrap;">Gerencia</th>
+                                    <th scope="col" style="white-space: nowrap;">Subgerencia</th>
+                                </tr>
+                            </thead>
+                            <tbody class="table-group-divider">
+                                @if (Model.ListaFiltroFiniquitados != null && Model.ListaFiltroFiniquitados.Any())
+                                {
+                                    @foreach (var item in Model.ListaFiltroFiniquitados)
+                                    {
+                                        <tr>
+                                            <th style="white-space: nowrap;">@item.rutdni</th>
+                                            <th style="white-space: nowrap;">@item.dv</th>
+                                            <th style="white-space: nowrap;">@item.nombreusuario</th>
+                                            
+                                            <th style="white-space: nowrap;">@item.cargo</th>
+                                            <th style="white-space: nowrap;">@item.perfil</th>
+                                            <th style="white-space: nowrap;">@item.estado</th>
+                                            <th style="white-space: nowrap;">@item.fecfiniq</th>
+                                            <th style="white-space: nowrap;">@item.pais</th>
+                                            <th style="white-space: nowrap;">@item.sistema</th>
+                                            <th style="white-space: nowrap;">@item.fechaad</th>
+                                            <th style="white-space: nowrap;">@item.Nom_Gerencia</th>
+                                            <th style="white-space: nowrap;">@item.Nom_Subgerencia</th>
+                                        </tr>
+                                    }
+                                }
+                                else
+                                {
+                                    <tr>
+                                        <th>Sin Registros</th>
+                                        <th></th>
+                                        <th></th>
+                                        <th></th>
+                                        <th></th>
+                                        <th></th>
+                                        <th></th>
+                                        <th></th>
+                                        <th></th>
+                                        <th></th>
+                                        <th></th>
+                                        <th></th>
+                                    </tr>
+                                }
+                            </tbody>
+                            <tfoot class="table-group-divider">
+                                <tr>
+                                    <th scope="col" style="white-space: nowrap;">Rut</th>
+                                    <th scope="col" style="white-space: nowrap;">DV</th>
+                                    <th scope="col" style="white-space: nowrap;">Nombre Usuario</th>
+                                    <th scope="col" style="white-space: nowrap;">Cargo</th>
+                                    <th scope="col" style="white-space: nowrap;">Perfil</th>
+                                    <th scope="col" style="white-space: nowrap;">Estado</th>
+                                    <th scope="col" style="white-space: nowrap;">Fecha Finiquito</th>
+                                    <th scope="col" style="white-space: nowrap;">Negocio</th>
+                                    <th scope="col" style="white-space: nowrap;">Sistema</th>
+                                    <th scope="col" style="white-space: nowrap;">Fecha AD</th>
+                                    <th scope="col" style="white-space: nowrap;">Gerencia</th>
+                                    <th scope="col" style="white-space: nowrap;">Subgerencia</th>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="/js/vendor.min.js"></script>
+<script src="/libs/datatables.net/js/jquery.dataTables.min.js"></script>
+<script src="/js/dataTables.buttons.min.js"></script>
+<script src="/js/jszip.min.js"></script>
+<script src="/js/pdfmake.min.js"></script>
+<script src="/js/vfs_fonts.js"></script>
+<script src="/js/buttons.html5.min.js"></script>
+<script src="/js/buttons.print.min.js"></script>
+<script src="/js/datatable/datatable-advanced.init.js" asp-append-version="true"></script>
+@* <script src="/js/datatable/datatable-basic.init.js"></script> *@
+
+<!-- Import Js Files -->
+@* <script src="/js/breadcrumb/breadcrumbChart.js"></script>
+<script src="/libs/apexcharts/dist/apexcharts.min.js"></script> *@
+
+<!-- solar icons -->
+@* <script src="https://cdn.datatables.net/buttons/2.4.2/js/dataTables.buttons.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/pdfmake.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/vfs_fonts.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.html5.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.print.min.js"></script> *@

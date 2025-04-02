@@ -1,0 +1,313 @@
+﻿@{
+
+}
+<style>
+    .form-text {
+        margin-top: 0.3rem;
+        font-size: 14px;
+        color: #007bff;
+    }
+
+    #loading {
+        background: #f4f4f2 url("img/page-bg.png") repeat scroll 0 0;
+        height: 100%;
+        left: 0;
+        margin: auto;
+        position: fixed;
+        top: 0;
+        width: 100%;
+    }
+
+    .alert-custom {
+        position: relative;
+        top: 10px;
+        left: 50%;
+        transform: translateX(-50%); /* Centra horizontalmente */
+        z-index: 9999;
+        width: 700px;
+        font-size: 18px; /* Aumenta el tamaño de la fuente */
+        padding: 15px 30px; /* Aumenta el padding para hacerla más grande */
+        border-radius: 10px; /* Bordes más redondeados */
+        min-width: 300px; /* Asegura que la alerta tenga un tamaño mínimo */
+        margin-bottom: 10px; /* Espacio entre alertas */
+    }
+
+        .alert-custom i {
+            margin-right: 10px;
+        }
+
+        .alert-custom .btn-close {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            border: none;
+            font-size: 20px;
+            color: black;
+            cursor: pointer;
+        }
+
+    #alert-container {
+        position: fixed;
+        top: 10px;
+        left: 50%;
+        transform: translateX(-50%);
+        max-height: 400px; /* Establecer una altura máxima */
+        overflow-y: auto; /* Habilitar desplazamiento vertical */
+        width: 90%; /* Ancho de las alertas */
+        z-index: 9999;
+    }
+</style>
+<link rel="stylesheet" href="~/css/botones.css" asp-append-version="true" />
+<div class="body-wrapper">
+    <div class="">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card mb-4">
+                    <h5 class="card-header">Lista Excepciones históricas por Gerencia</h5>
+                    <!-- Alerta que se muestra cuando hay excepciones a vencer -->
+                    <div id="alert-container"></div>
+
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table" id="TablaExc" style="table-layout: auto; width:100%;">
+                                <thead>
+                                    <tr>
+                                        <th style="white-space: nowrap;">ID Carga</th>
+                                        <th style="white-space: nowrap;">Motivo</th>
+                                        <th style="white-space: nowrap;">Responsable</th>
+                                        <th style="white-space: nowrap;">Estado</th>
+                                        <th style="white-space: nowrap;">Comentario</th>
+                                        <th style="white-space: nowrap;">Evidencia</th>
+                                        <th style="white-space: nowrap;">Fecha Autorización</th>
+                                        <th style="white-space: nowrap;">Fecha Creación</th>
+                                        <th style="white-space: nowrap;">Nombre Usuario</th>
+                                        <th style="white-space: nowrap;">Cargo</th>
+                                        <th style="white-space: nowrap;">Perfil</th>
+                                        <th style="white-space: nowrap;">Gerencia</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section scripts {
+    <script src="/libs/datatables.net/js/jquery.datatables.min.js"></script>
+    <script src="/js/dataTables.buttons.min.js"></script>
+    <script src="/js/jszip.min.js"></script>
+    <script src="/js/pdfmake.min.js"></script>
+    <script src="/js/vfs_fonts.js"></script>
+    <script src="/js/buttons.html5.min.js"></script>
+    <script src="/js/buttons.print.min.js"></script>
+    <script>
+        window.addEventListener('load', async () => {
+            await ListarHistoricos();
+        });
+
+        const ListarHistoricos = async () => {
+            $("#TablaExc").DataTable().destroy();
+
+            $('#TablaExc').DataTable({
+                dom: 'Bfrtip', // Agrega la funcionalidad de botones de exportación
+                buttons: [
+                    {
+                        extend: 'excel',
+                        text: '<i class="fa-solid fa-file-excel"></i>', // Icono para Excel
+                        title: 'Historial de Excepciones',
+                        titleAttr: 'Exportar a Excel',
+                        className: 'btn btn-excel',
+                        exportOptions: {
+                            columns: ':not(:eq(5))' // Excluir la columna de Evidencia (índice 5)
+                        }
+                    },
+                    {
+                        extend: 'pdf',
+                        text: '<i class="fa-solid fa-file-pdf"></i>',
+                        titleAttr: 'Exportar a PDF',
+                        title: 'Historial de Excepciones',
+                        className: 'btn btn-pdf',
+                        orientation: 'landscape', // PDF en horizontal
+                        pageSize: 'LEGAL', // Tamaño más grande
+                        exportOptions: {
+                            columns: ':not(:eq(5))' // Excluir la columna de Evidencia (índice 5)
+                        },
+                        customize: function (doc) {
+                            doc.styles.tableHeader = {
+                                bold: true,
+                                fontSize: 12,
+                                color: 'white',
+                                fillColor: '#343a40',
+                                alignment: 'center'
+                            };
+                            doc.styles.tableBodyEven = { fillColor: '#f3f3f3' };
+                            doc.styles.tableBodyOdd = { fillColor: '#ffffff' };
+                        }
+                    }
+                ],
+                "createdRow": function (row, data, dataIndex) {
+                    $('td', row).css('white-space', 'nowrap');
+
+                    // Verificar y mostrar alertas de fechas de autorización
+                    if (data.fecha_autorizacion) {
+                        const today = new Date();
+                        const fechaAutorizacion = new Date(data.fecha_autorizacion);
+                        const differenceInTime = fechaAutorizacion.getTime() - today.getTime();
+                        const differenceInDays = differenceInTime / (1000 * 3600 * 24);
+
+                        if (differenceInDays <= 5 && differenceInDays > 0) {
+                            const alertContainer = document.getElementById('alert-container');
+
+                            const alertMessage = `
+                                    La excepción con ID Carga: <strong>${data.idCarga}</strong> está cerca de vencer.
+                                    Quedan <strong>${Math.ceil(differenceInDays)} días</strong> para su vencimiento.
+                                    <br>
+                                    <strong>Motivo:</strong> ${data.motivo}
+                                    <br>
+                                    <strong>Responsable:</strong> ${data.responsable ? data.responsable : "-"}
+                                    <br>
+                                    <strong>Fecha de Autorización:</strong> ${data.fecha_autorizacion ? formatDate(data.fecha_autorizacion) : "-"}
+                                    <br>
+                                    <strong>Usuario:</strong> ${data.nombreusuario ? data.nombreusuario : "-"}
+                                `;
+
+                            const alertDiv = document.createElement('div');
+                            alertDiv.classList.add('alert', 'alert-danger', 'alert-custom');
+                            alertDiv.innerHTML = alertMessage;
+
+                            const closeButton = document.createElement('button');
+                            closeButton.classList.add('btn-close');
+                            closeButton.setAttribute('aria-label', 'Close');
+                            closeButton.addEventListener('click', () => {
+                                alertDiv.remove();
+                            });
+
+                            alertDiv.appendChild(closeButton);
+                            alertContainer.appendChild(alertDiv);
+
+                            setTimeout(() => {
+                                alertDiv.remove();
+                            }, 5000);
+                        }
+                    }
+                },
+                "columnDefs": [
+                    { "width": "5%", "targets": [2] },
+                    { "className": "text-center custom-middle-align", "targets": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] },
+                ],
+                "language": {
+                    "sProcessing": "<div class='overlay custom-loader-background'><i class='fa fa-cog fa-spin custom-loader-color'></i></div>",
+                    "sLengthMenu": "Mostrar _MENU_ registros",
+                    "sZeroRecords": "No se encontraron resultados",
+                    "sEmptyTable": "Ningún dato disponible en esta tabla",
+                    "sInfo": "Mostrando registros" + "<br/> del _START_ al _END_ de un total de _TOTAL_ registros",
+                    "sInfoEmpty": "Mostrando registros" + "<br/> del 0 al 0 de un total de 0 registros",
+                    "sInfoFiltered": "(filtrado de un total de _MAX_ registros)",
+                    "sSearch": "Buscar:",
+                    "sLoadingRecords": "Cargando...",
+                    "oPaginate": {
+                        "sFirst": "Primero",
+                        "sLast": "Último",
+                        "sNext": "Siguiente",
+                        "sPrevious": "Anterior"
+                    }
+                },
+                "processing": true,
+                "serverSide": true,
+                "ajax": {
+                    "url": "/Excepciones/ListaExcepcionesHistoricos",
+                    "type": "POST",
+                    "dataType": "JSON"
+                },
+                destroy: true,
+                "columns": [
+                    { "data": "idCarga" },
+                    { "data": "motivo" },
+                    { "data": "responsable" },
+                    { "data": "estado" },
+                    { "data": "comentario" },
+                    { "data": null }, // Evidencia
+                    { "data": null }, // Fecha Autorización
+                    { "data": null }, // Fecha Creación
+                    { "data": "nombreusuario" },
+                    { "data": "cargospr" },  // Nueva columna Cargo
+                    { "data": "perfil" },    // Nueva columna Perfil
+                    { "data": "nom_Gerencia" } // Nueva columna Gerencia
+                ],
+                "columnDefs": [
+                    {
+                        "render": function (data, type, row) {
+                            return row.idCarga !== null ? row.idCarga : "-";
+                        },
+                        "targets": 0
+                    },
+                    {
+                        "render": function (data, type, row) {
+                            return row.responsable ? row.responsable : "-";
+                        },
+                        "targets": 2
+                    },
+                    {
+                        "render": function (data, type, row) {
+                            if (row.evidencia !== null && row.evidencia !== "") {
+                                return `<a target='_blank' href="../ExcepcionesEvidencias/${row.evidencia}" class='btn btn-sm btn-primary'><i class="fa-solid fa-download"></i></a>`;
+                            } else {
+                                return "-";
+                            }
+                        },
+                        "targets": 5
+                    },
+                    {
+                        "render": function (data, type, row) {
+                            return row.fecha_autorizacion ? formatDate(row.fecha_autorizacion) : "-";
+                        },
+                        "targets": 6
+                    },
+                    {
+                        "render": function (data, type, row) {
+                            return formatDate(row.fecha_creacion);
+                        },
+                        "targets": 7
+                    },
+                    {
+                        "render": function (data, type, row) {
+                            return row.nombreusuario ? row.nombreusuario : "-";
+                        },
+                        "targets": 8
+                    },
+                    {
+                        "render": function (data, type, row) {
+                            return row.cargospr ? row.cargospr : "-";
+                        },
+                        "targets": 9
+                    },
+                    {
+                        "render": function (data, type, row) {
+                            return row.perfil ? row.perfil : "-";
+                        },
+                        "targets": 10
+                    },
+                    {
+                        "render": function (data, type, row) {
+                            return row.nom_Gerencia ? row.nom_Gerencia : "-";
+                        },
+                        "targets": 11
+                    }
+                ]
+            });
+        };
+
+        // Función para formatear la fecha a DD/MM/YYYY
+        const formatDate = (dateString) => {
+            const cleanDate = dateString.split('T')[0];
+            const [year, month, day] = cleanDate.split('-');
+            return `${day}/${month}/${year}`;
+        };
+    </script>
+
+}

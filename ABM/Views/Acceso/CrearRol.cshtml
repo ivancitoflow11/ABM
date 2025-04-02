@@ -1,0 +1,151 @@
+﻿@model ABM.ViewModels.UsuarioVM;
+
+<div class="col-12" style="margin-top: 90px;">
+    <h4 style="margin-top:5px;">Crear Rol</h4>
+    <div class="card w-100 border position-relative overflow-hidden mb-0">
+        <div class="card-body p-4">
+            <!-- Mensajes de éxito o error -->
+            <div class="alert-container">
+                @if (ViewData["Success"] != null)
+                {
+                    <div class="alert alert-success" role="alert">
+                        @ViewData["Success"]
+                    </div>
+                }
+
+                @if (ViewData["Error"] != null)
+                {
+                    <div class="alert alert-danger" role="alert">
+                        @ViewData["Error"]
+                    </div>
+                }
+            </div>
+            <form asp-controller="Acceso" asp-action="CrearRolYAsignarPermisos" method="post">
+                <div class="row">
+                    <!-- Columna para el campo "Rol" -->
+                    <div class="col-md-6" style="margin-top:15px;">
+                        <div class="mb-6">
+                            <label for="nombre" class="form-label">Rol</label>
+                            <input id="name-2" name="nuevoRol" type="text" class="form-control mb-3" placeholder="Ingresar nombre del nuevo rol" required asp-for="nuevoRol" />
+                        </div>
+                    </div>
+
+                    <!-- Columna para el campo "Seleccione Sistema" -->
+                    <div class="col-md-6" style="margin-top:15px;">
+                        <div class="mb-6">
+                            <label class="form-label">Seleccione Sistema</label>
+                            <select class="form-select" aria-label="Default select example" required asp-for="idRol">
+                                <option disabled selected>Seleccione...</option>
+                                @if (Model.Sistemas != null && Model.Sistemas.Any())
+                                {
+                                    @foreach (var item in Model.Sistemas)
+                                    {
+                                        <option value="@item.idSistema">@item.sistema</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Resto del formulario -->
+                <div class="row" style="margin-top:15px;">
+                    <!-- Columna para los checkboxes -->
+                    <div class="col-md-6">
+                        <div class="mb-6">
+                            <label class="form-label">Otorgar Permisos Menú</label>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="selectAllMenu">
+                                <label class="form-check-label" for="selectAllMenu">Seleccionar todos</label>
+                            </div>
+                            <div class="form-check">
+                                @if (Model.VistasMenu != null && Model.VistasMenu.Any())
+                                {
+                                    @foreach (var item in Model.VistasMenu)
+                                    {
+                                        var checkboxId = $"flexCheckChecked_{item.ID_Menu}";
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="PermisosMenuSeleccionados" value="@item.ID_Menu" id="@checkboxId" @(Model.PermisosMenuSeleccionados != null && Model.PermisosMenuSeleccionados.Contains(item.ID_Menu) ? "checked" : "")>
+                                            <label class="form-check-label" for="@checkboxId">@item.DESC_NombreMenu</label>
+                                        </div>
+                                    }
+                                }
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Columna para el select "Seleccione Vista Principal" -->
+                    <div class="col-md-6">
+                        <div class="mb-6">
+                            <label class="form-label">Seleccione Vista Principal</label>
+                            <select class="form-select" aria-label="Default select example" required asp-for="codVistaPrincipal">
+                                <option disabled selected>Seleccione...</option>
+                                @if (Model.VistasMenu != null && Model.VistasMenu.Any())
+                                {
+                                    @foreach (var item in Model.VistasMenu)
+                                    {
+                                        <option value="@item.ID_Menu">@item.DESC_NombreMenu</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Columna para los checkboxes "Otorgar Permisos Sub-Menú" -->
+                <div class="row" style="margin-top:15px;">
+                    <div class="col-md-12">
+                        <div class="mb-3">
+                            <label class="form-label">Otorgar Permisos Sub-Menú</label>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="selectAllSubMenu">
+                                <label class="form-check-label" for="selectAllSubMenu">Seleccionar todos</label>
+                            </div>
+                            <div class="form-check">
+                                @if (Model.VistasSubMenu != null && Model.VistasSubMenu.Any())
+                                {
+                                    @foreach (var item in Model.VistasSubMenu)
+                                    {
+                                        var checkboxId = $"flexCheckChecked_{item.ID_Submenu}";
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="PermisosSubMenuSeleccionados" value="@item.ID_Submenu" id="@checkboxId" @(Model.PermisosSubMenuSeleccionados != null && Model.PermisosSubMenuSeleccionados.Contains(item.ID_Submenu) ? "checked" : "")>
+                                            <label class="form-check-label" for="@checkboxId">@item.DESC_NombreMenu</label>
+                                        </div>
+                                    }
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-12">
+                        <div class="d-grid gap-2 mb-3" style="display: flex; justify-content: flex-end;">
+                            <button class="btn btn-primary" type="submit">Guardar</button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+
+</div>
+
+
+<script>
+    document.getElementById('selectAllMenu').addEventListener('change', function () {
+        const checkboxes = document.querySelectorAll('input[name="PermisosMenuSeleccionados"]');
+        checkboxes.forEach(checkbox => {
+            checkbox.checked = this.checked;
+        });
+    });
+
+    document.getElementById('selectAllSubMenu').addEventListener('change', function () {
+        const checkboxes = document.querySelectorAll('input[name="PermisosSubMenuSeleccionados"]');
+        checkboxes.forEach(checkbox => {
+            checkbox.checked = this.checked;
+        });
+    });
+</script>
+

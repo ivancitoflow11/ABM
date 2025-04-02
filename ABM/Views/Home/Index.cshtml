@@ -1,0 +1,29 @@
+﻿@using System.Security.Claims;
+@{
+    ViewData["Title"] = "Inicio";
+}
+
+<div style="background: linear-gradient(135deg, #003366, #cc0000); height: 100vh; display: flex; justify-content: center; align-items: center; text-align: center; color: #ffffff; font-family: Arial, sans-serif;">
+    @if (User.Identity!.IsAuthenticated)
+    {
+        <div style="background: rgba(255, 255, 255, 0.9); border-radius: 15px; padding: 40px; max-width: 600px; width: 90%; box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);">
+            <h1 style="font-size: 3rem; color: #cc0000; font-weight: bold;">Bienvenido(a),</h1>
+            <h2 style="font-size: 2rem; color: #003366; margin: 10px 0;">
+                @User.Claims.Where(c => c.Type == ClaimTypes.Name).Select(c => c.Value).SingleOrDefault()
+            </h2>
+            <p style="font-size: 1.2rem; color: #333333; line-height: 1.8; margin-top: 20px;">
+                <strong>ABM IMPERIAL</strong>
+            </p>
+        </div>
+    }
+    else
+    {
+        <div style="background: rgba(255, 255, 255, 0.9); border-radius: 15px; padding: 40px; max-width: 600px; width: 90%; box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);">
+            <h1 style="font-size: 3rem; color: #cc0000; font-weight: bold;">Bienvenido a</h1>
+            <h2 style="font-size: 2.5rem; color: #003366; font-weight: bold; margin-bottom: 20px;">ABM IMPERIAL</h2>
+            <p style="font-size: 1.2rem; color: #333333; line-height: 1.8;">
+                Por favor, inicia sesión para acceder a todas las funcionalidades del sistema.
+            </p>
+        </div>
+    }
+</div>

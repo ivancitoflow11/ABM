@@ -1,0 +1,942 @@
+﻿@model IEnumerable<DetalleExcepcion>
+
+@*
+    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+*@
+@{
+}
+<link rel="stylesheet" href="~/css/botones.css" asp-append-version="true" />
+<style>
+    /* CSS para la paginación */
+    .dataTables_wrapper .dataTables_paginate .paginate_button {
+        padding: 0.5em 0.5em;
+        margin: 0 1px;
+        font-size: 12px;
+        border-radius: 9px;
+        background-color: #a2a2b5; /* Cambia a tu color preferido */
+        color: white;
+        min-width: 30px;
+        transition: background-color 0.3s ease, color 0.3s ease;
+    }
+
+        .dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+            background-color: #0056b3; /* Color al pasar el cursor */
+            border-color: #0056b3;
+            color: white;
+        }
+
+        .dataTables_wrapper .dataTables_paginate .paginate_button.current {
+            background-color: #0056b3; /* Color para el botón activo */
+            color: white;
+        }
+
+
+    .form-text {
+        margin-top: 0.3rem;
+        font-size: 14px;
+        color: #007bff;
+    }
+
+    #loading {
+        background: #f4f4f2 url("img/page-bg.png") repeat scroll 0 0;
+        height: 100%;
+        left: 0;
+        margin: auto;
+        position: fixed;
+        top: 0;
+        width: 100%;
+    }
+
+    .bokeh {
+        border: 0.01em solid rgba(150, 150, 150, 0.1);
+        border-radius: 50%;
+        font-size: 100px;
+        height: 1em;
+        list-style: outside none none;
+        margin: 0 auto;
+        position: relative;
+        top: 35%;
+        width: 1em;
+        z-index: 2147483647;
+    }
+
+        .bokeh li {
+            border-radius: 50%;
+            height: 0.2em;
+            position: absolute;
+            width: 0.2em;
+        }
+
+            .bokeh li:nth-child(1) {
+                animation: 1.13s linear 0s normal none infinite running rota, 3.67s ease-in-out 0s alternate none infinite running opa;
+                background: white none repeat scroll 0 0;
+                left: 50%;
+                margin: 0 0 0 -0.1em;
+                top: 0;
+                transform-origin: 50% 250% 0;
+            }
+
+            .bokeh li:nth-child(2) {
+                animation: 1.86s linear 0s normal none infinite running rota, 4.29s ease-in-out 0s alternate none infinite running opa;
+                background: #ffa423 none repeat scroll 0 0;
+                margin: -0.1em 0 0;
+                right: 0;
+                top: 50%;
+                transform-origin: -150% 50% 0;
+            }
+
+            .bokeh li:nth-child(3) {
+                animation: 1.45s linear 0s normal none infinite running rota, 5.12s ease-in-out 0s alternate none infinite running opa;
+                background: #156db6 none repeat scroll 0 0;
+                bottom: 0;
+                left: 50%;
+                margin: 0 0 0 -0.1em;
+                transform-origin: 50% -150% 0;
+            }
+
+            .bokeh li:nth-child(4) {
+                animation: 1.72s linear 0s normal none infinite running rota, 5.25s ease-in-out 0s alternate none infinite running opa;
+                background: #88c100 none repeat scroll 0 0;
+                margin: -0.1em 0 0;
+                top: 50%;
+                transform-origin: 250% 50% 0;
+            }
+
+   /*  @@keyframes opa {
+        12% {
+            opacity: 0.8;
+        }
+
+        19.5% {
+            opacity: 0.88;
+        }
+
+        37.2% {
+            opacity: 0.64;
+        }
+
+        40.5% {
+            opacity: 0.52;
+        }
+
+        52.7% {
+            opacity: 0.69;
+        }
+
+        60.2% {
+            opacity: 0.6;
+        }
+
+        66.6% {
+            opacity: 0.52;
+        }
+
+        70% {
+            opacity: 0.63;
+        }
+
+        79.9% {
+            opacity: 0.6;
+        }
+
+        84.2% {
+            opacity: 0.75;
+        }
+
+        91% {
+            opacity: 0.87;
+        }
+    }
+
+    @@keyframes rota {
+        100% {
+            transform: rotate(360deg);
+        }
+    } */
+
+    /*body {
+        margin-top: 40px;
+    }*/
+
+    .stepwizard-step p {
+        margin-top: 10px;
+    }
+
+    .stepwizard-row {
+        display: table-row;
+    }
+
+    .stepwizard {
+        display: table;
+        width: 100%;
+        position: relative;
+    }
+
+    .stepwizard-step button[disabled] {
+        opacity: 1 !important;
+        filter: alpha(opacity=100) !important;
+    }
+
+    .stepwizard-row:before {
+        top: 14px;
+        bottom: 0;
+        position: absolute;
+        content: " ";
+        width: 100%;
+        height: 1px;
+        background-color: #ccc;
+        z-order: 0;
+    }
+
+    .stepwizard-step {
+        display: table-cell;
+        text-align: center;
+        position: relative;
+    }
+
+    .btn-circle {
+        width: 30px;
+        height: 30px;
+        text-align: center;
+        padding: 6px 0;
+        font-size: 12px;
+        line-height: 1.428571429;
+        border-radius: 15px;
+    }
+</style>
+
+
+<div class="">
+    <div class="">
+        
+        <div class="row">
+            <div class="card">
+                <div class="">
+                    <div class="stepwizard" style="margin-top:60px">
+                        <div class="stepwizard-row setup-panel">
+                            <div class="stepwizard-step">
+                                <a href="#step-1" type="button" class="btn btn-primary btn-circle">1</a>
+                                <p>Listado</p>
+                            </div>
+                            <div class="stepwizard-step">
+                                <a href="#step-2" type="button" class="btn btn-default btn-circle" disabled="disabled">2</a>
+                                <p>Argumentación</p>
+                            </div>
+                            <div class="stepwizard-step">
+                                <a href="#step-3" type="button" class="btn btn-default btn-circle" disabled="disabled">3</a>
+                                <p>Confirmación</p>
+                            </div>
+                        </div>
+                    </div>
+                    <form role="form">
+                        <div class="row setup-content" id="step-1">
+                            <div class="col-xs-12">
+                                <div class="col-md-12">
+                                    <h3> Listado Excepciones</h3>
+                                    <hr />
+                                    <div>
+                                        <h4 class="text-primary">Seleccionar Todos <input onchange="CheckAll(this)" type="checkbox" class="flaticon2-check-mark" /></h4>
+                                    </div>
+                                    <div class="table-responsive">
+                                        <table class="table table-bordered" id="tableLista" style="table-layout: auto; width:100%;">
+                                            <thead>
+                                                <tr>
+                                                    <th style="white-space: nowrap;">Acción</th>
+                                                    <th style="white-space: nowrap;">IdCarga</th>
+                                                    <th style="white-space: nowrap;">Id Sistema</th>
+                                                    <th style="white-space: nowrap;">Nombre Sistema</th>
+                                                    <th style="white-space: nowrap;">Usuario</th>
+                                                    <th style="white-space: nowrap;">UserId</th>
+                                                    <th style="white-space: nowrap;">Rut/DNI</th>
+                                                    <th style="white-space: nowrap;">Cargo</th>
+                                                    <th style="white-space: nowrap;">Perfil</th>
+                                                    <th style="white-space: nowrap;">Gerencia</th>
+                                                    <th style="white-space: nowrap;">Subgerencia</th>
+                                                </tr>
+
+                                            </thead>
+                                            @if (Model != null &&  Model.Any())
+                                            {
+                                                <tbody>
+                                                    @foreach (var item in Model)
+                                                    {
+                                                        <tr>
+                                                            <td style="white-space: nowrap;"><input type="checkbox" class="CheckUser" /></td>
+                                                            <td style="white-space: nowrap;">@item.idCarga</td>
+                                                            <td style="white-space: nowrap;">@item.idPaisNegocioSistema</td>
+                                                            <td style="white-space: nowrap;">@item.sistema</td>
+                                                            <td style="white-space: nowrap;">@item.nombreusuario</td>
+                                                            <td style="white-space: nowrap;">@item.userid</td>
+                                                            <td style="white-space: nowrap;">@item.rutdni</td>
+                                                            <td style="white-space: nowrap;">@item.cargospr</td>
+                                                            <td style="white-space: nowrap;">@item.perfil</td>
+                                                            <td style="white-space: nowrap;">@item.Nom_Gerencia</td>
+                                                            <td style="white-space: nowrap;">@item.Nom_Subgerencia</td>
+                                                        </tr>
+                                                    }
+                                                </tbody>
+                                            }
+                                        </table>
+                                    </div>
+                                    <br/>
+                                    <button class="btn btn-success nextBtn btn-lg pull-right" type="button">Autorizar Excepción</button>
+                                    @* <button class="btn btn-warning btn-lg pull-right" type="button" id="btnEnviarExcepcion"><i class="fa-regular fa-bell"></i> Enviar a eliminar</button> *@
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row setup-content" id="step-2">
+                            <div class="col-xs-12">
+                                <div class="col-md-12">                                   
+
+                                    <h3>
+                                        Datos Argumentación
+                                    </h3>
+                                    <hr />
+                                    <div class="row col-12">
+                                        <div class="row col-6">
+                                            <div class="form-group">
+                                                <label class="control-label">Seleccionar Estado</label>
+                                                <select id="Estado" class="form-select">
+                                                    <option value="">Seleccione</option>
+                                                    <option value="Pendiente">Pendiente</option>
+                                                    <option value="Rechazado">Rechazado</option>
+                                                    <option value="Aprobado">Aprobado</option>
+                                                </select>
+                                            </div>
+                                            <div class="form-group">
+                                                <label class="control-label">Seleccionar Motivo</label>
+                                                <select id="Motivo" class="form-select">
+                                                    <option value="">Seleccione</option>
+                                                    @if (ViewBag.TIPOS_EXEPCION != null)
+                                                    {
+                                                        foreach (TipoExcepcion item in ViewBag.TIPOS_EXEPCION)
+                                                        {
+                                                            <option value="@item.idMotivo">@item.nombreMotivo</option>
+                                                        }
+                                                    }
+
+                                                </select>
+                                            </div>
+                                            <div class="form-group">
+                                                <label class="control-label">Fecha autorización hasta</label>
+                                                <input id="FechaHasta" type="date" required="required" class="form-control" placeholder="Fecha autorización hasta" />
+                                            </div>
+                                            <div class="form-group">
+                                                <label class="control-label">Observaciones</label>
+                                                <textarea id="Observaciones" maxlength="200" class="form-control"></textarea>
+                                            </div>
+
+                                        </div>
+                                        <div class="row col-6">
+
+                                            <div class="form-group">
+                                                <label class="control-label">Seleccionar Evidencia</label>
+                                                <input type="file" id="Evidencia" required="required" class="form-control" />
+                                            </div>
+
+
+                                        </div>
+                                    </div>
+
+
+                                    <button class="btn btn-primary nextBtn btn-lg pull-right" type="button">Continuar</button>
+                                    <button class="btn btn-info btn-lg pull-left prevBtn" type="button">Regresar</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row setup-content" id="step-3">
+                            <div class="col-xs-12">
+                                <div class="col-md-12">
+                                    <h3>
+                                        Excepciones seleccionadas
+                                    </h3>
+                                    <div class="table-responsive">
+                                        <table class="table table-bordered" id="tableListaFinal" style="table-layout: auto; width:100%;">
+                                            <thead>
+                                                <tr>
+                                                    <th style="white-space: nowrap;">Acción</th>
+                                                    <th style="white-space: nowrap;">Id Carga</th>
+                                                    <th style="white-space: nowrap;">Id Sistema</th>
+                                                    <th style="white-space: nowrap;">Nombre Sistema</th>
+                                                    <th style="white-space: nowrap;">Usuario</th>
+                                                    <th style="white-space: nowrap;">UserId</th>
+                                                    <th style="white-space: nowrap;">Rut/DNI</th>
+                                                    <th style="white-space: nowrap;">Cargo</th>
+                                                    <th style="white-space: nowrap;">Perfil</th>
+                                                </tr>
+
+                                            </thead>
+                                            <tbody id="tableListaFinalTbody">
+                                            </tbody>
+
+                                        </table>
+                                    </div>
+                                    <button type="button" class="btn btn-success btn-lg pull-right" id="GuardarExcepciones">Guardar</button>
+                                    <button class="btn btn-info btn-lg pull-left prevBtn" type="button">Regresar</button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+
+    </div>
+</div>
+
+<!-- Modal para enviar excepción -->
+<div class="modal fade" id="modalEnviarExcepcion" tabindex="-1" role="dialog" aria-labelledby="modalEnviarExcepcionLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalEnviarExcepcionLabel">Enviar Excepción</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="correoEnvio">Correo de Envío:</label>
+                    <input type="email" class="form-control" id="correoEnvio" required>
+                </div>
+                <div class="form-group">
+                    <label for="observaciones">Observaciones:</label>
+                    <textarea class="form-control" id="observaciones" rows="3" required></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" id="btnCerrarModal" data-dismiss="modal">Cerrar</button>
+                <button type="button" class="btn btn-primary" id="btnGuardarExcepcion">Enviar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section scripts {
+    <script src="/libs/datatables.net/js/jquery.datatables.min.js"></script>
+    <script src="/js/sweetalert/sweetalert.min.js"></script>
+    <script src="/js/vendor.min.js"></script>
+    <script src="/libs/datatables.net/js/jquery.dataTables.min.js"></script>
+    <script src="/js/dataTables.buttons.min.js"></script>
+    <script src="/js/jszip.min.js"></script>
+    <script src="/js/pdfmake.min.js"></script>
+    <script src="/js/vfs_fonts.js"></script>
+    <script src="/js/buttons.html5.min.js"></script>
+    <script src="/js/buttons.print.min.js"></script>
+    <script src="/js/datatable/datatable-advanced.init.js" asp-append-version="true"></script>
+
+    <script>
+        $(document).ready(function() {
+            // Manejo del botón "Enviar Excepcion"
+            $('#btnEnviarExcepcion').click(function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+
+                var excepcionesSeleccionadas = $('.CheckUser:checked');
+                if (excepcionesSeleccionadas.length === 0) {
+                    Swal.fire({
+                        title: 'Información',
+                        icon: 'error',
+                        confirmButtonColor: '#3085d6',
+                        confirmButtonText: 'Aceptar',
+                        html: "<strong>Debe seleccionar por lo menos un usuario de la lista de excepciones para continuar.</strong>",
+                    });
+                } else {
+                    $('#modalEnviarExcepcion').modal('show');
+                }
+            });
+
+            // Manejo del botón "Enviar" dentro del modal
+            $('#btnGuardarExcepcion').click(function() {
+                var correoEnvio = $('#correoEnvio').val();
+                var observaciones = $('#observaciones').val();
+
+                if (!correoEnvio || !observaciones) {
+                    Swal.fire('Error', 'Por favor, complete todos los campos', 'error');
+                    return;
+                }
+
+                var excepcionesSeleccionadas = $('.CheckUser:checked');
+                var idsCarga = excepcionesSeleccionadas.map(function() {
+                    return $(this).closest('tr').find('td:eq(1)').text();
+                }).get();
+
+                console.log('IDs de carga seleccionados:', idsCarga);
+
+                var exitosos = 0;
+                var fallidos = 0;
+                var promesasCompletadas = 0;
+
+                idsCarga.forEach(function(idCarga) {
+                    console.log('Enviando solicitud para idCarga:', idCarga);
+                    $.ajax({
+                        url: '/Excepciones/GuardarExcepcionConEnvioCorreo',
+                        type: 'POST',
+                        data: {
+                            idCarga: idCarga,
+                            correoEnvio: correoEnvio,
+                            observaciones: observaciones
+                        }
+                    })
+                    .done(function(response) {
+                        console.log('Respuesta completa para idCarga ' + idCarga + ':', response);
+                        // Imprimir cada propiedad de la respuesta
+                        for (var prop in response) {
+                            console.log(prop + ': ' + response[prop]);
+                        }
+    
+                        if (response.respuesta === true || response.respuesta === 'true') {
+                            exitosos++;
+                            console.log('Marcado como exitoso para idCarga:', idCarga);
+                        } else {
+                            fallidos++;
+                            console.log('Marcado como fallido para idCarga:', idCarga);
+                        }
+                    })
+                    .fail(function(error) {
+                        console.error('Error para idCarga ' + idCarga + ':', error);
+                        fallidos++;
+                    })
+                    .always(function() {
+                        promesasCompletadas++;
+                        console.log('Promesas completadas: ' + promesasCompletadas + ' de ' + idsCarga.length);
+                        if (promesasCompletadas === idsCarga.length) {
+                            mostrarResultadoFinal();
+                        }
+                    });
+                });
+
+                function mostrarResultadoFinal() {
+                    console.log('Mostrando resultado final. Exitosos: ' + exitosos + ', Fallidos: ' + fallidos);
+                    let mensaje = '';
+                    if (exitosos > 0) {
+                        mensaje += `${exitosos} excepciones enviadas correctamente. `;
+                    }
+                    if (fallidos > 0) {
+                        mensaje += `${fallidos} excepciones no pudieron ser enviadas.`;
+                    }
+
+                    Swal.fire({
+                        title: exitosos > 0 ? 'Éxito' : ' Advertencia',
+                        text: mensaje,
+                        icon: exitosos > 0 ? 'success' : 'warning'
+                    });
+
+                    $('#modalEnviarExcepcion').modal('hide');
+                }
+            });
+
+            // Manejo del cierre del modal
+            $('.close, #btnCerrarModal').click(function() {
+                $('#modalEnviarExcepcion').modal('hide');
+            });
+
+            // Asegurarse de que el botón "Cerrar" también cierre el modal
+            $('#btnCerrarModal').click(function() {
+                $('#modalEnviarExcepcion').modal('hide');
+            });
+
+            // Limpiar campos del modal cuando se cierra
+            $('#modalEnviarExcepcion').on('hidden.bs.modal', function () {
+                $('#correoEnvio').val('');
+                $('#observaciones').val('');
+            });
+        });
+    </script>
+
+    <script>
+        $(document).ready(function () {
+            var table = $('#tableLista').DataTable({
+                //rowReorder: {
+                //    selector: 'td:nth-child(2)'
+                //},
+
+                responsive: false,
+                dom: "Bfrtip",
+                lengthMenu: [[10, 20, 50, -1], [10, 20, 50, "Todos"]],
+                pageLength: 20,
+                language: {
+                    info: "Mostrando _START_ a _END_ de _TOTAL_ entradas",
+                    infoEmpty: "Mostrando 0 a 0 de 0 entradas",
+                    infoFiltered: "(filtrado de _MAX_ entradas totales)"
+                },
+                buttons: [
+                    {
+                        extend: 'copy',
+                        text: '<i class="fa-regular fa-clipboard"></i>', // Icono para copiar
+                        titleAttr: 'Copiar',
+                        className: 'btn btn-copy' // Azul para copiar
+                    },
+                    {
+                        extend: 'excel',
+                        text: '<i class="fa-solid fa-file-excel"></i>', // Icono para Excel
+                        titleAttr: 'Exportar a Excel',
+                        className: 'btn btn-excel' // Verde para Excel
+                    },
+                    {
+                        extend: 'pdf',
+                        text: '<i class="fa-solid fa-file-pdf"></i>',
+                        titleAttr: 'Exportar a PDF',
+                        className: 'btn btn-pdf',
+                        orientation: 'landscape', // Cambia la orientación a horizontal
+                        pageSize: 'LEGAL', // Aumenta el tamaño de la página
+                        customize: function (doc) {
+                            // Ajusta el tamaño de la fuente
+                            doc.defaultStyle.fontSize = 8;
+
+                            // Ajusta el ancho de la tabla al ancho de la página
+                            doc.content[1].table.widths =
+                                Array(doc.content[1].table.body[0].length + 1).join('*').split('');
+
+                            // Ajusta los márgenes
+                            doc.pageMargins = [10, 10, 10, 10];
+                        },
+                        exportOptions: {
+                            columns: ':visible' // Solo exporta las columnas visibles
+                        }
+                    }
+                ]
+
+            });
+            var navListItems = $('div.setup-panel div a'),
+                allWells = $('.setup-content'),
+                allNextBtn = $('.nextBtn');
+
+            allWells.hide();
+
+            navListItems.click(function (e) {
+                e.preventDefault();
+                var $target = $($(this).attr('href')),
+                    $item = $(this);
+
+                if (!$item.hasClass('disabled')) {
+                    navListItems.removeClass('btn-primary').addClass('btn-default');
+                    $item.addClass('btn-primary');
+                    allWells.hide();
+                    $target.show();
+                    $target.find('input:eq(0)').focus();
+                }
+            });
+
+
+
+            allNextBtn.click(function () {
+                var curStep = $(this).closest(".setup-content"),
+                    curStepBtn = curStep.attr("id"),
+                    nextStepWizard = $('div.setup-panel div a[href="#' + curStepBtn + '"]').parent().next().children("a"),
+                    curInputs = curStep.find("input[type='text'],input[type='url']"),
+                    isValid = true;
+
+
+                if (curStepBtn === "step-1") {
+                    let ExisteSeleccion = ConsultarExisteSeleccionExc();
+                    if (ExisteSeleccion) {
+                        nextStepWizard.removeAttr('disabled').trigger('click');
+                    }
+                    else {
+                        Swal.fire({
+                            html: true,
+                            title: 'Información',
+                            icon: 'error',
+                            showCancelButton: false,
+                            confirmButtonColor: '#3085d6',
+                            confirmButtonText: 'Aceptar',
+                            html: "<strong>Debe seleccionar por lo menos un usuario de la lista de excepciones para continuar.</strong>",
+                        });
+                    }
+                }
+                else if (curStepBtn === "step-2") {
+                    let Estado = document.getElementById('Estado');
+                    Estado.style.border = "";
+                    let Motivo = document.getElementById('Motivo');
+                    Motivo.style.border = "";
+                    let FechaHasta = document.getElementById('FechaHasta');
+                    FechaHasta.style.border = "";
+                    let Evidencia = document.getElementById('Evidencia');
+                    Evidencia.style.border = "";
+                    if (Estado.value === "") {
+                        isValid = false;
+                        Estado.style.border = "1px solid red";
+                    }
+                    if (Motivo.value === "") {
+                        isValid = false;
+                        Motivo.style.border = "1px solid red";
+                    }
+                    if (FechaHasta.value === "") {
+                        isValid = false;
+                        FechaHasta.style.border = "1px solid red";
+                    }
+                    if (Evidencia.value === "") {
+                       isValid = false;
+                       Evidencia.style.border = "1px solid red";
+                    }
+
+                    if (isValid) {
+                        nextStepWizard.removeAttr('disabled').trigger('click');
+                        ObtenerExcSeleccionadas();
+                    }
+
+                }
+                else {
+
+                }
+
+
+            });
+
+            $('div.setup-panel div a.btn-primary').trigger('click');
+
+
+            document.getElementById('loading').style.display = "none";
+        });
+
+        const CheckAll = (elem) => {
+            // document.getElementById('loading').style.display = "";
+
+            if ($.fn.DataTable.isDataTable('#tableLista')) {
+                $('#tableLista').DataTable().destroy();
+            }
+
+            let contenido = document.getElementsByClassName('CheckUser')
+
+            for (var i = 0; i < contenido.length; i++) {
+                if (elem.checked) {
+                    contenido[i].setAttribute('checked', 'checked');
+                }
+                else {
+                    contenido[i].removeAttribute('checked');
+                }
+            }
+
+        }
+
+
+        const ConsultarExisteSeleccionExc = () => {
+            let existe = false;
+            let CheckUser = document.getElementsByClassName('CheckUser');
+            for (var i = 0; i < CheckUser.length; i++) {
+                if (CheckUser[i].checked) {
+                    existe = true;
+                }
+            }
+            return existe;
+        }
+
+
+        const ObtenerExcSeleccionadas = () => {
+            let tableListaFinalTbody = document.getElementById('tableListaFinalTbody');
+            tableListaFinalTbody.innerHTML = "";
+
+
+
+            if ($.fn.DataTable.isDataTable('#tableListaFinal')) {
+                $('#tableListaFinal').DataTable().destroy();
+            }
+
+            $('#tableListaFinal tbody').empty();
+
+
+            if ($.fn.DataTable.isDataTable('#tableLista')) {
+                $('#tableLista').DataTable().destroy();
+            }
+            let CheckUser = document.getElementsByClassName('CheckUser');
+            for (var i = 0; i < CheckUser.length; i++) {
+                if (CheckUser[i].checked) {
+
+                    let elem = CheckUser[i].parentNode.parentNode;
+
+                    let Childrens = elem.children;
+                    console.log(Childrens);
+
+
+                    let TrElement = document.createElement('tr');
+
+                    let inputTd = document.createElement('td');
+                    inputTd.innerHTML = `<input type="checkbox" checked="checked" class="CheckUserFinal">`;
+                    TrElement.appendChild(inputTd);
+
+                    inputTd = document.createElement('td');
+                    inputTd.appendChild(document.createTextNode((Childrens[1].firstChild == null) ? "" : Childrens[1].firstChild.textContent));
+                    TrElement.appendChild(inputTd);
+
+                    inputTd = document.createElement('td');
+                    inputTd.appendChild(document.createTextNode((Childrens[2].firstChild == null) ? "" : Childrens[2].firstChild.textContent));
+                    TrElement.appendChild(inputTd);
+
+                    inputTd = document.createElement('td');
+                    inputTd.appendChild(document.createTextNode((Childrens[3].firstChild == null) ? "" : Childrens[3].firstChild.textContent));
+                    TrElement.appendChild(inputTd);
+
+                    inputTd = document.createElement('td');
+                    inputTd.appendChild(document.createTextNode((Childrens[4].firstChild == null) ? "" : Childrens[4].firstChild.textContent));
+                    TrElement.appendChild(inputTd);
+
+                    inputTd = document.createElement('td');
+                    inputTd.appendChild(document.createTextNode((Childrens[5].firstChild == null) ? "" : Childrens[5].firstChild.textContent));
+                    TrElement.appendChild(inputTd);
+
+                    inputTd = document.createElement('td');
+                    inputTd.appendChild(document.createTextNode((Childrens[6].firstChild == null) ? "" : Childrens[6].firstChild.textContent));
+                    TrElement.appendChild(inputTd);
+
+                    inputTd = document.createElement('td');
+                    inputTd.appendChild(document.createTextNode((Childrens[7].firstChild == null) ? "" : Childrens[7].firstChild.textContent));
+                    TrElement.appendChild(inputTd);
+
+                    inputTd = document.createElement('td');
+                    inputTd.appendChild(document.createTextNode((Childrens[8].firstChild == null) ? "" : Childrens[8].firstChild.textContent));
+                    TrElement.appendChild(inputTd);
+
+                    tableListaFinalTbody.appendChild(TrElement);
+
+                }
+            }
+
+
+
+            var table = $('#tableListaFinal').DataTable({
+                //rowReorder: {
+                //    selector: 'td:nth-child(2)'
+                //},
+
+                responsive: false
+            });
+
+            var table = $('#tableLista').DataTable({
+                responsive: false
+            });
+        };
+
+
+        document.getElementById('GuardarExcepciones').addEventListener('click', async () => {
+            let isValid = true;
+
+            let Estado = document.getElementById('Estado');
+            Estado.style.border = "";
+
+            let Motivo = document.getElementById('Motivo');
+            Motivo.style.border = "";
+            let FechaHasta = document.getElementById('FechaHasta');
+            FechaHasta.style.border = "";
+            let Evidencia = document.getElementById('Evidencia');
+            Evidencia.style.border = "";
+
+            let Observaciones = document.getElementById('Observaciones');
+
+            if (Estado.value === "") {
+                isValid = false;
+                Estado.style.border = "1px solid red";
+            }
+            if (Motivo.value === "") {
+                isValid = false;
+                Motivo.style.border = "1px solid red";
+            }
+            if (FechaHasta.value === "") {
+                isValid = false;
+                FechaHasta.style.border = "1px solid red";
+            }
+            if (Evidencia.value === "") {
+               isValid = false;
+               Evidencia.style.border = "1px solid red";
+            }
+
+            if (isValid) {
+                let Ids = ObtenerListaIdsExcepcion();
+
+                console.log(Estado.value);
+                console.log(Motivo.value);
+                console.log(FechaHasta.value);
+                console.log(Evidencia.files[0]);
+                console.log(Observaciones.value);
+
+
+                const formData = new FormData();
+                formData.append('IdsCarga', Ids);
+                formData.append('Comentario', Observaciones.value);
+                if (Evidencia != null && Evidencia !== undefined) {
+                    formData.append('Archivo', Evidencia.files[0]);
+                }
+                formData.append('IdTipoMotivo', Number(Motivo.value));
+                formData.append('FechaHasta', FechaHasta.value);
+                formData.append('Estado', Estado.value);
+
+                var res = await fetch("/Excepciones/GuardarListaExcepciones", {
+                    method: "POST",
+                    body: formData
+                });
+
+                res = await res.json();
+
+                console.log(res);
+
+
+
+                if (res.respuesta) {
+                    window.location.replace("../../Excepciones/Index");
+
+                }
+
+            }
+
+        });
+
+
+
+        const ObtenerListaIdsExcepcion = () => {
+
+            if ($.fn.DataTable.isDataTable('#tableListaFinal')) {
+                $('#tableListaFinal').DataTable().destroy();
+            }
+
+            let ListaIds = [];
+
+            let CheckUser = document.getElementsByClassName('CheckUserFinal');
+
+            for (var i = 0; i < CheckUser.length; i++) {
+                if (CheckUser[i].checked) {
+
+                    let elem = CheckUser[i].parentNode.parentNode;
+
+                    let Childrens = elem.children;
+                    console.log(Childrens);
+
+                    let IdCarga = (Childrens[1].firstChild == null) ? null : Childrens[1].firstChild.textContent;
+
+                    ListaIds.push(IdCarga)
+                }
+            }
+
+            var table = $('#tableListaFinal').DataTable({
+                responsive: false
+            });
+
+            return ListaIds;
+        };
+
+
+
+    </script>
+
+    <script>
+        $(document).ready(function () {
+            // Función para retroceder al paso anterior
+            $('.prevBtn').on('click', function () {
+                var currentStep = $(this).closest('.setup-content');
+                var prevStepWizard = currentStep.prev('.setup-content');
+                if (prevStepWizard.length) {
+                    currentStep.hide();
+                    prevStepWizard.show();
+                }
+            });
+
+            // Elimina la funcionalidad del botón Next (si ya tienes los botones Next)
+            $('.nextBtn').on('click', function (e) {
+                e.preventDefault();  // Esto desactiva el comportamiento del botón Next
+            });
+        });
+    </script>
+
+
+
+}

@@ -1,0 +1,190 @@
+﻿@model ABM.Models.Abm_Sistema
+@{
+    ViewBag.Title = "SubirArchivo";
+}
+
+<link href="~/js/plugins/noty/lib/noty.css" rel="stylesheet" />
+<link href="~/js/plugins/noty/lib/themes/sunset.css" rel="stylesheet" />
+<style>
+    .form-text {
+        margin-top: 0.3rem;
+        font-size: 14px;
+        color: #007bff;
+    }
+
+    #loading {
+        background: #f4f4f2 url("img/page-bg.png") repeat scroll 0 0;
+        height: 100%;
+        left: 0;
+        margin: auto;
+        position: fixed;
+        top: 0;
+        width: 100%;
+    }
+
+    .bokeh {
+        border: 0.01em solid rgba(150, 150, 150, 0.1);
+        border-radius: 50%;
+        font-size: 100px;
+        height: 1em;
+        list-style: outside none none;
+        margin: 0 auto;
+        position: relative;
+        top: 35%;
+        width: 1em;
+        z-index: 2147483647;
+    }
+
+        .bokeh li {
+            border-radius: 50%;
+            height: 0.2em;
+            position: absolute;
+            width: 0.2em;
+        }
+
+            .bokeh li:nth-child(1) {
+                animation: 1.13s linear 0s normal none infinite running rota, 3.67s ease-in-out 0s alternate none infinite running opa;
+                background: white none repeat scroll 0 0;
+                left: 50%;
+                margin: 0 0 0 -0.1em;
+                top: 0;
+                transform-origin: 50% 250% 0;
+            }
+
+            .bokeh li:nth-child(2) {
+                animation: 1.86s linear 0s normal none infinite running rota, 4.29s ease-in-out 0s alternate none infinite running opa;
+                background: #ffa423 none repeat scroll 0 0;
+                margin: -0.1em 0 0;
+                right: 0;
+                top: 50%;
+                transform-origin: -150% 50% 0;
+            }
+
+            .bokeh li:nth-child(3) {
+                animation: 1.45s linear 0s normal none infinite running rota, 5.12s ease-in-out 0s alternate none infinite running opa;
+                background: #156db6 none repeat scroll 0 0;
+                bottom: 0;
+                left: 50%;
+                margin: 0 0 0 -0.1em;
+                transform-origin: 50% -150% 0;
+            }
+
+            .bokeh li:nth-child(4) {
+                animation: 1.72s linear 0s normal none infinite running rota, 5.25s ease-in-out 0s alternate none infinite running opa;
+                background: #88c100 none repeat scroll 0 0;
+                margin: -0.1em 0 0;
+                top: 50%;
+                transform-origin: 250% 50% 0;
+            }
+
+    @@keyframes opa {
+        12% {
+            opacity: 0.8;
+        }
+
+        19.5% {
+            opacity: 0.88;
+        }
+
+        37.2% {
+            opacity: 0.64;
+        }
+
+        40.5% {
+            opacity: 0.52;
+        }
+
+        52.7% {
+            opacity: 0.69;
+        }
+
+        60.2% {
+            opacity: 0.6;
+        }
+
+        66.6% {
+            opacity: 0.52;
+        }
+
+        70% {
+            opacity: 0.63;
+        }
+
+        79.9% {
+            opacity: 0.6;
+        }
+
+        84.2% {
+            opacity: 0.75;
+        }
+
+        91% {
+            opacity: 0.87;
+        }
+    }
+
+    @@keyframes rota {
+        100% {
+            transform: rotate(360deg);
+        }
+    }
+</style>
+
+
+<div id="loading" style="z-index:999999;display:none">
+    <ul class="bokeh">
+        <li></li>
+        <li></li>
+        <li></li>
+    </ul>
+</div>
+<div class="row">
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <h5 class="card-header">Cargar Archivo Sistema: <b>@Model.sistema</b> </h5>
+
+            @*ALERTAS*@
+
+            @if (ViewBag.e == 1)
+            {
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <strong>Sistema:</strong> Error de archivo
+                    <button type="button" class="btn-close mt-2" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            }
+            else if (ViewBag.e == 2)
+            {
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    <strong>Sistema:</strong> Archivo no cargado
+                    <button type="button" class="btn-close mt-2" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            }
+            else if (ViewBag.e == 3)
+            {
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    <strong>Sistema:</strong> Archivo cargado exitosamente
+                    <button type="button" class="btn-close mt-2" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            }
+            <div class="card-body">
+
+                <form action="@Url.Action("CargarArchivo","Archivos")" method="post" enctype="multipart/form-data">
+
+                    <input type="hidden" name="Id" value="@Model.idSistema" />
+                    <label class="form-label">Selecione Archivo</label>
+                    <!-- RUT Por Parametro -->
+                    <input type="file" name="FileUpload" class="form-control">
+                    <div class="pull-right" style="margin-top:2%">
+                        <input type="submit" class="btn btn-success" value="Guardar" />
+                    </div>
+                </form>
+
+
+
+            </div>
+        </div>
+    </div>
+
+
+
+</div>

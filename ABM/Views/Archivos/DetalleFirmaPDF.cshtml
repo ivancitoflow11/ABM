@@ -1,0 +1,149 @@
+﻿@model ABM.Models.ListaMatrizViewModel
+@{
+    Layout = null; // Evitar que el PDF herede estilos no deseados
+}
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detalle Firma</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 12px;
+            margin: 20px;
+        }
+
+        .container {
+            width: 100%;
+            text-align: center;
+        }
+
+        .title {
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+        }
+
+        .info-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+
+            .info-table th, .info-table td {
+                border: 1px solid #ddd;
+                padding: 8px;
+            }
+
+            .info-table th {
+                background-color: #f2f2f2;
+                font-weight: bold;
+            }
+
+        .firma {
+            margin-top: 20px;
+            text-align: center;
+        }
+
+            .firma img {
+                width: 200px;
+            }
+
+        .estado-correcto {
+            color: green;
+            font-weight: bold;
+        }
+
+        .estado-incorrecto {
+            color: red;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="title">Detalle de Firma Matriz</h1>
+
+        @if (Model.FirmasMatriz.Any())
+        {
+            var ultimaFirma = Model.FirmasMatriz.OrderByDescending(f => f.fechaFirma).FirstOrDefault();
+
+            <table class="info-table">
+                <tr>
+                    <th>Gerencia</th>
+                    <td>@ultimaFirma?.Nom_Gerencia</td>
+                </tr>
+                <tr>
+                    <th>Responsable de Firma</th>
+                    <td>@ultimaFirma?.nombreResponsable</td>
+                </tr>
+                <tr>
+                    <th>Fecha de Firma</th>
+                    <td>@(ultimaFirma?.fechaFirma != null ? ultimaFirma.fechaFirma.ToString("dd/MM/yyyy") : "N/A")</td>
+                </tr>
+                <tr>
+                    <th>Estado</th>
+                    <td class="@(ultimaFirma?.fechaFirma != null ? "estado-correcto" : "estado-incorrecto")">
+                        @(ultimaFirma?.fechaFirma != null ? "✓ Firma Exitosa" : "✗ No Firmado")
+                    </td>
+                </tr>
+            </table>
+
+            <h2>Detalles de la Firma</h2>
+            <table class="info-table">
+                <thead>
+                    <tr>
+                        <th>Sistema</th>
+                        <th>Fecha Firma</th>
+                        <th>Gerencia</th>
+                        <th>Subgerencia</th>
+                        <th>Comentario</th>
+                        <th>Cargo</th>
+                        <th>Perfil</th>
+                        <th>RUT/DNI</th>
+                        <th>DV</th>
+                        <th>Nombre Usuario</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model.FirmasMatriz)
+                    {
+                        <tr>
+                            <td>@item.sistema</td>
+                            <td>@item.fechaFirma.ToString("dd/MM/yyyy")</td>
+                            <td>@item.Nom_Gerencia</td>
+                            <td>@item.Nom_Subgerencia</td>
+                            <td>@item.comentario</td>
+                            <td>@item.cargospr</td>
+                            <td>@item.perfil</td>
+                            <td>@item.rutdni</td>
+                            <td>@item.dv</td>
+                            <td>@item.nombreusuario</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+
+            @if (!string.IsNullOrEmpty(ViewBag.FirmaBase64))
+            {
+                <div class="firma">
+                    <h3>Firma Responsable</h3>
+                    <img src="@ViewBag.FirmaBase64" alt="Firma Responsable">
+                </div>
+            }
+            else
+            {
+                <p class="estado-incorrecto">No hay firma registrada.</p>
+            }
+        }
+        else
+        {
+            <p class="estado-incorrecto">No se encontraron detalles para esta firma.</p>
+        }
+    </div>
+</body>
+</html>

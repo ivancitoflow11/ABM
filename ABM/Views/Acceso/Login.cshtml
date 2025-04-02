@@ -1,0 +1,334 @@
+﻿@model ABM.ViewModels.LoginVM;
+@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="en" dir="ltr" data-bs-theme="light" data-color-theme="Blue_Theme" data-layout="vertical">
+
+<head>
+    <!-- Required meta tags -->
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+
+    <!-- Favicon icon-->
+    <link rel="shortcut icon" type="image/png" href="~/images/logos/logoimperial.png" />
+
+    <title>Inicio de sesión</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+        }
+
+        .logo {
+            position: center;
+            width: 250px; /* Ajusta el tamaño del logo según tus necesidades */
+            align-content: center;
+            height: auto; /* Mantiene la proporción del logo */
+            z-index: 1000; /* Asegura que el logo esté por encima del fondo */
+        }
+
+        .bg-img {
+            background: url('/images/logft/fdlog.png');
+            height: 100vh;
+            background-size: cover;
+            background-position: center;
+        }
+
+            .bg-img:after {
+                position: absolute;
+                content: "";
+                top: 0;
+                left: 0;
+                height: 100%;
+                width: 100%;
+                background: rgba(0, 0, 0, 0.7);
+            }
+
+        .content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            z-index: 999;
+            text-align: center;
+            padding: 60px 32px;
+            width: 370px;
+            transform: translate(-50%, -50%);
+            background: rgba(255, 255, 255, 0.04);
+            box-shadow: -1px 4px 28px 0px rgba(0, 0, 0, 0.75);
+        }
+
+            .content header {
+                color: white;
+                font-size: 33px;
+                font-weight: 600;
+                margin: 0 0 35px 0;
+                font-family: "Montserrat", sans-serif;
+            }
+
+        .field {
+            position: relative;
+            height: 45px;
+            width: 100%;
+            display: flex;
+            background: rgba(255, 255, 255, 0.94);
+        }
+
+            .field span {
+                color: #222;
+                width: 40px;
+                line-height: 45px;
+            }
+
+            .field input {
+                height: 100%;
+                width: 100%;
+                background: transparent;
+                border: none;
+                outline: none;
+                color: #222;
+                font-size: 16px;
+                font-family: "Poppins", sans-serif;
+            }
+
+        .space {
+            margin-top: 16px;
+        }
+
+        .show {
+            position: absolute;
+            right: 13px;
+            top: 12px; /* Ajustado para centrar verticalmente */
+            font-size: 20px; /* Tamaño del ícono */
+            cursor: pointer;
+            color: #222;
+            z-index: 1000; /* Asegura que esté por encima de otros elementos */
+            transform: translateY(-50%); /* Alinea verticalmente con el candado */
+        }
+
+        .pass {
+            text-align: left;
+            margin: 10px 0;
+        }
+
+            .pass a {
+                color: white !important; /* Asegura que el texto sea blanco */
+                text-decoration: none !important; /* Quita el subrayado predeterminado */
+                background: none !important; /* Elimina cualquier fondo heredado */
+                border: none !important; /* Elimina bordes heredados */
+                padding: 0 !important; /* Elimina cualquier relleno inesperado */
+                box-shadow: none !important; /* Elimina sombras si las hay */
+                display: inline-block; /* Asegura que solo ocupe el espacio del texto */
+            }
+
+                .pass a:hover {
+                    text-decoration: underline; /* Agrega el subrayado al pasar el mouse */
+                }
+
+
+
+        .field input[type="submit"] {
+            background: #3498db;
+            border: 1px solid #2691d9;
+            color: white;
+            font-size: 18px;
+            letter-spacing: 1px;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: "Montserrat", sans-serif;
+        }
+
+            .field input[type="submit"]:hover {
+                background: #2691d9;
+            }
+
+        .login {
+            color: white;
+            margin: 20px 0;
+            font-family: "Poppins", sans-serif;
+        }
+
+        .links {
+            display: flex;
+            cursor: pointer;
+            color: white;
+            margin: 0 0 20px 0;
+        }
+
+        .facebook,
+        .instagram {
+            width: 100%;
+            height: 45px;
+            line-height: 45px;
+            margin-left: 10px;
+        }
+
+        .facebook {
+            margin-left: 0;
+            background: #4267b2;
+            border: 1px solid #3e61a8;
+        }
+
+        .instagram {
+            background: #e1306c;
+            border: 1px solid #df2060;
+        }
+
+        .facebook:hover {
+            background: #3e61a8;
+        }
+
+        .instagram:hover {
+            background: #df2060;
+        }
+
+        .links i {
+            font-size: 17px;
+        }
+
+        i span {
+            margin-left: 8px;
+            font-weight: 500;
+            letter-spacing: 1px;
+            font-size: 16px;
+            font-family: "Poppins", sans-serif;
+        }
+
+        .signup {
+            font-size: 15px;
+            color: white;
+            font-family: "Poppins", sans-serif;
+        }
+
+            .signup a {
+                color: #3498db;
+                text-decoration: none;
+            }
+
+                .signup a:hover {
+                    text-decoration: underline;
+                }
+
+        .footer-text {
+            position: absolute;
+            bottom: 20px;
+            width: 100%;
+            text-align: center;
+            font-family: Verdana, sans-serif;
+            font-weight: bold;
+            color: white;
+            z-index: 1000;
+
+
+        }
+
+        .alerta {
+            text-align: center;
+            font-family: Verdana, sans-serif;
+            font-weight: normal;
+            color: white; /* Color del texto */
+            background-color: #ff3030; /* Fondo rojo */
+            padding: 10px; /* Espaciado interno para mejorar la apariencia */
+            border-radius: 10px; /* Bordes redondeados, opcional */
+            z-index: 1000;
+            font-style: italic;
+            font-size: 0.9em;
+        }
+
+        .field .icon {
+            line-height: 45px; /* Alinea verticalmente los iconos con el campo de entrada */
+            font-size: 20px; /* Tamaño de los iconos */
+            margin-right: 10px; /* Espaciado entre el icono y el campo de entrada */
+        }
+
+        #ojito{
+            margin-top:10px
+        }
+
+        .underline-effect {
+            color: white; /* Color del texto */
+            text-decoration: none; /* Sin subrayado predeterminado */
+            position: relative; /* Necesario para el pseudo-elemento */
+            display: inline-block; /* Para aplicar el efecto correctamente */
+        }
+
+            .underline-effect::after {
+                content: ""; /* Pseudo-elemento vacío para la línea */
+                position: absolute;
+                bottom: 0; /* Posiciona la línea justo debajo del texto */
+                left: 50%; /* Centra la línea */
+                width: 0; /* Comienza con una línea de ancho 0 */
+                height: 2px; /* Altura de la línea */
+                background-color: white; /* Color de la línea */
+                transition: all 0.3s ease; /* Transición suave */
+            }
+
+            .underline-effect:hover::after {
+                width: 100%; /* Extiende la línea al 100% del texto */
+                left: 0; /* Alinea la línea con el inicio del texto */
+            }
+    </style>
+
+</head>
+<body>
+    <div class="bg-img">
+        <div class="content">
+            <img src="~/images/logos/abmlog.png" alt="Logo Imperial" class="" style="width:350px; margin-left:-15px">
+            <br />
+            <br />
+            <header>Iniciar Sesión</header>
+            <form asp-controller="Acceso" asp-action="Login" method="post">
+                <div class="field">
+                    <span class="fa fa-user"></span>
+                    <input class="form-control" placeholder="correo@ejemplo.com" required asp-for="correo" />
+                </div>
+                <div class="field space">
+                    <span class="fa fa-lock icon"></span> <!-- Icono del candado -->
+                    <input class="form-control pass-key" type="password" placeholder="Ingrese su contraseña" required asp-for="password_c" />
+                    <span class="show" id="ojito"><i class="fa fa-eye icon"></i></span> <!-- Icono del ojo -->
+                </div>
+                <div class="field" style="margin-top:20px">
+                    <input type="submit" value="CONÉCTATE">
+                </div>
+                <a asp-controller="Acceso" asp-action="OlvidoClave" class="underline-effect" style="margin-top: 15px; display: inline-block;">¿Olvidaste tu contraseña?</a>
+
+
+                <br />
+                <br />
+
+                @if (ViewData["Mensaje"] != null)
+                {
+                    <div class="alerta" role="alert">
+                        <i class="fa-solid fa-circle-exclamation"></i> <!-- Icono de advertencia -->
+                        @ViewData["Mensaje"]
+                    </div>
+                }
+
+            </form>
+        </div>
+        <div class="footer-text">
+            Desarrollado por Bidata
+        </div>
+    </div>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const pass_field = document.querySelector(".pass-key");
+            const showBtn = document.querySelector(".show");
+
+            showBtn.addEventListener("click", function () {
+                if (pass_field.type === "password") {
+                    pass_field.type = "text";
+                    showBtn.innerHTML = '<i class="fa fa-eye-slash"></i>'; // Cambiado a icono de ojo cerrado
+                } else {
+                    pass_field.type = "password";
+                    showBtn.innerHTML = '<i class="fa fa-eye"></i>'; // Icono de ojo abierto
+                }
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,614 @@
+﻿@model ABM.Models.ListaMatrizViewModel
+@{
+	ViewBag.Title = "ListaFirmasMatriz";
+}
+
+@{
+	var idUsuarioLogueado = Context.Session.GetInt32("IdUsuarioLogueado");
+
+	if (!idUsuarioLogueado.HasValue)
+	{
+		<p>No tienes permiso para acceder a esta página.</p>
+		return;
+	}
+}
+<link rel="stylesheet" href="~/css/botones.css" asp-append-version="true" />
+
+<style>
+	.form-text {
+		margin-top: 0.3rem;
+		font-size: 10px;
+		color: #007bff;
+	}
+
+	#loading {
+		background: #f4f4f2 url("img/page-bg.png") repeat scroll 0 0;
+		height: 100%;
+		left: 0;
+		margin: auto;
+		position: fixed;
+		top: 0;
+		width: 100%;
+	}
+
+	.estado-correcto {
+		background-color: #d4edda; /* Verde claro */
+	}
+
+	.estado-incorrecto {
+		background-color: #f8d7da; /* Rojo claro */
+	}
+
+	.estado-autorizado {
+		background-color: #fcf75e; /* Rojo claro */
+	}
+
+	.bokeh {
+		border: 0.01em solid rgba(150, 150, 150, 0.1);
+		border-radius: 50%;
+		font-size: 100px;
+		height: 1em;
+		list-style: outside none none;
+		margin: 0 auto;
+		position: relative;
+		top: 35%;
+		width: 1em;
+		z-index: 2147483647;
+	}
+
+		.bokeh li {
+			border-radius: 50%;
+			height: 0.2em;
+			position: absolute;
+			width: 0.2em;
+		}
+
+			.bokeh li:nth-child(1) {
+				animation: 1.13s linear 0s normal none infinite running rota, 3.67s ease-in-out 0s alternate none infinite running opa;
+				background: white none repeat scroll 0 0;
+				left: 50%;
+				margin: 0 0 0 -0.1em;
+				top: 0;
+				transform-origin: 50% 250% 0;
+			}
+
+			.bokeh li:nth-child(2) {
+				animation: 1.86s linear 0s normal none infinite running rota, 4.29s ease-in-out 0s alternate none infinite running opa;
+				background: #ffa423 none repeat scroll 0 0;
+				margin: -0.1em 0 0;
+				right: 0;
+				top: 50%;
+				transform-origin: -150% 50% 0;
+			}
+
+			.bokeh li:nth-child(3) {
+				animation: 1.45s linear 0s normal none infinite running rota, 5.12s ease-in-out 0s alternate none infinite running opa;
+				background: #156db6 none repeat scroll 0 0;
+				bottom: 0;
+				left: 50%;
+				margin: 0 0 0 -0.1em;
+				transform-origin: 50% -150% 0;
+			}
+
+			.bokeh li:nth-child(4) {
+				animation: 1.72s linear 0s normal none infinite running rota, 5.25s ease-in-out 0s alternate none infinite running opa;
+				background: #88c100 none repeat scroll 0 0;
+				margin: -0.1em 0 0;
+				top: 50%;
+				transform-origin: 250% 50% 0;
+			}
+
+	@@keyframes opa {
+		12% {
+			opacity: 0.8;
+		}
+
+		19.5% {
+			opacity: 0.88;
+		}
+
+		37.2% {
+			opacity: 0.64;
+		}
+
+		40.5% {
+			opacity: 0.52;
+		}
+
+		52.7% {
+			opacity: 0.69;
+		}
+
+		60.2% {
+			opacity: 0.6;
+		}
+
+		66.6% {
+			opacity: 0.52;
+		}
+
+		70% {
+			opacity: 0.63;
+		}
+
+		79.9% {
+			opacity: 0.6;
+		}
+
+		84.2% {
+			opacity: 0.75;
+		}
+
+		91% {
+			opacity: 0.87;
+		}
+	}
+
+	@@keyframes rota {
+		100% {
+			transform: rotate(360deg);
+		}
+	}
+
+	.custom-modal-class {
+		font-family: Arial, sans-serif;
+		max-width: 500px;
+	}
+
+		.custom-modal-class .swal2-title {
+			font-size: 1.5em;
+			color: #333;
+		}
+
+		.custom-modal-class .swal2-html-container {
+			font-size: 1.1em;
+			margin-top: 15px;
+		}
+
+		.custom-modal-class .swal2-styled.swal2-confirm {
+			background-color: #3085d6;
+			font-size: 1.1em;
+			padding: 12px 25px;
+		}
+
+		.custom-modal-class .swal2-styled.swal2-cancel {
+			font-size: 1.1em;
+			padding: 12px 25px;
+		}
+</style>
+
+
+<div id="loading" style="z-index:999999;display:none">
+	<ul class="bokeh">
+		<li></li>
+		<li></li>
+		<li></li>
+	</ul>
+</div>
+@if (ViewBag.TieneGerencia)
+{
+    <div id="ticketInfo" class="card text-center" style="margin-top:80px">
+        <div class="card-header">
+            @if (Model != null && Model.FirmasMatriz != null && Model.FirmasMatriz.Any())
+            {
+                var ultimaFirma = Model.FirmasMatriz
+                    .OrderByDescending(f => f.fechaFirma)
+                    .FirstOrDefault();
+
+                <!-- Icono de estado -->
+                <h5>
+                    <i class="@(ultimaFirma?.fechaFirma != null ? "fa-solid fa-check-to-slot text-success" : "fa-solid fa-xmark text-danger")" style="margin-right: 20px; font-size: 30px;"></i>
+                    "FIRMA MATRIZ" REALIZADO POR LA GERENCIA:
+                </h5>
+                <span style="font-size: 28px; font-weight: bold;">@ultimaFirma?.Nom_Gerencia</span>
+            }
+        </div>
+
+        <div class="card-body">
+            @if (Model != null && Model.FirmasMatriz != null && Model.FirmasMatriz.Any())
+            {
+                var ultimaFirma = Model.FirmasMatriz
+                    .OrderByDescending(f => f.fechaFirma)
+                    .FirstOrDefault();
+
+                <!-- Información de la última firma -->
+                <h5 class="card-title">Responsable de la firma: @ultimaFirma?.nombreResponsable</h5>
+                <h5 class="card-title">Fecha de creación de última firma: @ultimaFirma?.fechaFirma.ToString("dd/MM/yyyy")</h5>
+
+                <!-- Estado de la firma -->
+                <p class="@(ultimaFirma?.fechaFirma != null ? "text-success fw-bold" : "text-danger fw-bold")" style="font-size: 20px;">
+                    @(ultimaFirma?.fechaFirma != null ? "Matriz firmada correctamente" : "No firmado")
+                </p>
+
+                @if (!string.IsNullOrEmpty(ultimaFirma?.firmaResponsable))
+                {
+                    <h5 class="card-title">Firma</h5>
+                    <img src="@ultimaFirma?.firmaResponsable" alt="Firma" style="width:200px" />
+                }
+                else
+                {
+                    <p class="text-danger">No hay una firma registrada.</p>
+                }
+            }
+        </div>
+    </div>
+}
+
+
+
+
+<div class="row">
+	<div class="col-md-12">
+		<br />
+		<h4><i class="fa-solid fa-bars-staggered"></i> Detalle Firma Matriz </h4>
+		<div class="card mb-4">
+			<div class="card-body">
+				<div class="col-lg-12 table-responsive">
+					<table id="detallefirma" class="table table-bordered table-hover zero_config" style="width:100%; align-content:center; justify-content:center;text-align:center; table-layout: auto;">
+						<thead>
+							<tr>
+								<th style="white-space: nowrap;">Sistema</th>
+								<th style="white-space: nowrap;">Fecha Firma</th>
+								<th style="white-space: nowrap;">Gerencia</th>
+								<th style="white-space: nowrap;">Subgerencia</th>
+								<th style="white-space: nowrap;">Comentario</th>
+								<th style="white-space: nowrap;">Cargo</th>
+								<th style="white-space: nowrap;">Perfil</th>
+								<th style="white-space: nowrap;">RUT/DNI</th>
+								<th style="white-space: nowrap;">DV</th>
+								<th style="white-space: nowrap;">Nombre Usuario</th>
+								<th style="white-space: nowrap;">Responsable</th>
+								@* <th style="white-space: nowrap;">Cargo Matriz</th>
+								<th style="white-space: nowrap;">Perfil Matriz</th> *@
+							</tr>
+						</thead>
+						<tbody id="tablaMatriz">
+							@if (Model != null && Model.FirmasMatriz != null && Model.FirmasMatriz.Any())
+							{
+								@foreach (var item in Model.FirmasMatriz.OrderByDescending(f => f.fechaFirma))
+
+								{
+									<tr>
+										<td style="white-space: nowrap;">@item.sistema</td>
+										<td style="white-space: nowrap;">@item.fechaFirma</td>
+										<td style="white-space: nowrap;">@item.Nom_Gerencia</td>
+										<td style="white-space: nowrap;">@item.Nom_Subgerencia</td>
+										<td style="white-space: nowrap;">@item.comentario</td>
+										<td style="white-space: nowrap;">@item.cargospr</td>
+										<td style="white-space: nowrap;">@item.perfil</td>
+										<td style="white-space: nowrap;">@item.rutdni</td>
+										<td style="white-space: nowrap;">@item.dv</td>
+										<td style="white-space: nowrap;">@item.nombreusuario</td>
+										<td style="white-space: nowrap;">@item.nombreResponsable</td>
+										@* <td style="white-space: nowrap;">@item.cargomatriz</td>
+								<td style="white-space: nowrap;">@item.perfilmatriz</td> *@
+									</tr>
+								}
+							}
+						</tbody>
+					</table>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+
+
+@section scripts {
+
+	<script src="~/js/plugins/noty/lib/bounce.min.js"></script>
+	<script src="~/js/plugins/noty/lib/noty.js"></script>
+	<script src="~/js/FileSaver/FileSaver.js"></script>
+	<script src="~/js/SheetJs/xlsx.min.js"></script>
+	@* <script src="~/js/scripts.bundle.js"></script> *@
+	<script src="~/js/Fetch.js"></script>
+	<script src="/js/sweetalert/sweetalert.min.js"></script>
+	<script src="/js/vendor.min.js"></script>
+	<script src="/libs/datatables.net/js/jquery.dataTables.min.js"></script>
+	<script src="/js/dataTables.buttons.min.js"></script>
+	<script src="/js/jszip.min.js"></script>
+	<script src="/js/pdfmake.min.js"></script>
+	<script src="/js/vfs_fonts.js"></script>
+	<script src="/js/buttons.html5.min.js"></script>
+	<script src="/js/buttons.print.min.js"></script>
+
+
+	<script>
+		function getBase64Image(url) {
+			return new Promise((resolve, reject) => {
+				var img = new Image();
+				img.crossOrigin = 'Anonymous';
+				img.onload = function () {
+					var canvas = document.createElement('canvas');
+					canvas.width = img.width;
+					canvas.height = img.height;
+					var ctx = canvas.getContext('2d');
+					ctx.drawImage(img, 0, 0);
+					var dataURL = canvas.toDataURL('image/png');
+					resolve(dataURL);
+				};
+				img.onerror = reject;
+				img.src = url;
+			});
+		}
+
+		function ticketExists() {
+			return document.querySelector('.card.text-center') !== null;
+		}
+
+		function getTicketInfo() {
+			if (!ticketExists()) return [];
+			var ticketInfo = [];
+			var ticketElement = document.getElementById('ticketInfo');
+
+			if (ticketElement) {
+				var header = ticketElement.querySelector('.card-header');
+				var cardBody = ticketElement.querySelector('.card-body');
+
+				if (header && cardBody) {
+					var gerencia = header.querySelector('span').textContent;
+					var encargado = cardBody.querySelector('.card-title:nth-child(1)').textContent.split(': ')[1];
+					var fecha = cardBody.querySelector('.card-title:nth-child(2)').textContent.split(': ')[1];
+					var estado = cardBody.querySelector('p').textContent.trim();
+					var isSigned = estado.includes('Matriz firmada correctamente');
+
+					ticketInfo = [
+						['COMPROBANTE FIRMA MATRIZ', ''],
+						['Gerencia', gerencia],
+						['Responsable de la firma', encargado],
+						['Fecha', fecha],
+						['Estado', estado],
+						['', isSigned ? '✓' : '✗']
+					];
+				}
+			}
+			return ticketInfo;
+		}
+
+
+		$("#detallefirma").DataTable({
+			dom: "Bfrtip",
+			lengthMenu: [[10, 20, 50, -1], [10, 20, 50, "Todos"]],
+			pageLength: 20,
+			order: [[0, "desc"]],
+			buttons: [
+				{
+					extend: 'copy',
+					text: '<i class="fa-regular fa-clipboard"></i>',
+					titleAttr: 'Copiar',
+					className: 'btn btn-copy'
+				},
+				{
+					extend: 'excel',
+					text: '<i class="fa-solid fa-file-excel"></i>',
+					titleAttr: 'Exportar a Excel',
+					className: 'btn btn-excel',
+					title: 'Detalle Firma',
+					customize: function (xlsx) {
+						var sheet = xlsx.xl.worksheets['sheet1.xml'];
+						var ticketInfo = getTicketInfo();
+
+						if (ticketInfo.length > 0) {
+							// Estilos para Excel
+							var styles = xlsx.xl['styles.xml'];
+							var $styles = $(styles);
+							$styles.find('cellXfs').append(
+								'<xf numFmtId="0" fontId="2" fillId="3" borderId="1" applyFont="1" applyFill="1" applyBorder="1" xfId="0">' +
+								'<alignment horizontal="center" vertical="center"/>' +
+								'</xf>'
+							);
+							var ticketStyleIndex = $styles.find('cellXfs xf').length - 1;
+
+							// Crear nuevas filas para la información del ticket
+							var ticketRows = '';
+							ticketInfo.forEach(function (row, index) {
+								ticketRows += '<row r="' + (index + 1) + '" spans="1:2" x14ac:dyDescent="0.25">' +
+									'<c r="A' + (index + 1) + '" s="' + ticketStyleIndex + '" t="inlineStr"><is><t>' + row[0] + '</t></is></c>' +
+									'<c r="B' + (index + 1) + '" s="' + ticketStyleIndex + '" t="inlineStr"><is><t>' + row[1] + '</t></is></c>' +
+									'</row>';
+							});
+
+							// Agregar una fila en blanco
+							ticketRows += '<row r="' + (ticketInfo.length + 1) + '"><c r="A' + (ticketInfo.length + 1) + '" t="inlineStr"><is><t></t></is></c></row>';
+
+							// Insertar las nuevas filas al principio de la hoja
+							var sheetData = $('sheetData', sheet);
+							sheetData.prepend(ticketRows);
+
+							// Actualizar los índices de las filas existentes
+							$('row', sheetData).each(function (index) {
+								var $row = $(this);
+								var newIndex = index + ticketInfo.length + 2;
+								$row.attr('r', newIndex);
+								$('c', $row).each(function () {
+									var $cell = $(this);
+									var cellRef = $cell.attr('r');
+									var col = cellRef.replace(/[0-9]/g, '');
+									$cell.attr('r', col + newIndex);
+								});
+							});
+						}
+					}
+				},
+				{
+					extend: 'pdf',
+					text: '<i class="fa-solid fa-file-pdf"></i>',
+					titleAttr: 'Exportar a PDF',
+					className: 'btn btn-pdf',
+					orientation: 'landscape',
+					pageSize: 'LEGAL',
+					title: 'DETALLE FIRMA',
+					action: function (e, dt, node, config) {
+						var firmaResponsableUrl = document.querySelector('.card-body img[alt="Firma"]')?.src || '';
+						Promise.all([
+							firmaResponsableUrl ? getBase64Image(firmaResponsableUrl) : Promise.resolve(null),
+							getBase64Image('/images/logos/check.png'),
+							getBase64Image('/images/logos/logologin.png')
+						]).then(function ([firmaResponsableBase64, checkImgData, logoImgData]) {
+							var ticketInfo = getTicketInfo();
+							var docDefinition = {
+								pageOrientation: 'landscape',
+								pageSize: 'LEGAL',
+								content: [
+									// Logo al inicio del documento
+									{
+										image: logoImgData,
+										width: 150,
+										alignment: 'center',
+										margin: [0, 0, 0, 20]
+									}
+								],
+								styles: {
+									title: {
+										fontSize: 18,
+										bold: true,
+										color: '#0066cc',
+										alignment: 'center',
+										margin: [0, 10, 0, 10]
+									},
+									ticketHeader: {
+										fontSize: 18,
+										bold: true,
+										color: '#0066cc',
+										alignment: 'center',
+										margin: [0, 10, 0, 10]
+									},
+									ticketLabel: {
+										fontSize: 10,
+										bold: true,
+										color: '#444',
+										margin: [0, 5, 0, 5]
+									},
+									ticketValue: {
+										fontSize: 10,
+										color: '#444',
+										margin: [0, 5, 0, 5]
+									},
+									ticketStatus: {
+										fontSize: 14,
+										bold: true,
+										color: '#000000',
+										alignment: 'center',
+										margin: [0, 10, 0, 10]
+									},
+									tableHeader: {
+										fontSize: 10,
+										bold: true,
+										color: '#FFFFFF',
+										fillColor: '#FF0000'
+									}
+								}
+							};
+
+							// Agregar el comprobante si existe
+							if (ticketInfo.length > 0) {
+								var ticketContent = [
+									[{ text: 'COMPROBANTE FIRMA MATRIZ', style: 'ticketHeader', colSpan: 2 }, {}],
+									[{ text: 'Gerencia:', style: 'ticketLabel' }, { text: ticketInfo[1][1], style: 'ticketValue' }],
+									[{ text: 'Responsable de la firma:', style: 'ticketLabel' }, { text: ticketInfo[2][1], style: 'ticketValue' }],
+									[{ text: 'Fecha:', style: 'ticketLabel' }, { text: ticketInfo[3][1], style: 'ticketValue' }],
+									[{ text: 'Estado:', style: 'ticketLabel' }, { text: ticketInfo[4][1], style: 'ticketValue' }],
+									[{
+										colSpan: 2,
+										stack: [
+											{
+												text: ticketInfo[5][1] === '✓' ? 'FIRMA EXITOSA' : 'NO FIRMADO',
+												style: 'ticketStatus',
+												alignment: 'center'
+											},
+											ticketInfo[5][1] === '✓' ? {
+												image: checkImgData,  // Cambiado de imgData a checkImgData
+												width: 50,
+												alignment: 'center',
+												margin: [0, 10, 0, 0]
+											} : null,
+											firmaResponsableBase64 ? {
+												image: firmaResponsableBase64,
+												width: 200,
+												alignment: 'center',
+												margin: [0, 10, 0, 20]
+											} : null
+										].filter(item => item !== null)
+									}, {}]
+								];
+
+								docDefinition.content.push({
+									table: {
+										widths: ['40%', '60%'],
+										body: ticketContent
+									},
+									layout: {
+										hLineWidth: function (i, node) { return 1; },
+										vLineWidth: function (i, node) { return 1; },
+										hLineColor: function (i, node) { return '#aaa'; },
+										vLineColor: function (i, node) { return '#aaa'; },
+										paddingLeft: function (i, node) { return 10; },
+										paddingRight: function (i, node) { return 10; },
+										paddingTop: function (i, node) { return 5; },
+										paddingBottom: function (i, node) { return 5; }
+									},
+									margin: [0, 0, 0, 20]
+								});
+							}
+
+							// Agregar espacio entre las tablas
+							docDefinition.content.push({ text: '', margin: [0, 20] });
+
+							// Agregar el título de DETALLE FIRMA
+							docDefinition.content.push({
+								text: 'DETALLE FIRMA',
+								style: 'ticketHeader',
+								margin: [0, 0, 0, 10]
+							});
+
+							// Agregar la tabla de DETALLE FIRMA
+							var tableHeaders = [];
+							var tableData = [];
+
+							// Obtener los encabezados de la tabla
+							dt.columns().every(function () {
+								if (this.visible()) {
+									tableHeaders.push({
+										text: $(this.header()).text(),
+										style: 'tableHeader'
+									});
+								}
+							});
+
+							// Obtener los datos de la tabla
+							dt.rows().every(function () {
+								var rowData = [];
+								var row = this.data();
+								dt.columns().every(function (index) {
+									if (this.visible()) {
+										rowData.push(row[index] || '');
+									}
+								});
+								tableData.push(rowData);
+							});
+
+							// Agregar la tabla al documento
+							docDefinition.content.push({
+								table: {
+									headerRows: 1,
+									body: [tableHeaders].concat(tableData)
+								},
+								layout: {
+									fillColor: function (rowIndex, node, columnIndex) {
+										return (rowIndex === 0) ? '#FF0000' : null;
+									}
+								}
+							});
+
+							pdfMake.createPdf(docDefinition).download('DETALLE_FIRMA.pdf');
+						}).catch(function (error) {
+							console.error('Error al cargar las imágenes:', error);
+						});
+					}
+				}
+			]
+		});
+
+	</script>
+
+}

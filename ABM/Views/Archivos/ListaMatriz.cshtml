@@ -1,0 +1,481 @@
+﻿@model ABM.Models.ListaMatrizViewModel
+@{
+	ViewBag.Title = "ListaMatriz";
+}
+
+@{
+	var idUsuarioLogueado = Context.Session.GetInt32("IdUsuarioLogueado");
+
+	if (!idUsuarioLogueado.HasValue)
+	{
+		<p>No tienes permiso para acceder a esta página.</p>
+		return;
+	}
+}
+<link rel="stylesheet" href="~/css/botones.css" asp-append-version="true" />
+
+<style>
+	.form-text {
+		margin-top: 0.3rem;
+		font-size: 10px;
+		color: #007bff;
+	}
+
+	#loading {
+		background: #f4f4f2 url("img/page-bg.png") repeat scroll 0 0;
+		height: 100%;
+		left: 0;
+		margin: auto;
+		position: fixed;
+		top: 0;
+		width: 100%;
+	}
+
+	.estado-correcto {
+		background-color: #d4edda; /* Verde claro */
+	}
+
+	.estado-incorrecto {
+		background-color: #f8d7da; /* Rojo claro */
+	}
+
+	.estado-autorizado {
+		background-color: #fcf75e; /* Rojo claro */
+	}
+
+	.bokeh {
+		border: 0.01em solid rgba(150, 150, 150, 0.1);
+		border-radius: 50%;
+		font-size: 100px;
+		height: 1em;
+		list-style: outside none none;
+		margin: 0 auto;
+		position: relative;
+		top: 35%;
+		width: 1em;
+		z-index: 2147483647;
+	}
+
+		.bokeh li {
+			border-radius: 50%;
+			height: 0.2em;
+			position: absolute;
+			width: 0.2em;
+		}
+
+			.bokeh li:nth-child(1) {
+				animation: 1.13s linear 0s normal none infinite running rota, 3.67s ease-in-out 0s alternate none infinite running opa;
+				background: white none repeat scroll 0 0;
+				left: 50%;
+				margin: 0 0 0 -0.1em;
+				top: 0;
+				transform-origin: 50% 250% 0;
+			}
+
+			.bokeh li:nth-child(2) {
+				animation: 1.86s linear 0s normal none infinite running rota, 4.29s ease-in-out 0s alternate none infinite running opa;
+				background: #ffa423 none repeat scroll 0 0;
+				margin: -0.1em 0 0;
+				right: 0;
+				top: 50%;
+				transform-origin: -150% 50% 0;
+			}
+
+			.bokeh li:nth-child(3) {
+				animation: 1.45s linear 0s normal none infinite running rota, 5.12s ease-in-out 0s alternate none infinite running opa;
+				background: #156db6 none repeat scroll 0 0;
+				bottom: 0;
+				left: 50%;
+				margin: 0 0 0 -0.1em;
+				transform-origin: 50% -150% 0;
+			}
+
+			.bokeh li:nth-child(4) {
+				animation: 1.72s linear 0s normal none infinite running rota, 5.25s ease-in-out 0s alternate none infinite running opa;
+				background: #88c100 none repeat scroll 0 0;
+				margin: -0.1em 0 0;
+				top: 50%;
+				transform-origin: 250% 50% 0;
+			}
+
+	@@keyframes opa {
+		12% {
+			opacity: 0.8;
+		}
+
+		19.5% {
+			opacity: 0.88;
+		}
+
+		37.2% {
+			opacity: 0.64;
+		}
+
+		40.5% {
+			opacity: 0.52;
+		}
+
+		52.7% {
+			opacity: 0.69;
+		}
+
+		60.2% {
+			opacity: 0.6;
+		}
+
+		66.6% {
+			opacity: 0.52;
+		}
+
+		70% {
+			opacity: 0.63;
+		}
+
+		79.9% {
+			opacity: 0.6;
+		}
+
+		84.2% {
+			opacity: 0.75;
+		}
+
+		91% {
+			opacity: 0.87;
+		}
+	}
+
+	@@keyframes rota {
+		100% {
+			transform: rotate(360deg);
+		}
+	}
+
+	.custom-modal-class {
+		font-family: Arial, sans-serif;
+		max-width: 500px;
+	}
+
+		.custom-modal-class .swal2-title {
+			font-size: 1.5em;
+			color: #333;
+		}
+
+		.custom-modal-class .swal2-html-container {
+			font-size: 1.1em;
+			margin-top: 15px;
+		}
+
+		.custom-modal-class .swal2-styled.swal2-confirm {
+			background-color: #3085d6;
+			font-size: 1.1em;
+			padding: 12px 25px;
+		}
+
+		.custom-modal-class .swal2-styled.swal2-cancel {
+			font-size: 1.1em;
+			padding: 12px 25px;
+		}
+</style>
+
+@* <br />
+<br />
+<br />
+<div class="row">
+	<div class="col-md-12 d-flex justify-content-center">
+		@if (Model != null && Model.ListaMatrizPerfil != null && Model.ListaMatrizPerfil.Any())
+		{
+			// Obtener el primer registro con fecha de firma válida
+			var ultimaFirma = Model.ListaMatrizPerfil
+			.Where(m => m.UltimaFirmaMesActual.HasValue)
+			.OrderByDescending(m => m.UltimaFirmaMesActual)
+			.FirstOrDefault();
+
+			if (ultimaFirma != null)
+			{
+				<div class="alert alert-info d-inline-flex align-items-center px-4 gap-2" role="alert">
+					<small><strong>Última firma registrada del mes actual:</strong></small>
+					<small><i class="fa-regular fa-calendar"></i> Fecha <mark>@ultimaFirma.UltimaFirmaMesActual?.ToString("dd/MM/yyyy")</mark></small>
+					<small><i class="fa-regular fa-clock"></i> Hora <mark>@ultimaFirma.UltimaFirmaMesActual?.ToString("HH:mm")</mark></small>
+				</div>
+			}
+			else
+			{
+				<div class="alert alert-warning d-inline-flex align-items-center px-4" role="alert">
+					<small><strong>Aún no se ha firmado la matriz este mes.</strong></small>
+				</div>
+			}
+		}
+		else
+		{
+			<div class="alert alert-warning d-inline-flex align-items-center px-4" role="alert">
+				<small><strong>Aún no se ha firmado la matriz este mes.</strong></small>
+			</div>
+		}
+	</div>
+</div>
+
+ *@
+
+ <br />
+ <br />
+ <br />
+<div id="loading" style="z-index:999999;display:none">
+	<ul class="bokeh">
+		<li></li>
+		<li></li>
+		<li></li>
+	</ul>
+</div>
+<div class="row">
+	<div class="col-md-12">
+
+		<h4><i class="fa-solid fa-bars-staggered"></i> Lista Matriz </h4>
+		<div class="card mb-12">
+
+			<input type="hidden" id="IdSistema" value="@ViewBag.IdSistema" />
+
+			<div class="card-body">
+				<div class="pull-right">
+				</div>
+
+
+				<!-- Agregamos el select y el botón de filtro -->
+				<div class="row my-3">
+					<div class="col-md-4 d-flex align-items-end">
+						<div class="me-2">
+							<label for="estadoFiltro">Ordenar por:</label>
+							<select id="estadoFiltro" class="form-control">
+								<option value="Todos">Todos</option>
+								<option value="Correcto">Correcto</option>
+								<option value="Autorizado">Autorizado</option>
+							</select>
+						</div>
+
+						@if (ViewBag.TieneGerencia && ViewBag.EsResponsableFirma)
+						{
+							<button class="btn btn-info" id="btnFirmar">Firmar Matriz</button>
+						}
+					</div>
+				</div>
+				<br />
+
+				<div class="col-lg-12 table-responsive">
+
+					<table id="file_export4" class="table table-bordered table-hover zero_config" style="width:100%; align-content:center; justify-content:center;text-align:center; table-layout: auto;">
+						<thead>
+							<tr>
+								<th style="white-space: nowrap;">Sistema</th>
+								<th style="white-space: nowrap;">RUT/DNI</th>
+								<th style="white-space: nowrap;">DV</th>
+								<th style="white-space: nowrap;">Nombre Usuario</th>
+								<th style="white-space: nowrap;">Usuario</th>
+								<th style="white-space: nowrap;">Cargo</th>
+								<th style="white-space: nowrap;">Perfil</th>
+								<th style="white-space: nowrap;">Gerencia</th>
+								<th style="white-space: nowrap;">Subgerencia</th>
+								<th style="white-space: nowrap;">Fecha Carga</th>
+								<th style="white-space: nowrap;">Evidencia</th>
+								<th style="white-space: nowrap;">Cta Duplicada</th>
+								<th style="white-space: nowrap;">Estado Matriz</th>
+							</tr>
+						</thead>
+						<tbody id="tablaMatriz">
+							@if (Model != null && Model.ListaMatrizPerfil != null && Model.ListaMatrizPerfil.Any())
+							{
+								@foreach (var item in Model.ListaMatrizPerfil)
+								{
+									// Determina la clase basada en el estado
+									var estadoClase = "";
+									@if (item.EstadoMatrizPerfil == "Incorrecto")
+									{
+										estadoClase = "estado-incorrecto";
+									}
+									else if (item.EstadoMatrizPerfil == "Autorizado")
+									{
+										estadoClase = "estado-autorizado";
+									}
+									else if (item.EstadoMatrizPerfil == "Correcto")
+									{
+										estadoClase = "estado-correcto";
+									}
+
+									<tr class="@estadoClase">
+										<td style="white-space: nowrap;">@item.sistema</td>
+										<td style="white-space: nowrap;">@item.rutdni</td>
+										<td style="white-space: nowrap;">@item.dv</td>
+										<td style="white-space: nowrap;">@item.nombreusuario</td>
+										<td style="white-space: nowrap;">@item.userid</td>
+										<td style="white-space: nowrap;">@item.cargospr</td>
+										<td style="white-space: nowrap;">@item.perfil</td>
+										<td style="white-space: nowrap;">@item.Nom_Gerencia</td>
+										<td style="white-space: nowrap;">@item.Nom_Subgerencia</td>
+										<td style="white-space: nowrap;">@item.feccarga</td>
+										<td style="white-space: nowrap;">
+											@if (item.Evidencia != "Sin evidencia")
+											{
+												<a target='_black' href="/ExcepcionesEvidencias/@item.Evidencia" class='btn btn-sm btn-primary'><i class="fa-solid fa-download"></i></a>
+											}
+										</td>
+										<td style="white-space: nowrap;">@item.cta_duplicada</td>
+										<td class="estadoMatrizPerfil" style="white-space: nowrap;">@item.EstadoMatrizPerfil</td>
+									</tr>
+								}
+							}
+						</tbody>
+					</table>
+				</div>
+			</div>
+
+		</div>
+	</div>
+
+
+
+</div>
+
+
+@section scripts {
+
+	<script src="~/js/plugins/noty/lib/bounce.min.js"></script>
+	<script src="~/js/plugins/noty/lib/noty.js"></script>
+	<script src="~/js/FileSaver/FileSaver.js"></script>
+	<script src="~/js/SheetJs/xlsx.min.js"></script>
+
+	<script src="~/js/Fetch.js"></script>
+	<script src="/js/sweetalert/sweetalert.min.js"></script>
+
+
+	<script src="/js/vendor.min.js"></script>
+	<script src="/libs/datatables.net/js/jquery.dataTables.min.js"></script>
+	<script src="/js/dataTables.buttons.min.js"></script>
+	<script src="/js/jszip.min.js"></script>
+	<script src="/js/pdfmake.min.js"></script>
+	<script src="/js/vfs_fonts.js"></script>
+	<script src="/js/buttons.html5.min.js"></script>
+	<script src="/js/buttons.print.min.js"></script>
+	<script src="/js/datatable/datatable-advanced.init.js" asp-append-version="true"></script>
+
+	<script>
+		$(document).ready(function () {
+			var table = $('.zero_config').DataTable();
+
+			// Función para aplicar el filtro
+			function aplicarFiltro() {
+				var filtro = $('#estadoFiltro').val();
+				table.column(12).search(filtro === 'Todos' ? '' : filtro, true, false).draw();
+			}
+
+			// Evento change para el select
+			$('#estadoFiltro').on('change', aplicarFiltro);
+
+			// Aplicar filtro inicial (opcional)
+			aplicarFiltro();
+		});
+
+		function mostrarMensaje(titulo, texto, tipo) {
+			return Swal.fire({
+				icon: tipo,
+				title: titulo,
+				text: texto,
+				confirmButtonText: 'Aceptar',
+				customClass: {
+					popup: 'custom-modal-class'
+				}
+			});
+		}
+
+		document.getElementById("btnFirmar").addEventListener("click", function () {
+			const btn = this;
+			btn.disabled = true;
+
+			Swal.fire({
+				title: 'Firma de Matriz',
+				input: 'textarea',
+				inputLabel: 'Ingrese un comentario para la firma:',
+				inputPlaceholder: 'Escribe tu comentario aquí...',
+				showCancelButton: true,
+				confirmButtonText: 'Firmar',
+				cancelButtonText: 'Cancelar',
+				showLoaderOnConfirm: true,
+				customClass: {
+					popup: 'custom-modal-class'
+				},
+				preConfirm: (comentario) => {
+					if (!comentario || comentario.trim().length < 5) {
+						Swal.showValidationMessage('Debes ingresar un comentario con al menos 5 caracteres para firmar.');
+						return false;
+					}
+					Swal.showLoading();
+
+					return new Promise((resolve) => {
+						$.ajax({
+							url: '@Url.Action("CrearFirmaConDetalles", "Archivos")',
+							type: 'POST',
+							data: {
+								idUsuarioLogueado: @ViewBag.ID,
+								idSistema: @ViewBag.IdSistema,
+								comentario: comentario.trim()
+							},
+							success: function (response) {
+								resolve(response);
+							},
+							error: function (jqXHR, textStatus, errorThrown) {
+								resolve({
+									respuesta: false,
+									mensaje: "Error en la conexión. Por favor, intente nuevamente."
+								});
+							}
+						});
+					}).finally(() => {
+						Swal.hideLoading();
+					});
+				},
+				allowOutsideClick: () => !Swal.isLoading()
+			}).then((result) => {
+				if (result.isConfirmed && result.value) {
+					let icon = 'warning';
+					let title = 'Resultado de la Firma';
+					let message = 'Ocurrió un error desconocido.';
+
+					if (typeof result.value === 'object') {
+						const respuesta = result.value.respuesta || result.value.RESPUESTA;
+						const mensaje = result.value.mensaje || result.value.MENSAJE || message;
+
+						if (respuesta === true) {
+							icon = 'success';
+							title = 'Firma Exitosa';
+						} else if (mensaje.toLowerCase().includes("no hay datos")) {
+							icon = 'error';
+							title = 'Sin Datos para Firmar';
+						} else if (mensaje.toLowerCase().includes("usuario no encontrado")) {
+							icon = 'error';
+							title = 'Usuario No Válido';
+						} else {
+							icon = 'warning';
+							title = 'Firma No Creada';
+						}
+						message = mensaje;
+					}
+
+					Swal.fire({
+						icon: icon,
+						title: title,
+						text: message,
+						confirmButtonText: 'Entendido',
+						customClass: {
+							popup: 'custom-modal-class'
+						}
+					}).then(() => {
+						if (icon === 'success') {
+							location.reload();
+						}
+					});
+				}
+			}).finally(() => {
+				btn.disabled = false;
+			});
+		});
+	</script>
+
+
+}

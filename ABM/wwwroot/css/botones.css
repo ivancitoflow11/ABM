@@ -1,0 +1,34 @@
+﻿/* Personalizar colores de fondo para los botones */
+.buttons-copy {
+    background-color: #007bff !important; /* Azul para copiar */
+    border-color: #007bff !important;
+    border-radius: 50% !important;
+}
+
+.buttons-excel {
+    background-color: #28a745 !important; /* Verde para Excel */
+    border-color: #28a745 !important;
+    border-radius: 50% !important;
+}
+
+.buttons-pdf {
+    background-color: #dc3545 !important; /* Rojo para PDF */
+    border-color: #dc3545 !important;
+    border-radius: 50% !important;
+}
+
+/* Colores al pasar el ratón */
+.buttons-copy:hover {
+    background-color: #0056b3 !important; /* Azul más oscuro */
+    border-color: #004085 !important;
+}
+
+.buttons-excel:hover {
+    background-color: #218838 !important; /* Verde más oscuro */
+    border-color: #1e7e34 !important;
+}
+
+.buttons-pdf:hover {
+    background-color: #c82333 !important; /* Rojo más oscuro */
+    border-color: #bd2130 !important;
+}

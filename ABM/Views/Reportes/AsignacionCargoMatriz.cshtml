@@ -1,0 +1,184 @@
+﻿@model ReportesViewModel
+@*
+    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+*@
+@{
+}
+
+<link rel="stylesheet" href="~/css/botones.css" asp-append-version="true" />
+<div class="pt-5">
+
+    <h4 class="mt-5">Asignación Cargo Matriz</h4>
+
+    <div class=" mt-4">
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        Filtrar por Rut de Usuario
+                    </div>
+                    <div class="card-body text-left">
+                        <form method="post" asp-action="AsignacionCargoMatriz">
+                            <div class="form-group">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">Rut</label>
+                                            <input asp-for="rutdni" type="text" class="form-control" placeholder="Ingrese Rut sin dígito" />
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+                            <button type="submit" class="btn btn-primary ml-2 mt-2">Filtrar</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card mb-4">
+                    <div class="card-header bg-primary text-white">
+                        Detalle Usuario
+                    </div>
+                    <div class="card-body table-responsive">
+                        <table id="file_export7" class="table table-striped table-bordered nowrap" style="width:100%; align-content:center; justify-content:center;text-align:center; table-layout: auto;">
+                            <thead>
+                                <tr>
+                                    <th scope="col" style="white-space: nowrap;">Rut</th>
+                                    <th scope="col" style="white-space: nowrap;">DV</th>
+                                    <th scope="col" style="white-space: nowrap;">Nombre Usuario</th>
+                                    <th scope="col" style="white-space: nowrap;">User ID</th>
+                                    <th scope="col" style="white-space: nowrap;">Cargo</th>
+                                    <th scope="col" style="white-space: nowrap;">Centro Costo</th>
+                                    <th scope="col" style="white-space: nowrap;">Nombre Centro Costo</th>
+                                    <th scope="col" style="white-space: nowrap;">Sistema</th>
+                                    <th scope="col" style="white-space: nowrap;">Gerencia</th>
+                                    <th scope="col" style="white-space: nowrap;">Subgerencia</th>
+                                </tr>
+                            </thead>
+                            <tbody class="table-group-divider">
+                                @if (Model.ListaBuscarUsuario != null && Model.ListaBuscarUsuario.Any())
+                                {
+                                    @foreach (var item in Model.ListaBuscarUsuario)
+                                    {
+                                        <tr>
+                                            <th style="white-space: nowrap;">@item.rutdni</th>
+                                            <th style="white-space: nowrap;">@item.dv</th>
+                                            <th style="white-space: nowrap;">@item.nombreusuario</th>
+                                            <th style="white-space: nowrap;">@item.userid</th>
+                                            <th style="white-space: nowrap;">@item.cargospr</th>
+                                            <th style="white-space: nowrap;">@item.codccostospr</th>
+                                            <th style="white-space: nowrap;">@item.Nomccosto</th>
+                                            <th style="white-space: nowrap;">@item.sistema</th>
+                                            <th style="white-space: nowrap;">@item.Nom_Gerencia</th>
+                                            <th style="white-space: nowrap;">@item.Nom_Subgerencia</th>
+                                        </tr>
+                                    }
+                                }
+                                else
+                                {
+                                    <tr>
+                                        <th>Sin Registros</th>
+                                        <th></th>
+                                        <th></th>
+                                        <th></th>
+                                        <th></th>
+                                        <th></th>
+                                        <th></th>
+                                        <th></th>
+                                        <th></th>
+                                        <th></th>
+                                    </tr>
+                                } 
+                            </tbody>
+                            <tfoot class="table-group-divider">
+                                <tr>
+                                    <th scope="col" style="white-space: nowrap;">Rut</th>
+                                    <th scope="col" style="white-space: nowrap;">DV</th>
+                                    <th scope="col" style="white-space: nowrap;">Nombre Usuario</th>
+                                    <th scope="col" style="white-space: nowrap;">User ID</th>
+                                    <th scope="col" style="white-space: nowrap;">Cargo</th>
+                                    <th scope="col" style="white-space: nowrap;">Centro Costo</th>
+                                    <th scope="col" style="white-space: nowrap;">Nombre Centro Costo</th>
+                                    <th scope="col" style="white-space: nowrap;">Sistema</th>
+                                    <th scope="col" style="white-space: nowrap;">Gerencia</th>
+                                    <th scope="col" style="white-space: nowrap;">Subgerencia</th>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+                <div class="card mb-4">
+                    <div class="card-header bg-primary text-white">
+                        Detalle Cargo Perfil
+                    </div>
+                    <div class="card-body table-responsive">
+                        <table id="zero_config" class="table table-striped table-bordered nowrap">
+                            <thead>
+                                <tr>
+                                    <th scope="col" style="white-space: nowrap;">Sistema</th>
+                                    <th scope="col" style="white-space: nowrap;">Cargo</th>
+                                    <th scope="col" style="white-space: nowrap;">Perfil</th>
+                                </tr>
+                            </thead>
+                            <tbody class="table-group-divider">
+                                @if (Model.ListaInfoUsuario != null && Model.ListaInfoUsuario.Any())
+                                {
+                                    @foreach (var item2 in Model.ListaInfoUsuario)
+                                    {
+                                        <tr>
+                                            <th style="white-space: nowrap;">@item2.Sistema</th>
+                                            <th style="white-space: nowrap;">@item2.Cargo</th>
+                                            <th style="white-space: nowrap;">@item2.Perfil</th>
+                                        </tr>
+                                    }
+                                }
+                                else
+                                {
+                                    <tr>
+                                        <th>Sin Registros</th>
+                                        <th></th>
+                                        <th></th>
+                                    </tr>
+                                }
+                            </tbody>
+                            <tfoot class="table-group-divider">
+                                <tr>
+                                    <th scope="col" style="white-space: nowrap;">Sistema</th>
+                                    <th scope="col" style="white-space: nowrap;">Cargo</th>
+                                    <th scope="col" style="white-space: nowrap;">Perfil</th>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="/js/vendor.min.js"></script>
+<script src="/libs/datatables.net/js/jquery.dataTables.min.js"></script>
+<script src="/js/dataTables.buttons.min.js"></script>
+<script src="/js/jszip.min.js"></script>
+<script src="/js/pdfmake.min.js"></script>
+<script src="/js/vfs_fonts.js"></script>
+<script src="/js/buttons.html5.min.js"></script>
+<script src="/js/buttons.print.min.js"></script>
+<script src="/js/datatable/datatable-advanced.init.js" asp-append-version="true"></script>
+
+@* <script src="/js/datatable/datatable-basic.init.js"></script> *@
+
+@* <script src="/js/breadcrumb/breadcrumbChart.js"></script> *@
+@* <script src="/libs/apexcharts/dist/apexcharts.min.js"></script> *@
+
+@* <script src="https://cdn.datatables.net/buttons/2.4.2/js/dataTables.buttons.min.js"></script> *@
+@* <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script> *@
+@* <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/pdfmake.min.js"></script> *@
+@* <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/vfs_fonts.js"></script> *@
+@* <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.html5.min.js"></script> *@
+@* <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.print.min.js"></script> *@
+

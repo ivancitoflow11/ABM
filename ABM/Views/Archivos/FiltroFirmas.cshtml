@@ -1,0 +1,318 @@
+﻿@model ABM.Models.FiltroFirmasViewModel
+@{
+    ViewBag.Title = "Filtro de Firmas";
+    var fechaSeleccionada = ViewBag.FechaSeleccionada as string ?? ""; // Se inicializa aquí
+}
+
+<style>
+    /* Estilo para el hover azul */
+    .icono-accion {
+        font-size: 1.2rem;
+        transition: color 0.3s ease-in-out;
+    }
+
+        .icono-accion:hover {
+            color: #007bff !important; /* Azul Bootstrap */
+        }
+
+    .dropdown-menu {
+        min-width: 180px;
+    }
+
+    .dropdown-item i {
+        margin-right: 8px;
+    }
+</style>
+
+
+<div class="d-flex justify-content-center align-items-center" style="height: 40vh;">
+    <div class="card w-80">
+        <div class="card-header bg-primary text-white text-center">
+            <h4 class="text-white">Buscar firmas por periodo</h4>
+        </div>
+
+        <div class="card-body">
+            @if (ViewBag.FechasDisponibles == null || !((List<string>)ViewBag.FechasDisponibles).Any())
+            {
+                <div class="alert alert-warning text-center">
+                    <strong>⚠ Atención:</strong> Usted no tiene firmas registradas actualmente.
+                </div>
+            }
+            else
+            {
+                <form method="get" asp-action="FiltroFirmas" asp-controller="Archivos">
+                    <input type="hidden" name="idUsuarioLogueado" value="@ViewBag.ID" />
+
+                    <div class="row">
+                        <div class="col-md-12">
+                            <label for="fechaSeleccionada">Selecciona un periodo:</label>
+                            <select id="fechaSeleccionada" name="fechaSeleccionada" class="form-control" required>
+                                <option value="" disabled selected>-- Seleccione un periodo --</option>
+
+                                @foreach (var fecha in (List<string>)ViewBag.FechasDisponibles)
+                                {
+                                    var parts = fecha.Split('|');
+                                    var valor = parts.Length > 1 ? parts[1] : "";
+                                    var texto = parts.Length > 0 ? parts[0] : "";
+
+                                    <option value="@valor">@texto</option>
+                                }
+                            </select>
+                        </div>
+                    </div>
+                    <br />
+                    <div class="text-center">
+                        <button type="submit" class="btn btn-primary">Filtrar</button>
+                    </div>
+                </form>
+            }
+        </div>
+    </div>
+</div>
+
+
+
+@if (ViewBag.Firmas != null && ((List<ABM.Models.ImFirma>)ViewBag.Firmas).Any())
+{
+    <br />
+    <div mt-12">
+        <h4>Firmas Registradas</h4>
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover">
+                <thead class="bg-primary">
+                    <tr>
+                        <th class="text-white">Usuario Responsable</th>
+                        <th class="text-white">Fecha Firma</th>
+                        <th class="text-white">Fecha Carga</th>
+                        <th class="text-white">Gerencia</th>
+                        <th class="text-white">Comentario</th>
+                        <th style="display: none;">Firma</th>
+                        <th class="text-white">Acciones</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    @foreach (var firma in (List<ABM.Models.ImFirma>)ViewBag.Firmas)
+                    {
+                        <tr data-id-firma="@firma.IdFirma">
+                            <td>@firma.NombreUsuario</td>
+                            <td>@firma.FechaFirma.ToString("dd/MM/yyyy HH:mm")</td>
+                            <td>@firma.FechaCarga</td>
+                            <td>@firma.Nom_Gerencia</td>
+                            <td>@firma.Comentario</td>
+                            <td style="display: none;" class="firma-imagen">@firma.FirmaBase64</td>
+                            <td>
+                                @*
+                                <a href="@Url.Action("VerDetalle", "Archivos", new { id = firma.IdFirma })"
+                                   class="icono-accion text-dark me-2"
+                                   data-bs-toggle="tooltip" title="Ver Detalle">
+                                    <i class="fa-solid fa-eye"></i>
+                                </a>
+                                *@
+                                <button class="icono-accion text-danger btn-pdf"
+                                        title="Descargar PDF"
+                                        onclick="descargarPDF(@firma.IdFirma)">
+                                    <i class="fa-solid fa-file-pdf"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}
+else if (ViewBag.Firmas != null)
+{
+    <div class="alert alert-info mt-4">No hay firmas registradas en la fecha seleccionada.</div>
+}
+
+
+
+
+@section scripts {
+    <script src="~/js/plugins/noty/lib/bounce.min.js"></script>
+    <script src="~/js/plugins/noty/lib/noty.js"></script>
+    <script src="~/js/FileSaver/FileSaver.js"></script>
+    <script src="~/js/SheetJs/xlsx.min.js"></script>
+    @* <script src="~/js/scripts.bundle.js"></script> *@
+    <script src="~/js/Fetch.js"></script>
+    <script src="/js/sweetalert/sweetalert.min.js"></script>
+    <script src="/js/vendor.min.js"></script>
+    <script src="/libs/datatables.net/js/jquery.dataTables.min.js"></script>
+    <script src="/js/dataTables.buttons.min.js"></script>
+    <script src="/js/jszip.min.js"></script>
+    <script src="/js/pdfmake.min.js"></script>
+    <script src="/js/vfs_fonts.js"></script>
+    <script src="/js/buttons.html5.min.js"></script>
+    <script src="/js/buttons.print.min.js"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            // Inicializar tooltips en Bootstrap 5
+            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            var tooltipList = tooltipTriggerList.map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
+        });
+
+    </script>
+    <script>
+        function descargarPDF(idFirma) {
+            let fila = document.querySelector(`tr[data-id-firma='${idFirma}']`);
+            if (!fila) {
+                console.error("No se encontró la fila para el ID de firma:", idFirma);
+                return;
+            }
+
+            let responsable = fila.cells[0].innerText.trim();
+            let fechaFirma = fila.cells[1].innerText.trim();
+            let fechaCarga = fila.cells[2].innerText.trim();
+            let gerencia = fila.cells[3].innerText.trim();
+            let comentario = fila.cells[4].innerText.trim();
+            let firmaBase64 = fila.querySelector(".firma-imagen")?.textContent.trim() || "";
+
+            if (firmaBase64 && !firmaBase64.startsWith("data:image")) {
+                firmaBase64 = `data:image/png;base64,${firmaBase64}`;
+            }
+
+            function getBase64Image(url) {
+                return new Promise((resolve, reject) => {
+                    var img = new Image();
+                    img.crossOrigin = 'Anonymous';
+                    img.onload = function () {
+                        var canvas = document.createElement('canvas');
+                        canvas.width = img.width;
+                        canvas.height = img.height;
+                        var ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0);
+                        var dataURL = canvas.toDataURL('image/png');
+                        resolve(dataURL);
+                    };
+                    img.onerror = reject;
+                    img.src = url;
+                });
+            }
+
+            Promise.all([
+                getBase64Image('/images/logos/logologin.png'),
+                fetch(`/ObtenerExcepcionesPorFirma?idFirma=${idFirma}`).then(res => res.ok ? res.json() : [])
+            ]).then(([logoBase64, excepciones]) => {
+                fetch(`/Archivos/VerDetalle/${idFirma}`)
+                    .then(response => response.text())
+                    .then(html => {
+                        let parser = new DOMParser();
+                        let doc = parser.parseFromString(html, "text/html");
+
+                        let tabla = doc.querySelector("#detallefirma");
+                        let encabezados = [];
+                        let datosTabla = [];
+
+                        if (tabla) {
+                            tabla.querySelectorAll("thead th").forEach(th => {
+                                encabezados.push({ text: th.textContent.trim(), style: 'tableHeader' });
+                            });
+
+                            tabla.querySelectorAll("tbody tr").forEach(tr => {
+                                let fila = [];
+                                tr.querySelectorAll("td").forEach(td => {
+                                    fila.push(td.textContent.trim());
+                                });
+                                datosTabla.push(fila);
+                            });
+                        }
+
+                        let docDefinition = {
+                            pageSize: 'A3',
+                            pageOrientation: 'landscape',
+                            content: [
+                                {
+                                    image: logoBase64,
+                                    width: 150,
+                                    absolutePosition: { x: 980, y: 20 }
+                                },
+                                { text: 'DETALLE FIRMA MATRIZ', style: 'title', margin: [0, 40, 0, 10] },
+
+                                {
+                                    table: {
+                                        widths: ['30%', '70%'],
+                                        body: [
+                                            [{ text: 'Usuario Responsable:', style: 'infoLabel' }, { text: responsable, style: 'infoValue' }],
+                                            [{ text: 'Fecha de Firma:', style: 'infoLabel' }, { text: fechaFirma, style: 'infoValue' }],
+                                            [{ text: 'Fecha de Carga:', style: 'infoLabel' }, { text: fechaCarga, style: 'infoValue' }],
+                                            [{ text: 'Gerencia:', style: 'infoLabel' }, { text: gerencia, style: 'infoValue' }],
+                                            [{ text: 'Comentario:', style: 'infoLabel' }, { text: comentario, style: 'infoValue' }]
+                                        ]
+                                    },
+                                    layout: 'lightHorizontalLines',
+                                    margin: [0, 10, 0, 20]
+                                }
+                            ],
+                            styles: {
+                                title: { fontSize: 22, bold: true, alignment: 'center', color: '#0066cc' },
+                                infoLabel: { fontSize: 12, bold: true, color: '#0D47A1', margin: [5, 2] },
+                                infoValue: { fontSize: 12, margin: [5, 2] },
+                                tableHeader: { fontSize: 10, bold: true, fillColor: '#D32F2F', color: 'white', alignment: 'center' },
+                                tableCell: { fontSize: 9, margin: [2, 2, 2, 2] }
+                            }
+                        };
+
+                        if (firmaBase64 && firmaBase64.startsWith("data:image")) {
+                            docDefinition.content.push({ text: 'Firma Responsable:', style: 'infoLabel' });
+                            docDefinition.content.push({
+                                image: firmaBase64,
+                                width: 150,
+                                alignment: 'center',
+                                margin: [0, 10, 0, 10]
+                            });
+                        }
+
+                        if (encabezados.length > 0) {
+                            docDefinition.content.push({ text: 'Detalle de la Firma:', style: 'infoLabel' });
+                            docDefinition.content.push({
+                                table: {
+                                    headerRows: 1,
+                                    widths: encabezados.map(() => '*'),
+                                    body: [encabezados].concat(datosTabla),
+                                    dontBreakRows: true
+                                },
+                                layout: 'noBorders',
+                                fontSize: 8
+                            });
+                        }
+
+                        // 🔹 Agregar excepciones sin las columnas especificadas
+                        if (excepciones.length > 0) {
+                            let excepcionesEncabezados = Object.keys(excepciones[0])
+                                .filter(key => !["idCarga", "idUsuario", "evidencia", "idMotivo", "llave_ex"].includes(key)) // Eliminamos estas columnas
+                                .map(key => ({
+                                    text: key.replace(/_/g, ' '), style: 'tableHeader'
+                                }));
+
+                            let excepcionesDatos = excepciones.map(ex =>
+                                Object.entries(ex)
+                                    .filter(([key]) => !["idCarga", "idUsuario", "evidencia", "idMotivo", "llave_ex"].includes(key)) // Eliminamos valores de estas columnas
+                                    .map(([_, value]) => value ?? '-')
+                            );
+
+                            docDefinition.content.push({ text: 'Excepciones Registradas:', style: 'infoLabel', margin: [0, 20, 0, 10] });
+
+                            docDefinition.content.push({
+                                table: {
+                                    headerRows: 1,
+                                    widths: excepcionesEncabezados.map(() => '*'),
+                                    body: [excepcionesEncabezados].concat(excepcionesDatos)
+                                },
+                                layout: 'lightHorizontalLines',
+                                fontSize: 8
+                            });
+                        }
+
+                        pdfMake.createPdf(docDefinition).download(`DetalleFirma_${idFirma}.pdf`);
+                    })
+                    .catch(error => console.error('Error al obtener el detalle de la firma:', error));
+            }).catch(error => console.error('Error al cargar el logo o excepciones:', error));
+        }
+
+    </script>
+
+
+
+}

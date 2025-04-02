@@ -1,0 +1,940 @@
+﻿@using System.Security.Claims;
+@using ABM.Servicios;
+@using Microsoft.AspNetCore.Identity;
+@using Microsoft.Extensions.DependencyInjection
+@inject IRepositorioCargas repositorioCargas
+
+@inject IServiceProvider ServiceProvider
+@{
+    var dataService = ServiceProvider.GetService<IRepositorioUsuarios>();
+    var resultado = await dataService.ObtenerDatosUsuarioPerfilLogeado();
+    var dataService2 = ServiceProvider.GetService<IRepositorioMenus>();
+    var menus = await dataService2.ObtenerMenusRol(resultado.IdUsuario);
+}
+<!DOCTYPE html>
+<html lang="en" dir="ltr" data-bs-theme="light" data-color-theme="Blue_Theme" data-layout="vertical">
+
+<head>
+    <!-- Required meta tags -->
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <!-- Favicon icon-->
+    <link rel="shortcut icon" type="image/png" href="~/images/logos/imperiallogo.png" />
+
+    <!-- Core Css -->
+    <link rel="stylesheet" href="~/css/styles.css" asp-append-version="true" />
+
+    <title>ABM Imperial</title>
+</head>
+
+<body>
+    <div id="excepcion-alerta" class="excepcion-alerta" style="position: fixed; top: 10px; right: 10px; z-index: 1050; max-width: 400px;"></div>
+
+    <!-- Preloader -->
+    <div class="preloader">
+        <img src="~/images/logos/imperiallogo.png" alt="loader" class="lds-ripple img-fluid" />
+    </div>
+    <div id="main-wrapper">
+        <!-- Sidebar Start -->
+        <aside class="left-sidebar with-vertical">
+            <div>
+                <!-- ---------------------------------- -->
+                <!-- Start Vertical Layout Sidebar -->
+                <!-- ---------------------------------- -->
+                <!-- Sidebar scroll-->
+                <nav class="sidebar-nav scroll-sidebar" data-simplebar>
+                    <!-----------Profile------------------>
+                    <div class="user-profile position-relative"
+                         style="">
+                        <!-- User profile image -->
+                        <div class="profile-img">
+                            <img src="~/images/avatar.png" alt="user" class="w-100 rounded-circle overflow-hidden" />
+                        </div>
+                        <!-- User profile text-->
+                        <div class="profile-text hide-menu pt-1 dropdown">
+                            <a href="javascript:void(0)" class="dropdown-toggle u-dropdown w-100 text-white d-block position-relative" id="dropdownMenuLink" data-bs-toggle="dropdown" aria-expanded="false">@User.Claims.Where(c => c.Type == ClaimTypes.Name).Select(c => c.Value).SingleOrDefault()</a>
+                            <div class="dropdown-menu animated flipInY" aria-labelledby="dropdownMenuLink">
+                               @*  <a class="dropdown-item d-flex gap-2" href="">
+                                    <i data-feather="user" class="feather-sm text-info "></i>
+                                    Mi Perfil
+                                </a>
+                                <a class="dropdown-item d-flex gap-2" href="">
+                                    <i data-feather="credit-card" class="feather-sm text-info "></i>
+                                    Notas
+                                </a>*@
+                                <a class="dropdown-item d-flex gap-2" href="/Manual/ManualUsuariosImperial.pdf" target="_blank">
+                                    <i data-feather="settings" class="feather-sm text-success"></i>
+                                Manual de Usuario
+                                </a>
+
+                                @*<div class="dropdown-divider"></div>
+                                <a class="dropdown-item d-flex gap-2" href="">
+                                    <i data-feather="settings" class="feather-sm text-warning "></i>
+                                    Configuración
+                                </a>
+                                <div class="dropdown-divider"></div> *@
+                                <a class="dropdown-item d-flex gap-2" asp-controller="Home" asp-action="Salir">
+                                    >
+                                    <i data-feather="log-out" class="feather-sm text-danger "></i>
+                                    Cerrar sesión
+                                </a>
+@*                                 <div class="dropdown-divider"></div> *@
+@*                                 <div class="px-3 py-2">
+                                    <a href="" class="btn d-block w-100 btn-info rounded-pill">
+                                        Ir a Mi Cuenta
+                                    </a>
+                                </div> *@
+                            </div>
+                        </div>
+                    </div>
+                    <!-----------Profile End------------------>
+
+                    <ul id="sidebarnav">
+                        <!-- ---------------------------------- -->
+                        <!-- Home -->
+                        <!-- ---------------------------------- -->
+                        <li class="nav-small-cap">
+                            <i class="fa fa-ellipsis-h nav-small-cap-icon fs-4"></i>
+                            <span class="hide-menu" id="get-url">Menú</span>
+                        </li>
+
+                        @if (menus != null && menus.Any())
+                        {
+                            @foreach (var item in menus)
+                            {
+                                @if (item.DESC_Vista != null && item.DESC_Vista != "")
+                                {
+                                    <li class="sidebar-item">
+                                        <a class="sidebar-link" href="@Url.Action(item.DESC_Vista,item.DESC_Controlador)" id="get-url">
+                                            <i class="aside-icon @item.DESC_Icono"></i>
+                                            <span class="hide-menu" title="@item.DESC_NombreMenu">@item.DESC_NombreMenu</span>
+                                        </a>
+                                    </li>
+                                }
+                                else
+                                {
+                                    <li class="sidebar-item">
+                                        <a class="sidebar-link has-arrow" href="javascript:void(0)" aria-expanded="false">
+                                            <i class="aside-icon @item.DESC_Icono"></i>
+                                            <span class="hide-menu" title="@item.DESC_NombreMenu">@item.DESC_NombreMenu</span>
+                                        </a>
+                                        <ul aria-expanded="false" class="collapse first-level">
+                                            @if (item.ListaSubMenu != null && item.ListaSubMenu.Any())
+                                            {
+                                                foreach (var item2 in item.ListaSubMenu)
+                                                {
+                                                    <li class="sidebar-item">
+                                                        @{
+                                                            string url;
+                                                            if (item2.DESC_Vista == "ListaMatrizResumida" && item2.DESC_Controlador == "Archivos")
+                                                            {
+                                                                url = Url.Action(item2.DESC_Vista, item2.DESC_Controlador, new { idUsuarioLogueado = resultado.IdUsuario });
+                                                            }
+                                                            else if (item2.DESC_Vista == "ListaFirmasMatriz" && item2.DESC_Controlador == "Archivos")
+                                                            {
+                                                                url = Url.Action(item2.DESC_Vista, item2.DESC_Controlador, new { idUsuarioLogueado = resultado.IdUsuario });
+                                                            }
+                                                            else
+                                                            {
+                                                                url = Url.Action(item2.DESC_Vista, item2.DESC_Controlador);
+                                                            }
+                                                        }
+                                                        <a href="@url" class="sidebar-link sublink">
+                                                            <div class="round-16 d-flex align-items-center justify-content-center">
+                                                                <i class="fa-solid fa-check"></i>
+                                                            </div>
+                                                            <span class="hide-menu" title="@item2.DESC_NombreMenu">@item2.DESC_NombreMenu</span>
+                                                        </a>
+                                                    </li>
+                                                }
+                                            }
+                                            @* <li class="sidebar-item">
+                                <a href="@Url.Action("Historicos","Excepciones")" class="sidebar-link sublink">
+                                <div class="round-16 d-flex align-items-center justify-content-center">
+                                <iconify-icon icon="solar:stop-circle-line-duotone"></iconify-icon>
+                                </div>
+                                <span class="hide-menu">Histórico Excepciones</span>
+                                </a>
+                                </li> *@
+                                        </ul>
+                                    </li>
+                                }
+
+                            }
+                        }
+
+                        @*
+                        <li class="sidebar-item">
+                        <a class="sidebar-link" href="@Url.Action("AlertaSistema","Home")" id="get-url">
+                        <iconify-icon icon="solar:shield-warning-linear" class="aside-icon"></iconify-icon>
+                        <span class="hide-menu">Alerta Sistema</span>
+                        </a>
+                        </li>
+                        <li class="sidebar-item">
+                        <a class="sidebar-link" href="@Url.Action("VisionCorporativa","Home")" id="get-url">
+                        <iconify-icon icon="solar:suitcase-bold-duotone" class="aside-icon"></iconify-icon>
+                        <span class="hide-menu">Visión Corporativa</span>
+                        </a>
+                        </li>
+                        <li class="sidebar-item">
+                        <a class="sidebar-link" href="@Url.Action("Gestion","Home")" id="get-url">
+                        <iconify-icon icon="solar:checklist-minimalistic-linear" class="aside-icon"></iconify-icon>
+                        <span class="hide-menu">Gestión</span>
+                        </a>
+                        </li>
+                        <li class="sidebar-item">
+                        <a class="sidebar-link has-arrow" href="javascript:void(0)" aria-expanded="false">
+                        <iconify-icon icon="solar:widget-4-linear" class="aside-icon"></iconify-icon>
+                        <span class="hide-menu">Detalle casos</span>
+                        </a>
+                        <ul aria-expanded="false" class="collapse first-level">
+                        <li class="sidebar-item">
+                        <a href="@Url.Action("Index","Excepciones")" class="sidebar-link sublink">
+                        <div class="round-16 d-flex align-items-center justify-content-center">
+                        <iconify-icon icon="solar:stop-circle-line-duotone"></iconify-icon>
+                        </div>
+                        <span class="hide-menu">Excepciones</span>
+                        </a>
+                        </li>
+                        <li class="sidebar-item">
+                        <a href="@Url.Action("Historicos","Excepciones")" class="sidebar-link sublink">
+                        <div class="round-16 d-flex align-items-center justify-content-center">
+                        <iconify-icon icon="solar:stop-circle-line-duotone"></iconify-icon>
+                        </div>
+                        <span class="hide-menu">Histórico Excepciones</span>
+                        </a>
+                        </li>
+                        </ul>
+                        </li> *@
+
+                        <!-- ---------------------------------- -->
+                        <!-- Dashboard -->
+                        <!-- ---------------------------------- -->
+                        @* <li class="sidebar-item">
+                        <a class="sidebar-link has-arrow" href="javascript:void(0)" aria-expanded="false">
+                        <iconify-icon icon="solar:notes-outline" class="aside-icon"></iconify-icon>
+                        <span class="hide-menu">Reportes</span>
+                        </a>
+                        <ul aria-expanded="false" class="collapse first-level">
+                        <li class="sidebar-item">
+                        <a href="@Url.Action("AsignacionCargoMatriz","Reportes")" class="sidebar-link sublink">
+                        <div class="round-16 d-flex align-items-center justify-content-center">
+                        <iconify-icon icon="solar:stop-circle-line-duotone"></iconify-icon>
+                        </div>
+                        <span class="hide-menu">Asignación Cargo Matriz</span>
+                        </a>
+                        </li>
+                        <li class="sidebar-item">
+                        <a href="@Url.Action("Finiquitados","Reportes")" class="sidebar-link sublink">
+                        <div class="round-16 d-flex align-items-center justify-content-center">
+                        <iconify-icon icon="solar:stop-circle-line-duotone"></iconify-icon>
+                        </div>
+                        <span class="hide-menu">Usuarios Finiquitados</span>
+                        </a>
+                        </li>
+                        <li class="sidebar-item">
+                        <a href="@Url.Action("UsuariosNoEncontrados","Reportes")" class="sidebar-link sublink">
+                        <div class="round-16 d-flex align-items-center justify-content-center">
+                        <iconify-icon icon="solar:stop-circle-line-duotone"></iconify-icon>
+                        </div>
+                        <span class="hide-menu">Usuarios no Encontrados</span>
+                        </a>
+                        </li>
+                        <li class="sidebar-item">
+                        <a href="@Url.Action("BuscarUsuarios","Reportes")" class="sidebar-link sublink">
+                        <div class="round-16 d-flex align-items-center justify-content-center">
+                        <iconify-icon icon="solar:stop-circle-line-duotone"></iconify-icon>
+                        </div>
+                        <span class="hide-menu">Búsqueda de Usuarios</span>
+                        </a>
+                        </li>
+                        <li class="sidebar-item">
+                        <a href="@Url.Action("UltimaConexion","Reportes")" class="sidebar-link sublink">
+                        <div class="round-16 d-flex align-items-center justify-content-center">
+                        <iconify-icon icon="solar:stop-circle-line-duotone"></iconify-icon>
+                        </div>
+                        <span class="hide-menu">Última Conexión</span>
+                        </a>
+                        </li>
+                        <li class="sidebar-item">
+                        <a href="@Url.Action("InactividadUsuarios","Reportes")" class="sidebar-link sublink">
+                        <div class="round-16 d-flex align-items-center justify-content-center">
+                        <iconify-icon icon="solar:stop-circle-line-duotone"></iconify-icon>
+                        </div>
+                        <span class="hide-menu">Tiempo Inactividad</span>
+                        </a>
+                        </li>
+                        <li class="sidebar-item">
+                        <a href="@Url.Action("DifCargoPerfil","Reportes")" class="sidebar-link sublink">
+                        <div class="round-16 d-flex align-items-center justify-content-center">
+                        <iconify-icon icon="solar:stop-circle-line-duotone"></iconify-icon>
+                        </div>
+                        <span class="hide-menu">Dif. Cargo Perfil</span>
+                        </a>
+                        </li>
+                        <li class="sidebar-item">
+                        <a href="@Url.Action("UsuariosActivos","Reportes")" class="sidebar-link sublink">
+                        <div class="round-16 d-flex align-items-center justify-content-center">
+                        <iconify-icon icon="solar:stop-circle-line-duotone"></iconify-icon>
+                        </div>
+                        <span class="hide-menu">Usuarios Activos</span>
+                        </a>
+                        </li>
+                        </ul>
+                        </li>
+                        <li class="sidebar-item">
+                        <a class="sidebar-link" href="@Url.Action("Matriz","Archivos")">
+                        <iconify-icon icon="solar:chart-2-linear" class="aside-icon"></iconify-icon>
+                        <span class="hide-menu">Matriz perfil</span>
+                        </a>
+                        </li>
+
+                        <li class="sidebar-item">
+                        <a class="sidebar-link has-arrow" href="javascript:void(0)" aria-expanded="false">
+                        <iconify-icon icon="solar:remote-controller-minimalistic-broken" class="aside-icon"></iconify-icon>
+                        <span class="hide-menu">Mantenedor Usuarios</span>
+                        </a>
+                        <ul aria-expanded="false" class="collapse first-level">
+                        <li class="sidebar-item">
+                        <a href="@Url.Action("Registrarse","Acceso")" class="sidebar-link sublink">
+                        <div class="round-16 d-flex align-items-center justify-content-center">
+                        <iconify-icon icon="solar:user-bold"></iconify-icon>
+                        </div>
+                        <span class="hide-menu">Crear Usuario</span>
+                        </a>
+                        </li>
+                        <li class="sidebar-item">
+                        <a href="@Url.Action("CrearRol","Acceso")" class="sidebar-link sublink">
+                        <div class="round-16 d-flex align-items-center justify-content-center">
+                        <iconify-icon icon="solar:user-bold"></iconify-icon>
+                        </div>
+                        <span class="hide-menu">Crear Rol</span>
+                        </a>
+                        </li>
+                        <li class="sidebar-item">
+                        <a href="@Url.Action("ListaUsuarios","Home")" class="sidebar-link sublink">
+                        <div class="round-16 d-flex align-items-center justify-content-center">
+                        <iconify-icon icon="solar:user-bold"></iconify-icon>
+                        </div>
+                        <span class="hide-menu">Lista Usuarios</span>
+                        </a>
+                        </li>
+                        </ul>
+                        *@
+                        @* </li> *@
+
+
+
+                        <li class="sidebar-item">
+                            <a class="sidebar-link" asp-controller="Home" asp-action="Salir">
+                                <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                                <span class="hide-menu">Cerrar sesión</span>
+                            </a>
+                        </li>
+                        <!-- ---------------------------------- -->
+                        <!-- UI -->
+                        <!-- ---------------------------------- -->
+                        @* </ul> *@
+                    </ul>
+                </nav>
+
+                <!-- End Sidebar scroll-->
+            </div>
+        </aside>
+        <!--  Sidebar End -->
+        <div class="page-wrapper">
+            <!--  Header Start -->
+            <header class="topbar rounded-0 border-0 bg-primary">
+                <div class="with-vertical">
+                    <!-- ---------------------------------- -->
+                    <!-- Start Vertical Layout Header -->
+                    <!-- ---------------------------------- -->
+                    <nav class="navbar navbar-expand-lg px-lg-0 px-3 py-0">
+                        <div class="d-none d-lg-block">
+                            <div class="brand-logo d-flex align-items-center justify-content-between">
+                                <a class="text-nowrap logo-img d-flex align-items-center gap-2" asp-area="" asp-controller="Home" asp-action="Index">
+                                    <b class="logo-icon">
+                                        <!--You can put here icon as well // <i class="wi wi-sunset"></i> //-->
+                                        <!-- Dark Logo icon -->
+                                        <img src="~/images/logos/imperiallogo.png" alt="homepage" class="dark-logo" style="width: 30px; height: 30px;" />
+                                        <!-- Light Logo icon -->
+                                        <img src="~/images/logos/imperiallogo.png" alt="homepage" class="light-logo" style="width: 30px; height: 30px;" />
+                                    </b>
+                                    <!--End Logo icon -->
+
+                                </a>
+                            </div>
+                        </div>
+
+                        <ul class="navbar-nav gap-2">
+                            <li class="nav-item nav-icon-hover-bg rounded-circle">
+                                <a class="nav-link nav-icon-hover sidebartoggler" id="headerCollapse" href="javascript:void(0)">
+                                    <i class="fa-solid fa-bars"></i>
+                                </a>
+                            </li>
+                        </ul>
+
+                        <div class="d-block d-lg-none">
+                            <div class="brand-logo d-flex align-items-center justify-content-between">
+                                <a class="text-nowrap logo-img d-flex align-items-center gap-2" asp-area="" asp-controller="Home" asp-action="Index">
+                                    <b class="logo-icon">
+                                        <!--You can put here icon as well // <i class="wi wi-sunset"></i> //-->
+                                        <!-- Dark Logo icon -->
+                                        <img src="~/images/logos/imperiallogo.png" alt="homepage" class="dark-logo" style="width: 30px; height: 30px;" />
+                                        <!-- Light Logo icon -->
+                                        <img src="~/images/logos/imperiallogo.png" alt="homepage" class="light-logo" style="width: 30px; height: 30px;" />
+                                    </b>
+                                    <!--End Logo icon -->
+
+                                </a>
+                            </div>
+                        </div>
+                        <ul class="navbar-nav flex-row  gap-2 align-items-center justify-content-center d-flex d-lg-none">
+                            <li class="nav-item dropdown nav-icon-hover-bg rounded-circle">
+                                <a class="navbar-toggler nav-link text-white nav-icon-hover border-0" href="javascript:void(0)"
+                                   data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false"
+                                   aria-label="Toggle navigation">
+                                    <span class="">
+                                        <i class="ti ti-dots fs-7"></i>
+                                    </span>
+                                    <span class="me-2">Perfil</span> <!-- Texto antes de la imagen -->
+                                </a>
+                            </li>
+                        </ul>
+                        <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
+                            <div class="d-flex align-items-center justify-content-between py-2 py-lg-0">
+                                <ul class="navbar-nav gap-2 flex-row ms-auto align-items-center justify-content-center">
+                                    <!-- Mostrar la última fecha de carga -->
+                                    <li class="nav-item">
+                                        <span class="navbar-text" style="color:white">
+                                            Última fecha de actualizacion:
+                                            @if (repositorioCargas != null)
+                                            {
+                                                var ultimaFecha = await repositorioCargas.ObtenerUltimaFechaDeCarga();
+                                                if (ultimaFecha.HasValue)
+                                                {
+                                                    <span>@ultimaFecha.Value.ToString("dd/MM/yyyy")</span>
+                                                }
+                                                else
+                                                {
+                                                    <span>No disponible</span>
+                                                }
+                                            }
+                                        </span>
+                                    </li>
+                                    <li class="nav-item nav-icon-hover-bg rounded-circle">
+                                        <!-- Icono de la luna y texto a la izquierda -->
+                                        <a class="nav-link nav-icon-hover moon dark-layout" href="javascript:void(0)">
+                                            <i class="fa-solid fa-moon"></i>
+                                        </a>
+                                        <a class="nav-link nav-icon-hover sun light-layout" href="javascript:void(0)">
+                                            <i class="fa-solid fa-sun"></i>
+                                        </a>
+                                    </li>
+
+                                    <!-- ------------------------------- -->
+                                    <!-- start profile Dropdown -->
+                                    <!-- ------------------------------- -->
+                                    <li class="nav-item hover-dd dropdown">
+                                        <a class="nav-link nav-icon-hover" href="javascript:void(0)" id="drop2" aria-expanded="false">
+                                            <!-- Texto antes de la imagen de perfil -->
+                                            <img src="~/images/avatar.png" alt="user" class="profile-pic rounded-circle round-30" />
+                                        </a>
+                                        <div class="dropdown-menu pt-0 content-dd overflow-hidden pt-0 dropdown-menu-end user-dd" aria-labelledby="drop2">
+                                            <div class="profile-dropdown position-relative" data-simplebar>
+                                                <div class="py-3 border-bottom">
+                                                    <div class="d-flex align-items-center px-3">
+                                                        <img src="~/images/avatar.png" class="rounded-circle round-50" alt="" />
+                                                        <div class="ms-3">
+                                                            <h5 class="mb-1 fs-4">@User.Claims.Where(c => c.Type == ClaimTypes.Name).Select(c => c.Value).SingleOrDefault()</h5>
+                                                            <p class="mb-0 fs-2 d-flex align-items-center text-muted">
+                                                                @User.Claims.Where(c => c.Type == ClaimTypes.Name).Select(c => c.Value).SingleOrDefault()
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="message-body pb-3">
+                                                    <!-- Aquí se puede agregar más texto si es necesario en los elementos del menú -->
+                                                    <div class="px-3">
+                                                        <div class="py-8 px-3 d-flex justify-content-between dropdown-item align-items-center h6 mb-0 rounded-2 link">
+                                                            <a href="/Manual/ManualUsuariosImperial.pdf" class="" target="_blank">
+                                                                <i data-feather="settings" class="feather-sm text-success"></i>
+                                                                Manual de usuario
+                                                            </a>
+                                                        </div>
+                                                        <div class="py-8 px-3 d-flex justify-content-between dropdown-item align-items-center h6 mb-0 rounded-2 link" id="support-button">
+                                                            <a class="">
+                                                                <i class="fa-solid fa-headset"></i>
+                                                                Soporte
+                                                            </a>
+                                                        </div>
+                                                        <div id="support-card" style="position: relative; transition: transform 0.5s ease; transform: translateX(100%); display: none;">
+                                                            <div class="card">
+                                                                <div class="card-body">
+                                                                    <h5 class="card-title">¿En qué podemos ayudarte?</h5>
+                                                                    <p class="card-text">Para consultas, por favor enviar un correo a: <strong style="color: #00BFFF;">soporteabmmatriz@imperial.cl</strong></p>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <div class="h6 mb-0 dropdown-item py-8 px-3 rounded-2 link">
+                                                            <a class=" d-flex  align-items-center " asp-controller="Home" asp-action="Salir">
+                                                                <i data-feather="log-out" class="feather-sm text-danger" style="margin-inline-end:5px"></i>
+                                                                Cerrar sesión
+                                                            </a>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </li>
+                                    <!-- ------------------------------- -->
+                                    <!-- end profile Dropdown -->
+                                    <!-- ------------------------------- -->
+                                </ul>
+                            </div>
+                        </div>
+
+                    </nav>
+                    <!-- ---------------------------------- -->
+                    <!-- End Vertical Layout Header -->
+                    <!-- ---------------------------------- -->
+                    <!-- ------------------------------- -->
+                    <!-- apps Dropdown in Small screen -->
+                    <!-- ------------------------------- -->
+                    <!--  Mobilenavbar -->
+
+                </div>
+                <div class="app-header with-horizontal">
+                    <nav class="navbar navbar-expand-xl container-fluid">
+                        <ul class="navbar-nav gap-2 align-items-center">
+                            <li class="nav-item d-block d-xl-none">
+                                <a class="nav-link sidebartoggler ms-n3" id="sidebarCollapse" href="javascript:void(0)">
+                                    <iconify-icon icon="solar:hamburger-menu-line-duotone"></iconify-icon>
+                                </a>
+                            </li>
+                            <li class="nav-item d-none d-xl-block">
+                                <div class="brand-logo d-flex align-items-center justify-content-between">
+                                    <a class="text-nowrap logo-img d-flex align-items-center gap-2" asp-area="" asp-controller="Home" asp-action="Index">
+                                        <b class="logo-icon">
+                                            <!--You can put here icon as well // <i class="wi wi-sunset"></i> //-->
+                                            <!-- Dark Logo icon -->
+                                            <img src="~/images/logos/imperiallogo.png" alt="homepage" class="dark-logo" style="width: 30px; height: 30px;" />
+                                            <!-- Light Logo icon -->
+                                            <img src="~/images/logos/imperiallogo.png" alt="homepage" class="light-logo" style="width: 30px; height: 30px;" />
+                                        </b>
+
+                                    </a>
+                                </div>
+                            </li>
+
+                            <li class="nav-item hover-dd d-none d-lg-block dropdown">
+                                <a class="nav-link nav-icon-hover" id="drop2" href="javascript:void(0)" aria-haspopup="true"
+                                   aria-expanded="false">
+                                    <iconify-icon icon="solar:widget-3-line-duotone"></iconify-icon>
+                                </a>
+                            </li>
+                        </ul>
+
+                        <a class="navbar-toggler nav-icon-hover p-0 border-0 text-white" href="javascript:void(0)"
+                           data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false"
+                           aria-label="Toggle navigation">
+                            <span class="p-2">
+                                <i class="ti ti-dots fs-7"></i>
+                            </span>
+                        </a>
+                        <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
+                            <div class="d-flex align-items-center justify-content-between">
+                                <ul class="navbar-nav gap-2 flex-row ms-auto align-items-center justify-content-center">
+
+                                    <li class="nav-item nav-icon-hover-bg rounded-circle">
+                                        <a class="nav-link nav-icon-hover moon dark-layout" href="javascript:void(0)">
+                                            <iconify-icon icon="solar:moon-line-duotone" class="moon"></iconify-icon>
+                                        </a>
+                                        <a class="nav-link nav-icon-hover sun light-layout" href="javascript:void(0)">
+                                            <iconify-icon icon="solar:sun-2-line-duotone" class="sun"></iconify-icon>
+                                        </a>
+                                    </li>
+
+                                    <!-- ------------------------------- -->
+                                    <!-- start profile Dropdown -->
+                                    <!-- ------------------------------- -->
+                                    <li class="nav-item hover-dd dropdown">
+                                        <a class="nav-link nav-icon-hover" href="javascript:void(0)" id="drop2" aria-expanded="false">
+                                            <img src="~/images/profile/user-1.jpg" alt="user" width="30"
+                                                 class="profile-pic rounded-circle" />
+                                        </a>
+                                        <div class="dropdown-menu pt-0 content-dd overflow-hidden pt-0 dropdown-menu-end user-dd"
+                                             aria-labelledby="drop2">
+                                            <div class="profile-dropdown position-relative" data-simplebar>
+                                                <div class=" py-3 border-bottom">
+                                                    <div class="d-flex align-items-center px-3">
+                                                        <img src="~/images/profile/user-1.jpg" class="rounded-circle round-50" alt="" />
+                                                        <div class="ms-3">
+                                                            <h5 class="mb-1 fs-4">@User.Claims.Where(c => c.Type == ClaimTypes.Name).Select(c => c.Value).SingleOrDefault()</h5>
+                                                            <p class="mb-0 fs-2 d-flex align-items-center text-muted">
+                                                                markrarn@wrappixel.com
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="message-body pb-3">
+                                                    <div class="px-3 pt-3">
+                                                        @* <div class="h6 mb-0 dropdown-item py-8 px-3 rounded-2 link">
+                                                            <a href="" class=" d-flex  align-items-center ">
+                                                                Mi Perfil
+                                                            </a>
+                                                        </div>
+                                                        <div class="h6 mb-0 dropdown-item py-8 px-3 rounded-2 link">
+                                                            <a href="javascript:void(0)" class=" d-flex  align-items-center ">
+                                                                My Projects
+                                                            </a>
+                                                        </div>
+                                                        <div class="h6 mb-0 dropdown-item py-8 px-3 rounded-2 link">
+                                                            <a href="" class=" d-flex  align-items-center ">
+                                                                Inbox
+                                                            </a>
+                                                        </div> *@
+                                                    </div>
+                                                    <hr>
+                                                    <div class="px-3">
+                                                        @* <div class="py-8 px-3 d-flex justify-content-between dropdown-item align-items-center h6 mb-0  rounded-2 link">
+                                                            <a href="javascript:void(0)" class="">
+                                                                Modo Pantalla
+                                                            </a>
+                                                            <div>
+                                                                <a class="moon dark-layout" href="javascript:void(0)">
+                                                                    <iconify-icon icon="solar:moon-line-duotone" class="moon"></iconify-icon>
+                                                                </a>
+                                                                <a class="sun light-layout" href="javascript:void(0)">
+                                                                    <iconify-icon icon="solar:sun-2-line-duotone" class="sun"></iconify-icon>
+                                                                </a>
+                                                            </div>
+                                                        </div>
+                                                        <div class="h6 mb-0 dropdown-item py-8 px-3 rounded-2 link">
+                                                            <a href="" class=" d-flex  align-items-center  ">
+                                                                Configuración
+                                                            </a>
+                                                        </div> *@
+                                                        <div class="h6 mb-0 dropdown-item py-8 px-3 rounded-2 link">
+                                                            <a class=" d-flex  align-items-center " asp-controller="Home" asp-action="Salir">
+                                                                Cerrar sesión
+                                                            </a>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                            </div>
+                                        </div>
+                                    </li>
+
+                                    <!-- ------------------------------- -->
+                                    <!-- end profile Dropdown -->
+                                    <!-- ------------------------------- -->
+                                </ul>
+                            </div>
+                        </div>
+                    </nav>
+                </div>
+            </header>
+            <div style="margin:15px">
+                <main role="main" class="pb-3">
+                    @RenderBody()
+                </main>
+            </div>
+            <!--  Header End -->
+            <aside class="left-sidebar with-horizontal">
+                <!-- Sidebar scroll-->
+                <div>
+                    <!-- Sidebar navigation-->
+                    <nav id="sidebarnavh" class="sidebar-nav scroll-sidebar container-fluid">
+                        <ul id="sidebarnav">
+                        </ul>
+                    </nav>
+                    <!-- End Sidebar navigation -->
+                </div>
+                <!-- End Sidebar scroll-->
+            </aside>
+
+            <script>
+                function handleColorTheme(e) {
+                    $("html").attr("data-color-theme", e);
+                    $(e).prop("checked", !0);
+                }
+            </script>
+
+            <div class="offcanvas customizer offcanvas-end" tabindex="-1" id="offcanvasExample"
+                 aria-labelledby="offcanvasExampleLabel">
+                <div class="d-flex align-items-center justify-content-between p-3 border-bottom">
+                    <h4 class="offcanvas-title fw-semibold" id="offcanvasExampleLabel">
+                        Settings
+                    </h4>
+                    <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+                </div>
+                <div class="offcanvas-body h-n80" data-simplebar>
+                    <h6 class="fw-semibold fs-4 mb-2">Theme</h6>
+
+                    <div class="d-flex flex-row gap-3 customizer-box" role="group">
+                        <input type="radio" class="btn-check light-layout " name="theme-layout" id="light-layout"
+                               autocomplete="off" />
+                        <label class="btn p-9 btn-outline-primary rounded" for="light-layout">
+                            <iconify-icon icon="solar:sun-2-outline" class="icon fs-7 me-2"></iconify-icon>Light
+                        </label>
+                        <input type="radio" class="btn-check dark-layout" name="theme-layout" id="dark-layout" autocomplete="off" />
+                        <label class="btn p-9 btn-outline-primary rounded" for="dark-layout">
+                            <iconify-icon icon="solar:moon-outline"
+                                          class="icon fs-7 me-2"></iconify-icon>Dark
+                        </label>
+                    </div>
+
+                    <h6 class="mt-5 fw-semibold fs-4 mb-2">Theme Direction</h6>
+                    <div class="d-flex flex-row gap-3 customizer-box" role="group">
+                        <input type="radio" class="btn-check" name="direction-l" id="ltr-layout" autocomplete="off" />
+                        <label class="btn p-9 btn-outline-primary rounded" for="ltr-layout">
+                            <iconify-icon icon="solar:align-left-linear" class="icon fs-7 me-2"></iconify-icon>LTR
+                        </label>
+
+                        <input type="radio" class="btn-check" name="direction-l" id="rtl-layout" autocomplete="off" />
+                        <label class="btn p-9 btn-outline-primary rounded" for="rtl-layout">
+                            <iconify-icon icon="solar:align-right-linear" class="icon fs-7 me-2"></iconify-icon>RTL
+                        </label>
+                    </div>
+
+                    <h6 class="mt-5 fw-semibold fs-4 mb-2">Theme Colors</h6>
+
+                    <div class="d-flex flex-row flex-wrap gap-3 customizer-box color-pallete" role="group">
+                        <input type="radio" class="btn-check" name="color-theme-layout" id="Blue_Theme" autocomplete="off" />
+                        <label class="btn p-9 btn-outline-primary d-flex align-items-center justify-content-center rounded"
+                               onclick="handleColorTheme('Blue_Theme')" for="Blue_Theme" data-bs-toggle="tooltip" data-bs-placement="top"
+                               data-bs-title="BLUE_THEME">
+                            <div class="color-box rounded-circle d-flex align-items-center justify-content-center skin-1">
+                                <i class="ti ti-check text-white d-flex icon fs-5"></i>
+                            </div>
+                        </label>
+
+                        <input type="radio" class="btn-check" name="color-theme-layout" id="Aqua_Theme" autocomplete="off" />
+                        <label class="btn p-9 btn-outline-primary d-flex align-items-center justify-content-center rounded"
+                               onclick="handleColorTheme('Aqua_Theme')" for="Aqua_Theme" data-bs-toggle="tooltip" data-bs-placement="top"
+                               data-bs-title="AQUA_THEME">
+                            <div class="color-box rounded-circle d-flex align-items-center justify-content-center skin-2">
+                                <i class="ti ti-check text-white d-flex icon fs-5"></i>
+                            </div>
+                        </label>
+
+                        <input type="radio" class="btn-check" name="color-theme-layout" id="Purple_Theme" autocomplete="off" />
+                        <label class="btn p-9 btn-outline-primary d-flex align-items-center justify-content-center rounded"
+                               onclick="handleColorTheme('Purple_Theme')" for="Purple_Theme" data-bs-toggle="tooltip"
+                               data-bs-placement="top" data-bs-title="PURPLE_THEME">
+                            <div class="color-box rounded-circle d-flex align-items-center justify-content-center skin-3">
+                                <i class="ti ti-check text-white d-flex icon fs-5"></i>
+                            </div>
+                        </label>
+
+                        <input type="radio" class="btn-check" name="color-theme-layout" id="green-theme-layout"
+                               autocomplete="off" />
+                        <label class="btn p-9 btn-outline-primary d-flex align-items-center justify-content-center rounded"
+                               onclick="handleColorTheme('Green_Theme')" for="green-theme-layout" data-bs-toggle="tooltip"
+                               data-bs-placement="top" data-bs-title="GREEN_THEME">
+                            <div class="color-box rounded-circle d-flex align-items-center justify-content-center skin-4">
+                                <i class="ti ti-check text-white d-flex icon fs-5"></i>
+                            </div>
+                        </label>
+
+                        <input type="radio" class="btn-check" name="color-theme-layout" id="cyan-theme-layout" autocomplete="off" />
+                        <label class="btn p-9 btn-outline-primary d-flex align-items-center justify-content-center rounded"
+                               onclick="handleColorTheme('Cyan_Theme')" for="cyan-theme-layout" data-bs-toggle="tooltip"
+                               data-bs-placement="top" data-bs-title="CYAN_THEME">
+                            <div class="color-box rounded-circle d-flex align-items-center justify-content-center skin-5">
+                                <i class="ti ti-check text-white d-flex icon fs-5"></i>
+                            </div>
+                        </label>
+
+                        <input type="radio" class="btn-check" name="color-theme-layout" id="orange-theme-layout"
+                               autocomplete="off" />
+                        <label class="btn p-9 btn-outline-primary d-flex align-items-center justify-content-center rounded"
+                               onclick="handleColorTheme('Orange_Theme')" for="orange-theme-layout" data-bs-toggle="tooltip"
+                               data-bs-placement="top" data-bs-title="ORANGE_THEME">
+                            <div class="color-box rounded-circle d-flex align-items-center justify-content-center skin-6">
+                                <i class="ti ti-check text-white d-flex icon fs-5"></i>
+                            </div>
+                        </label>
+                    </div>
+
+                    <h6 class="mt-5 fw-semibold fs-4 mb-2">Layout Type</h6>
+                    <div class="d-flex flex-row gap-3 customizer-box" role="group">
+                        <div>
+                            <input type="radio" class="btn-check" name="page-layout" id="vertical-layout" autocomplete="off" />
+                            <label class="btn p-9 btn-outline-primary rounded" for="vertical-layout">
+                                <iconify-icon icon="solar:slider-vertical-minimalistic-linear"
+                                              class="icon fs-7 me-2"></iconify-icon>Vertical
+                            </label>
+                        </div>
+                        <div>
+                            <input type="radio" class="btn-check" name="page-layout" id="horizontal-layout" autocomplete="off" />
+                            <label class="btn p-9 btn-outline-primary rounded" for="horizontal-layout">
+                                <iconify-icon icon="solar:slider-minimalistic-horizontal-outline" class="icon fs-7 me-2"></iconify-icon>
+                                Horizontal
+                            </label>
+                        </div>
+                    </div>
+
+                    <h6 class="mt-5 fw-semibold fs-4 mb-2">Container Option</h6>
+                    <div class="d-flex flex-row gap-3 customizer-box" role="group">
+                        <input type="radio" class="btn-check" name="layout" id="boxed-layout" autocomplete="off" />
+                        <label class="btn p-9 btn-outline-primary rounded" for="boxed-layout">
+                            <iconify-icon icon="solar:cardholder-linear" class="icon fs-7 me-2"></iconify-icon>
+                            Boxed
+                        </label>
+
+                        <input type="radio" class="btn-check" name="layout" id="full-layout" autocomplete="off" />
+                        <label class="btn p-9 btn-outline-primary rounded" for="full-layout">
+                            <iconify-icon icon="solar:scanner-linear" class="icon fs-7 me-2"></iconify-icon> Full
+                        </label>
+                    </div>
+
+                    <h6 class="fw-semibold fs-4 mb-2 mt-5">Sidebar Type</h6>
+                    <div class="d-flex flex-row gap-3 customizer-box" role="group">
+                        <a href="javascript:void(0)" class="fullsidebar">
+                            <input type="radio" class="btn-check" name="sidebar-type" id="full-sidebar" autocomplete="off" />
+                            <label class="btn p-9 btn-outline-primary rounded" for="full-sidebar">
+                                <iconify-icon icon="solar:sidebar-minimalistic-outline" class="icon fs-7 me-2"></iconify-icon> Full
+                            </label>
+                        </a>
+                        <div>
+                            <input type="radio" class="btn-check " name="sidebar-type" id="mini-sidebar" autocomplete="off" />
+                            <label class="btn p-9 btn-outline-primary rounded" for="mini-sidebar">
+                                <iconify-icon icon="solar:siderbar-outline" class="icon fs-7 me-2"></iconify-icon>Collapse
+                            </label>
+                        </div>
+                    </div>
+
+                    <h6 class="mt-5 fw-semibold fs-4 mb-2">Card With</h6>
+
+                    <div class="d-flex flex-row gap-3 customizer-box" role="group">
+                        <input type="radio" class="btn-check" name="card-layout" id="card-with-border" autocomplete="off" />
+                        <label class="btn p-9 btn-outline-primary rounded" for="card-with-border">
+                            <iconify-icon icon="solar:library-broken" class="icon fs-7 me-2"></iconify-icon>Border
+                        </label>
+
+                        <input type="radio" class="btn-check" name="card-layout" id="card-without-border" autocomplete="off" />
+                        <label class="btn p-9 btn-outline-primary rounded" for="card-without-border">
+                            <iconify-icon icon="solar:box-outline " class="icon fs-7 me-2"></iconify-icon>Shadow
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <script>
+                function handleColorTheme(e) {
+                    document.documentElement.setAttribute("data-color-theme", e);
+                }
+            </script>
+        </div>
+    </div>
+
+
+    <div class="dark-transparent sidebartoggler"></div>
+    <footer class="border-top footer text-muted">
+        <div class="container text-center">
+            2024 - ABM Imperial
+        </div>
+    </footer>
+    <!-- Import Js Files -->
+    @* <script src="/js/breadcrumb/breadcrumbChart.js"></script> *@
+    @* <script src="/libs/apexcharts/dist/apexcharts.min.js"></script> *@
+    <script src="/libs/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/libs/simplebar/dist/simplebar.min.js"></script>
+    <script src="/js/theme/app.init.js"></script>
+    <script src="/js/theme/theme.js"></script>
+    <script src="/js/theme/app.min.js"></script>
+    <script src="/js/theme/sidebarmenu.js"></script>
+    <script src="/js/theme/feather.min.js"></script>
+    <script src="/lib/jquery/dist/jquery.min.js"></script>
+    <script src="/libs/bootstrap-datepicker/dist/js/bootstrap-datepicker.min.js"></script>
+    <script src="/js/forms/datepicker-init.js"></script>
+    <!-- iconos-->
+	<script src="~/js/plugins/all.min.js"></script>
+    <script>
+        document.getElementById('support-button').addEventListener('click', function () {
+            const card = document.getElementById('support-card');
+            if (card.style.display === "none") {
+                card.style.display = "block"; // Mostrar la card
+                setTimeout(() => {
+                    card.style.transform = "translateX(0)"; // Desplazar la card a su posición original
+                }, 10); // Pequeño retraso para permitir que se aplique el display block
+            } else {
+                card.style.transform = "translateX(100%)"; // Desplazar la card fuera de la vista
+                setTimeout(() => {
+                    card.style.display = "none"; // Ocultar la card después de la animación
+                }, 500); // Esperar a que la animación termine
+            }
+        });
+    </script>
+    <script>
+        $(document).ready(function () {
+            var mostrarAlertas = '@TempData["MostrarAlertasInicio"]';
+            if (mostrarAlertas === 'True') {
+                $.ajax({
+                    url: '/Excepciones/ObtenerListaExcepcionesPorVencer',
+                    type: 'POST',
+                    success: function (data) {
+                        if (data && Array.isArray(data) && data.length > 0) {
+                            const alertContainer = document.getElementById('excepcion-alerta');
+
+                            data.forEach(excepcion => {
+                                const alertMessage = `
+                                    La excepción con ID Carga: <strong>${excepcion.idCarga}</strong> está cerca de vencer.
+                                    Quedan <strong>${Math.ceil(excepcion.diasRestantes)} días</strong> para su vencimiento.
+                                    <br>
+                                    <strong>Motivo:</strong> ${excepcion.motivo || "-"}
+                                    <br>
+                                    <strong>Responsable:</strong> ${excepcion.responsable || "-"}
+                                    <br>
+                                    <strong>Fecha de Autorización:</strong> ${new Date(excepcion.fecha_autorizacion).toLocaleDateString()}
+                                    <br>
+                                    <strong>Usuario:</strong> ${excepcion.nombreusuario || "-"}
+                                `;
+
+                                const alertDiv = document.createElement('div');
+                                alertDiv.classList.add('alert', 'alert-danger', 'alert-custom');
+                                alertDiv.innerHTML = alertMessage;
+
+                                const closeButton = document.createElement('button');
+                                closeButton.classList.add('btn-close');
+                                closeButton.setAttribute('aria-label', 'Close');
+                                closeButton.addEventListener('click', () => {
+                                    alertDiv.remove();
+                                });
+
+                                alertDiv.appendChild(closeButton);
+                                alertContainer.appendChild(alertDiv);
+
+                                setTimeout(() => {
+                                    alertDiv.remove();
+                                }, 10000);
+                            });
+                        } else if (data.message) {
+                            console.log(data.message); // Mostrar mensaje si no tiene gerencia
+                        }
+                    },
+                    error: function (err) {
+                        console.error("Error al obtener las excepciones por vencer: ", err);
+                    }
+                });
+            }
+        });
+    </script>
+
+
+
+    <!-- solar icons -->
+    @* <script src="/js/dashboards/dashboard1.js"></script> *@
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+
+</html>
+
+
+
+

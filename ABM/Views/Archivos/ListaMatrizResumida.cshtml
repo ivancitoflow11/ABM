@@ -1,0 +1,399 @@
+﻿@model ABM.Models.ListaMatrizViewModel
+@{
+	ViewBag.Title = "ListaMatrizResumida";
+}
+@{
+	var idUsuarioLogueado = Context.Session.GetInt32("IdUsuarioLogueado");
+
+	if (!idUsuarioLogueado.HasValue)
+	{
+		<p>No tienes permiso para acceder a esta página.</p>
+		return;
+	}
+}
+<link rel="stylesheet" href="~/css/botones.css" asp-append-version="true" />
+
+<style>
+	.form-text {
+		margin-top: 0.3rem;
+		font-size: 10px;
+		color: #007bff;
+	}
+
+	#loading {
+		background: #f4f4f2 url("img/page-bg.png") repeat scroll 0 0;
+		height: 100%;
+		left: 0;
+		margin: auto;
+		position: fixed;
+		top: 0;
+		width: 100%;
+	}
+
+	.estado-correcto {
+		background-color: #d4edda; /* Verde claro */
+	}
+
+	.estado-incorrecto {
+		background-color: #f8d7da; /* Rojo claro */
+	}
+
+	.estado-autorizado {
+		background-color: #fcf75e; /* Rojo claro */
+	}
+
+	.bokeh {
+		border: 0.01em solid rgba(150, 150, 150, 0.1);
+		border-radius: 50%;
+		font-size: 100px;
+		height: 1em;
+		list-style: outside none none;
+		margin: 0 auto;
+		position: relative;
+		top: 35%;
+		width: 1em;
+		z-index: 2147483647;
+	}
+
+		.bokeh li {
+			border-radius: 50%;
+			height: 0.2em;
+			position: absolute;
+			width: 0.2em;
+		}
+
+			.bokeh li:nth-child(1) {
+				animation: 1.13s linear 0s normal none infinite running rota, 3.67s ease-in-out 0s alternate none infinite running opa;
+				background: white none repeat scroll 0 0;
+				left: 50%;
+				margin: 0 0 0 -0.1em;
+				top: 0;
+				transform-origin: 50% 250% 0;
+			}
+
+			.bokeh li:nth-child(2) {
+				animation: 1.86s linear 0s normal none infinite running rota, 4.29s ease-in-out 0s alternate none infinite running opa;
+				background: #ffa423 none repeat scroll 0 0;
+				margin: -0.1em 0 0;
+				right: 0;
+				top: 50%;
+				transform-origin: -150% 50% 0;
+			}
+
+			.bokeh li:nth-child(3) {
+				animation: 1.45s linear 0s normal none infinite running rota, 5.12s ease-in-out 0s alternate none infinite running opa;
+				background: #156db6 none repeat scroll 0 0;
+				bottom: 0;
+				left: 50%;
+				margin: 0 0 0 -0.1em;
+				transform-origin: 50% -150% 0;
+			}
+
+			.bokeh li:nth-child(4) {
+				animation: 1.72s linear 0s normal none infinite running rota, 5.25s ease-in-out 0s alternate none infinite running opa;
+				background: #88c100 none repeat scroll 0 0;
+				margin: -0.1em 0 0;
+				top: 50%;
+				transform-origin: 250% 50% 0;
+			}
+
+	@@keyframes opa {
+		12% {
+			opacity: 0.8;
+		}
+
+		19.5% {
+			opacity: 0.88;
+		}
+
+		37.2% {
+			opacity: 0.64;
+		}
+
+		40.5% {
+			opacity: 0.52;
+		}
+
+		52.7% {
+			opacity: 0.69;
+		}
+
+		60.2% {
+			opacity: 0.6;
+		}
+
+		66.6% {
+			opacity: 0.52;
+		}
+
+		70% {
+			opacity: 0.63;
+		}
+
+		79.9% {
+			opacity: 0.6;
+		}
+
+		84.2% {
+			opacity: 0.75;
+		}
+
+		91% {
+			opacity: 0.87;
+		}
+	}
+
+	@@keyframes rota {
+		100% {
+			transform: rotate(360deg);
+		}
+	}
+
+	.custom-modal-class {
+		font-family: Arial, sans-serif;
+		max-width: 500px;
+	}
+
+		.custom-modal-class .swal2-title {
+			font-size: 1.5em;
+			color: #333;
+		}
+
+		.custom-modal-class .swal2-html-container {
+			font-size: 1.1em;
+			margin-top: 15px;
+		}
+
+		.custom-modal-class .swal2-styled.swal2-confirm {
+			background-color: #3085d6;
+			font-size: 1.1em;
+			padding: 12px 25px;
+		}
+
+		.custom-modal-class .swal2-styled.swal2-cancel {
+			font-size: 1.1em;
+			padding: 12px 25px;
+		}
+</style>
+
+
+<div id="loading" style="z-index:999999;display:none">
+	<ul class="bokeh">
+		<li></li>
+		<li></li>
+		<li></li>
+	</ul>
+</div>
+<div class="row">
+	<div class="col-md-12">
+		<br />
+		<br />
+		<br />
+		<h4><i class="fa-solid fa-bars-staggered"></i> Resumen Matriz </h4>
+		<div class="card mb-4">
+
+			<div class="card-body">
+
+
+				<div class="col-lg-12 table-responsive">
+
+					<table id="file_export4" class="table table-bordered table-hover zero_config" style="width:100%; align-content:center; justify-content:center;text-align:center; table-layout: auto;">
+						<thead>
+							<tr>
+								<th style="white-space: nowrap;">Sistema</th>
+								<th style="white-space: nowrap;">Cargo</th>
+								<th style="white-space: nowrap;">Perfil</th>
+								<th style="white-space: nowrap;">Gerencia</th>
+								<th style="white-space: nowrap;">Subgerencia</th>
+								<th style="white-space: nowrap;">Cantidad Usuarios</th>
+							</tr>
+						</thead>
+						<tbody id="tablaMatriz">
+							@if (Model != null && Model.ResumenMatrizPerfil != null && Model.ResumenMatrizPerfil.Any())
+							{
+								@foreach (var item in Model.ResumenMatrizPerfil)
+								{
+
+									<tr>
+
+										<td style ="white-space: nowrap;">@item.sistema</td>
+										<td style="white-space: nowrap;">@item.cargospr</td>
+										<td style="white-space: nowrap;">@item.perfil</td>
+										<td style="white-space: nowrap;">@item.Gerencia</td>
+										<td style="white-space: nowrap;">@item.Subgerencia</td>
+										<td style="white-space: nowrap;">@item.CantidadUsuarios</td>
+									</tr>
+								}
+							}
+						</tbody>
+					</table>
+				</div>
+			</div>
+
+		</div>
+	</div>
+
+
+
+</div>
+
+
+@section scripts {
+
+	<script src="~/js/plugins/noty/lib/bounce.min.js"></script>
+	<script src="~/js/plugins/noty/lib/noty.js"></script>
+	<script src="~/js/FileSaver/FileSaver.js"></script>
+	<script src="~/js/SheetJs/xlsx.min.js"></script>
+	@* <script src="~/js/scripts.bundle.js"></script> *@
+
+	<script src="~/js/Fetch.js"></script>
+	<script src="/js/sweetalert/sweetalert.min.js"></script>
+
+
+	<script src="/js/vendor.min.js"></script>
+	<script src="/libs/datatables.net/js/jquery.dataTables.min.js"></script>
+	<script src="/js/dataTables.buttons.min.js"></script>
+	<script src="/js/jszip.min.js"></script>
+	<script src="/js/pdfmake.min.js"></script>
+	<script src="/js/vfs_fonts.js"></script>
+	<script src="/js/buttons.html5.min.js"></script>
+	<script src="/js/buttons.print.min.js"></script>
+	<script src="/js/datatable/datatable-advanced.init.js" asp-append-version="true"></script>
+	
+
+	@* <script>
+		document.getElementById('DescargarExcel').addEventListener('click', async () => {
+			try {
+				let url = '/Archivos/ListaMatrizJson';
+				let IdSistema = Number(document.getElementById('IdSistema').value);
+
+				if (isNaN(IdSistema) || IdSistema <= 0) {
+					console.error('ID del sistema no válido.');
+					return;
+				}
+
+				const formdata = new FormData();
+				formdata.append("Id", IdSistema);
+				let response = await fetch(url, {
+					method: 'POST',
+					body: formdata
+				});
+
+				if (!response.ok) {
+					console.error('Error en la solicitud:', response.statusText);
+					return;
+				}
+
+				let Resultado = await response.json();
+
+				if (Resultado.respuesta === true) {
+					let Data = Resultado.data;
+					let Info = Resultado.titulo;
+
+					let wb = XLSX.utils.book_new();
+					wb.Props = {
+						Title: "SistemaAbm",
+						Subject: "SistemaAbm",
+						Author: "SistemaAbm",
+						CreatedDate: new Date()
+					};
+					wb.SheetNames.push("Data");
+
+					let ResultadoFinal = LlenarExcel(Data);
+					let ws = XLSX.utils.aoa_to_sheet(ResultadoFinal);
+					wb.Sheets["Data"] = ws;
+					let wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'binary' });
+					saveAs(new Blob([s2ab(wbout)], { type: "application/octet-stream" }), Info.sistema + '.xlsx');
+				} else {
+					console.error('Error en la respuesta:', Resultado);
+				}
+			} catch (error) {
+				console.error('Error al descargar el Excel:', error);
+			}
+		});
+
+		document.getElementById('DescargarExcelAnt').addEventListener('click', async () => {
+			try {
+				let url = '/Archivos/ListaMatrizJsonResp';
+				let IdSistema = Number(document.getElementById('IdSistema').value);
+				// alert(IdSistema);
+				if (isNaN(IdSistema) || IdSistema <= 0) {
+					console.error('ID del sistema no válido.');
+					return;
+				}
+				const formdata = new FormData();
+				formdata.append("Id", IdSistema);
+				let response = await fetch(url, {
+					method: 'POST',
+					body: formdata
+				});
+
+				if (!response.ok) {
+					console.error('Error en la solicitud:', response.statusText);
+					return;
+				}
+
+				let Resultado = await response.json();
+				console.log(Resultado);
+				if (Resultado.respuesta === true) {
+
+					let Data = Resultado.data;
+					let Info = Resultado.titulo;
+
+					let wb = XLSX.utils.book_new();
+					wb.Props = {
+						Title: "SistemaAbm",
+						Subject: "SistemaAbm",
+						Author: "SistemaAbm",
+						CreatedDate: new Date()
+					};
+					wb.SheetNames.push("Data");
+
+					let ResultadoFinal = LlenarExcel(Data);
+					let ws = XLSX.utils.aoa_to_sheet(ResultadoFinal);
+					wb.Sheets["Data"] = ws;
+					let wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'binary' });
+					saveAs(new Blob([s2ab(wbout)], { type: "application/octet-stream" }), Info.sistema + '_respaldo.xlsx');
+				} else {
+					console.error('Error en la respuesta:', Resultado);
+				}
+			} catch (error) {
+				console.error('Error al descargar el Excel:', error);
+			}
+		});
+
+		function s2ab(s) {
+			let buf = new ArrayBuffer(s.length);
+			let view = new Uint8Array(buf);
+			for (let i = 0; i < s.length; i++) view[i] = s.charCodeAt(i) & 0xFF;
+			return buf;
+		}
+
+		function LlenarExcel(Data) {
+			let Ws_data = [];
+			if (Data.length !== 0) {
+				let headers = [
+					'sistema', 'perfil', 'cargomatriz', 'perfilmatriz', 'feccarga', 'Nom_Gerencia',
+					'CantidadUsuarios'
+				];
+				Ws_data.push(headers);
+
+				Data.forEach(Item => {
+					let row = [
+						Item.sistema,
+						Item.perfil,
+						Item.cargomatriz,
+						Item.perfilmatriz, 
+						Item.feccarga,
+						Item.Nom_Gerencia, 
+						Item.CantidadUsuarios,
+					];
+					Ws_data.push(row);
+				});
+			}
+			return Ws_data;
+		}
+
+	</script> *@
+
+}

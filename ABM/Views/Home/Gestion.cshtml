@@ -1,0 +1,490 @@
+﻿@model GestionViewModel
+@*
+    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+
+*@
+@{
+}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión</title>
+
+</head>
+<style>
+    #chartdiv {
+        width: 100%;
+        height: 500px;
+    }
+
+    #chartdiv2 {
+        width: 100%;
+        height: 500px;
+    }
+
+
+    .chart--container {
+        min-height: 530px;
+        width: 100%;
+        height: 100%;
+    }
+
+    .zc-ref {
+        display: none;
+    }
+
+</style>
+<body>
+        <br />
+        <br />
+        <br />
+        <br />
+        <div class="row">
+            <div class="col-lg-3 col-md-6 mb-4 card-hover">
+                <div class="card border-start border-success">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <span class="text-success display-6">
+                                <i class="ti ti-users"></i>
+                            </span>
+                            <div>
+                                <h2 class="fs-7">@Model.Activos</h2>
+                                <p class="fw-medium text-success mb-0">
+                                    Activos
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6 mb-4 card-hover">
+                <div class="card border-start border-warning">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <span class="text-warning display-6">
+                                <i class="ti ti-users"></i>
+                            </span>
+                            <div>
+                                <h2 class="fs-7">@Model.NoEncontrados</h2>
+                                <p class="fw-medium text-warning mb-0"> No Encontrados</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6 mb-4 card-hover">
+                <div class="card border-start border-danger">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <span class="text-danger display-6">
+                                <i class="ti ti-users"></i>
+                            </span>
+                            <div>
+                                <h2 class="fs-7">@Model.Finiquitados</h2>
+                                <p class="fw-medium text-danger mb-0">
+                                    Finiquitados
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6 mb-4 card-hover">
+                <div class="card border-start border-dark">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <span class="text-dark display-6">
+                                <i class="ti ti-briefcase"></i>
+                            </span>
+                            <div>
+                                <h2 class="fs-7">@Model.Riesgo</h2>
+                                <p class="fw-medium text-dark mb-0">
+                                    Riesgo
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card mb-4">
+                    <div class="card-header bg-primary text-white">
+                        Casos Cargo Perfil
+                    </div>
+                    <div class="card-body table-responsive">
+                        <table class="table table-bordered">
+                            <thead>
+                                <tr>
+                                    <th scope="col">Sistema</th>
+                                    <th scope="col">Rut</th>
+                                    <th scope="col">Casos</th>
+                                    <th scope="col">Cerrados</th>
+                                    <th scope="col">Pendientes</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @if (Model.ListaCasosCargo != null && Model.ListaCasosCargo.Any())
+                                {
+                                    foreach (var item in Model.ListaCasosCargo)
+                                    {
+                                        <tr>
+                                            <td>@item.Sistema</td>
+                                            <td>@item.Rut</td>
+                                            <td>@item.Casos</td>
+                                            <td>@item.Cerrados</td>
+                                            <td>@item.Pendientes</td>
+
+                                        </tr>
+                                    }
+                                }
+
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card mb-4">
+                    <div class="card-header bg-primary text-white">
+                        Evidencias Finiquitados
+                    </div>
+                    <div class="card-body table-responsive">
+                        <table class="table table-bordered">
+                            <thead>
+                                <tr>
+                                    <th scope="col">Sistema</th>
+                                    <th scope="col">Total</th>
+                                    <th scope="col">Entre 0 a 3</th>
+                                    <th scope="col">Entre 4 a 6</th>
+                                    <th scope="col">Mayor a 6</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @if (Model.ListaEvidenciasFiniquitado != null && Model.ListaEvidenciasFiniquitado.Any())
+                                {
+                                    foreach (var item in Model.ListaEvidenciasFiniquitado)
+                                    {
+                                        <tr>
+                                            <td>@item.Sistema</td>
+                                            <td>@item.finiquitados_hoy</td>
+                                            <td>@item.entre_1_3</td>
+                                            <td>@item.entre_4_6</td>
+                                            <td>@item.mayor_a_6</td>
+                                        </tr>
+                                    }
+                                }
+
+
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card mb-4">
+                    <div class="card-header bg-primary text-white">
+                        Resumen Sistema Pais
+                    </div>
+                    <div class="card-body table-responsive">
+                        <table class="table table-bordered">
+                            <thead>
+                                <tr>
+                                    <th scope="col">Sistema</th>
+                                    <th scope="col">Activos</th>
+                                    <th scope="col">Finiquitados</th>
+                                    <th scope="col">No Encontrados</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+
+                                @if (Model.ListaResumenPais != null && Model.ListaResumenPais.Any())
+                                {
+                                    foreach (var item in Model.ListaResumenPais)
+                                    {
+                                        <tr>
+                                            <td>@item.Sistema</td>
+                                            <td>@item.ACTIVOS</td>
+                                            <td>@item.FINIQUITADOS</td>
+                                            <td>@item.NO_ENCONTRADOS</td>
+                                        </tr>
+                                    }
+                                }
+
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card mb-4">
+                    <div class="card-header bg-primary text-white">
+                        Tendencias Diarias Pais
+                    </div>
+                    <div class="card-body table-responsive" style="max-height: 220px; overflow-y: auto;">
+                        <table id="tendenciasTable" class="table table-bordered">
+                            <thead>
+                                <tr>
+                                    <th scope="col" onclick="sortTable()">Fecha Carga &#x25B2;&#x25BC;</th>
+                                    <th scope="col">Finiquitados</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tendenciasBody">
+                                @if (Model.ListaTendenciaDiaria != null && Model.ListaTendenciaDiaria.Any())
+                                {
+                                    foreach (var item in Model.ListaTendenciaDiaria)
+                                    {
+                                        <tr>
+                                            <td>@item.feccarga</td>
+                                            <td>@item.cnt_finiquitados</td>
+                                        </tr>
+                                    }
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-12">
+                <div class="card mb-4">
+                    <div class="card-header bg-primary text-white">
+                        Graficos Evidencias
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col">
+                                <div id="chartdiv"></div>
+                            </div>
+                            <div class="col">
+                                <div id="chartdiv2"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-12">
+                <div class="card mb-4">
+                    <div class="card-header bg-primary text-white">
+                        Graficas de Finiquitados - Activos en Sistemas por Días
+                    </div>
+                    <div class="card-body">
+                        <div id="chartContainer" style="height: 300px; width: 100%;">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        @section scripts {
+            <script src="/js/canvasjs-chart-3.10.9/canvasjs.min.js"></script>
+            <script src="/js/amcharts_4.10.39/core.js"></script>
+            <script src="/js/amcharts_4.10.39/themes/animated.js"></script>
+            <script src="/js/amcharts_4.10.39/charts.js"></script>
+            @* ORDEN FECHAS DE LA TABLA TENDENCIAS DIARIAS *@
+            <script type="text/javascript">
+                function convertToDate(fechaString) {
+                    var fechaParts = fechaString.split('-');
+                    return new Date(fechaParts[2], fechaParts[1] - 1, fechaParts[0]);
+                }
+                function sortTable() {
+                    var tbody = document.getElementById("tendenciasBody");
+                    var rows = Array.from(tbody.querySelectorAll("tr"));
+
+                    rows.sort(function (rowA, rowB) {
+                        var dateA = convertToDate(rowA.cells[0].innerText);
+                        var dateB = convertToDate(rowB.cells[0].innerText);
+                        return dateB - dateA;
+                    });
+
+                    tbody.innerHTML = "";
+                    rows.forEach(function (row) {
+                        tbody.appendChild(row);
+                    });
+                }
+
+                window.onload = function () {
+                    sortTable();
+                };
+            </script>
+            @* GRÁFICO FINIQUITADOS ACTIVOS *@
+            <script type="text/javascript">
+                window.onload = function () {
+                    var chart = new CanvasJS.Chart("chartContainer", {
+                        title: {
+                            text: "Finiquitados Activos en Sistemas por Días",
+                            fontFamily: "Poppins",
+                            fontSize: 25,
+                            fontWeight: "normal",
+                            fontColor: "#808080",
+                        },
+                        axisY: {
+                            title: "Cantidad Finiquitados",
+                            valueFormatString: "#,###"
+                        },
+                        axisX: {
+                            valueFormatString: "DD-MM-YYYY",
+                            labelAngle: -45
+                        },
+                        data: [{
+                            type: "column",
+                            xValueFormatString: "DD-MM-YYYY",
+                            yValueFormatString: "#,##0",
+                            dataPoints: [
+                @if (Model.ListaTendenciaDiaria != null && Model.ListaTendenciaDiaria.Any())
+                {
+                    @foreach (var item in Model.ListaTendenciaDiaria)
+                    {
+                        var fechaPartes = item.feccarga.Split('-');
+                        var fechaFormato = $"{fechaPartes[2]}-{fechaPartes[1]}-{fechaPartes[0]}";
+                        @:{ x: new Date("@fechaFormato"), y: @item.cnt_finiquitados },
+                    }
+                }
+                                                                            ],
+                        }]
+                    });
+
+                    chart.render();
+                }
+            </script>
+            @* GRÁFICO TORTA EVIDENCIA FINIQUITADOS *@
+            <script>
+                am4core.ready(function () {
+
+                    am4core.useTheme(am4themes_animated);
+
+                    var chart = am4core.create("chartdiv", am4charts.PieChart3D);
+                    chart.hiddenState.properties.opacity = 0;
+
+                    var title = chart.titles.create();
+                    title.text = "Evidencia Finiquitados";
+                    title.fontSize = 25;
+                    title.marginBottom = 30;
+                    title.fontWeight = "normal";
+                    title.align = "center";
+                    title.fill = "#808080";
+
+                    chart.legend = new am4charts.Legend();
+                    chart.legend.position = "right";
+                    chart.legend.maxWidth = 150;
+
+                    chart.data = [
+                @if (Model.ListaResumenPais != null && Model.ListaResumenPais.Any())
+                {
+                    foreach (var item in Model.ListaResumenPais)
+                    {
+                        @:{ sistema: "@item.Sistema", finiquitados: @item.FINIQUITADOS },
+                    }
+                }
+                                    ];
+
+                    var series = chart.series.push(new am4charts.PieSeries3D());
+                    series.dataFields.value = "finiquitados";
+                    series.dataFields.category = "sistema";
+
+                    series.labels.template.wrap = true;
+                    series.labels.template.maxWidth = 150;
+                    series.labels.template.text = "{category}: {value.percent.formatNumber('#.0')}%";
+
+                    chart.innerRadius = am4core.percent(30);
+
+                    series.alignLabels = true;
+                    series.labels.template.bent = true;
+                    series.labels.template.radius = am4core.percent(-60);
+                    series.labels.template.padding(10, 10, 10, 10);
+
+                    series.ticks.template.disabled = false;
+                    series.ticks.template.strokeOpacity = 0.5;
+
+                });
+            </script>
+            @* GRÁFICO DE BARRAS EVIDENCIA FINIQUITADOS *@
+            <script>
+                am4core.ready(function () {
+
+                    am4core.useTheme(am4themes_animated);
+
+                    var chart = am4core.create("chartdiv2", am4charts.XYChart3D);
+
+                    var title = chart.titles.create();
+                    title.text = "Evidencia Finiquitados";
+                    title.fontSize = 25;
+                    title.marginBottom = 30;
+                    title.fontWeight = "normal";
+                    title.align = "center";
+                    title.fill = "#808080";
+
+                    var finiquitados = @Model.ListaResumenPais.Sum(x => x.FINIQUITADOS);
+                    var no_encontrados = @Model.ListaResumenPais.Sum(x => x.NO_ENCONTRADOS);
+
+                    chart.data = [{
+                        "category": "Finiquitados",
+                        "value": finiquitados
+                    }, {
+                        "category": "No Encontrados",
+                        "value": no_encontrados
+                    }];
+
+                    var maxValue = Math.max(finiquitados, no_encontrados);
+                    var halfValue = Math.round(maxValue / 2);
+
+                    let categoryAxis = chart.xAxes.push(new am4charts.CategoryAxis());
+                    categoryAxis.dataFields.category = "category";
+                    categoryAxis.renderer.labels.template.rotation = 270;
+                    categoryAxis.renderer.labels.template.hideOversized = false;
+                    categoryAxis.renderer.minGridDistance = 20;
+                    categoryAxis.renderer.labels.template.horizontalCenter = "right";
+                    categoryAxis.renderer.labels.template.verticalCenter = "middle";
+                    categoryAxis.tooltip.label.rotation = 270;
+                    categoryAxis.tooltip.label.horizontalCenter = "right";
+                    categoryAxis.tooltip.label.verticalCenter = "middle";
+
+                    let valueAxis = chart.yAxes.push(new am4charts.ValueAxis());
+                    valueAxis.title.text = "Cantidad";
+                    valueAxis.title.fontWeight = "light";
+                    valueAxis.min = 0;
+                    valueAxis.max = maxValue;
+                    valueAxis.strictMinMax = true;
+                    valueAxis.renderer.minGridDistance = 20;
+                    valueAxis.renderer.grid.template.disabled = false;
+
+                    valueAxis.renderer.labels.template.adapter.add("text", function (text, target) {
+                        var value = target.dataItem.value;
+                        if (value === 0 || value === halfValue || value === maxValue) {
+                            return value.toString();
+                        }
+                        return "";
+                    });
+
+                    var series = chart.series.push(new am4charts.ColumnSeries3D());
+                    series.dataFields.valueY = "value";
+                    series.dataFields.categoryX = "category";
+                    series.name = "Evidencia";
+                    series.tooltipText = "{categoryX}: [light]{valueY}[/]";
+                    series.columns.template.fillOpacity = .8;
+
+                    var columnTemplate = series.columns.template;
+                    columnTemplate.strokeWidth = 2;
+                    columnTemplate.strokeOpacity = 1;
+                    columnTemplate.stroke = am4core.color("#FFFFFF");
+
+                    columnTemplate.adapter.add("fill", function (fill, target) {
+                        return chart.colors.getIndex(target.dataItem.index);
+                    });
+
+                    columnTemplate.adapter.add("stroke", function (stroke, target) {
+                        return chart.colors.getIndex(target.dataItem.index);
+                    });
+
+                    chart.cursor = new am4charts.XYCursor();
+                    chart.cursor.lineX.strokeOpacity = 0;
+                    chart.cursor.lineY.strokeOpacity = 0;
+
+                });
+            </script>
+        }
+</body>
+</html>
