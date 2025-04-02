@@ -13,9 +13,10 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
 
     <!-- Favicon icon-->
-    <link rel="shortcut icon" type="image/png" href="~/images/logos/logoimperial.png" />
+    <link rel="shortcut icon" type="image/png" href="~/images/logos/favicon-32x32q.png" />
 
     <title>Inicio de sesión</title>
+
     <style>
         * {
             margin: 0;
@@ -33,7 +34,7 @@
         }
 
         .bg-img {
-            background: url('/images/logft/fdlog.png');
+            background: url('/images/fdlog.png');
             height: 100vh;
             background-size: cover;
             background-position: center;
@@ -46,7 +47,6 @@
                 left: 0;
                 height: 100%;
                 width: 100%;
-                background: rgba(0, 0, 0, 0.7);
             }
 
         .content {
@@ -132,7 +132,7 @@
 
 
         .field input[type="submit"] {
-            background: #3498db;
+            background: #abd600;
             border: 1px solid #2691d9;
             color: white;
             font-size: 18px;
@@ -143,7 +143,7 @@
         }
 
             .field input[type="submit"]:hover {
-                background: #2691d9;
+                background: #99bf00;
             }
 
         .login {
@@ -159,32 +159,6 @@
             margin: 0 0 20px 0;
         }
 
-        .facebook,
-        .instagram {
-            width: 100%;
-            height: 45px;
-            line-height: 45px;
-            margin-left: 10px;
-        }
-
-        .facebook {
-            margin-left: 0;
-            background: #4267b2;
-            border: 1px solid #3e61a8;
-        }
-
-        .instagram {
-            background: #e1306c;
-            border: 1px solid #df2060;
-        }
-
-        .facebook:hover {
-            background: #3e61a8;
-        }
-
-        .instagram:hover {
-            background: #df2060;
-        }
 
         .links i {
             font-size: 17px;
@@ -246,7 +220,8 @@
         }
 
         #ojito{
-            margin-top:10px
+            margin-top:10px;
+            color: #34a012
         }
 
         .underline-effect {
@@ -254,6 +229,7 @@
             text-decoration: none; /* Sin subrayado predeterminado */
             position: relative; /* Necesario para el pseudo-elemento */
             display: inline-block; /* Para aplicar el efecto correctamente */
+            font-family: Marlett
         }
 
             .underline-effect::after {
@@ -271,30 +247,44 @@
                 width: 100%; /* Extiende la línea al 100% del texto */
                 left: 0; /* Alinea la línea con el inicio del texto */
             }
+
+        header {
+            font-size: 2em;
+            font-weight: bold;
+            color: white;
+            text-shadow: -2px -2px 0 #34a012, -2px 0px 0 #34a012, -2px 2px 0 #34a012, 0px -2px 0 #34a012, 0px 2px 0 #34a012, 2px -2px 0 #34a012, 2px 0px 0 #34a012, 2px 2px 0 #34a012;
+        }
+
+        #iconosloginusercontra{
+            color: #34a012
+        }
+
     </style>
 
 </head>
+
+
 <body>
     <div class="bg-img">
         <div class="content">
-            <img src="~/images/logos/abmlog.png" alt="Logo Imperial" class="" style="width:350px; margin-left:-15px">
+            <img src="~/images/logos/logofalabellalogin.png" alt="Logo Falabella" class="" style="width:350px; margin-left:-15px; margin-bottom:-55px">
             <br />
             <br />
-            <header>Iniciar Sesión</header>
+            <header>INICIAR SESIÓN</header>
             <form asp-controller="Acceso" asp-action="Login" method="post">
                 <div class="field">
-                    <span class="fa fa-user"></span>
+                    <span id="iconosloginusercontra" class="fa fa-user"></span>
                     <input class="form-control" placeholder="correo@ejemplo.com" required asp-for="correo" />
                 </div>
                 <div class="field space">
-                    <span class="fa fa-lock icon"></span> <!-- Icono del candado -->
-                    <input class="form-control pass-key" type="password" placeholder="Ingrese su contraseña" required asp-for="password_c" />
+                    <span id="iconosloginusercontra" class="fa fa-lock icon"></span> <!-- Icono del candado -->
+                    <input class="form-control pass-key"  type="password" placeholder="Ingrese su contraseña" required asp-for="password_c" />
                     <span class="show" id="ojito"><i class="fa fa-eye icon"></i></span> <!-- Icono del ojo -->
                 </div>
                 <div class="field" style="margin-top:20px">
                     <input type="submit" value="CONÉCTATE">
                 </div>
-                <a asp-controller="Acceso" asp-action="OlvidoClave" class="underline-effect" style="margin-top: 15px; display: inline-block;">¿Olvidaste tu contraseña?</a>
+                <a asp-controller="Acceso" asp-action="OlvidoClave" class="underline-effect" style="margin-top: 15px; display: inline-block;">¿OLVIDASTE TU CONTRASEÑA?</a>
 
 
                 <br />

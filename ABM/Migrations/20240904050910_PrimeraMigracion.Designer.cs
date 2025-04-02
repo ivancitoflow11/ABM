@@ -5,11 +5,11 @@ using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
-using imperials.Data;
+using ABM.Data;
 
 #nullable disable
 
-namespace imperials.Migrations
+namespace ABM.Migrations
 {
     [DbContext(typeof(AppDBContext))]
     [Migration("20240904050910_PrimeraMigracion")]
