@@ -9,8 +9,9 @@ namespace ABM.Models
         public string correo { get; set; }
         public string password_c { get; set; }
         public string password { get; set; }
-        public string TokenRecuperacion { get; set; } // Campo para token
         public DateTime? ExpiracionToken { get; set; }
+        public string TokenRecuperacion { get; set; } // Campo para token
+        public DateTime? FechaCambioPassword { get; set; }
         // Propiedad de foreign key
         public int? idRol { get; set; }
         public int? ID_gerencia { get; set; }

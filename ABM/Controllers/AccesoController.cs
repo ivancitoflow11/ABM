@@ -478,6 +478,29 @@ namespace ABM.Controllers
                 return RedirectToAction("CambiarPasswordPrimerInicio");
             }
 
+            // Verificar si la contraseña ha expirado (más de 2 meses desde último cambio)
+            if (usuario_encontrado.FechaCambioPassword == null ||
+                usuario_encontrado.FechaCambioPassword.Value.AddMonths(2) < DateTime.Now)
+            {
+                List<Claim> claims = new List<Claim>
+        {
+            new Claim("RequiresPasswordChange", "true"),
+            new Claim(ClaimTypes.Name, usuario_encontrado.correo),
+            new Claim(ClaimTypes.NameIdentifier, usuario_encontrado.IdUsuario.ToString())
+        };
+
+                ClaimsIdentity claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+                AuthenticationProperties properties = new AuthenticationProperties() { AllowRefresh = true };
+
+                await HttpContext.SignInAsync(
+                    CookieAuthenticationDefaults.AuthenticationScheme,
+                    new ClaimsPrincipal(claimsIdentity),
+                    properties
+                );
+
+                return RedirectToAction("CambiarPasswordPrimerInicio");
+            }
+
             // Crear los claims de autenticación normal
             List<Claim> userClaims = new List<Claim>
     {
@@ -561,9 +584,7 @@ namespace ABM.Controllers
         public async Task<IActionResult> CambiarPasswordPrimerInicio(CambioPasswordVM modelo)
         {
             if (!ModelState.IsValid)
-            {
                 return View(modelo);
-            }
 
             if (modelo.NuevaContrasena != modelo.ConfirmarContrasena)
             {
@@ -577,32 +598,24 @@ namespace ABM.Controllers
                 return View(modelo);
             }
 
-            // Validar que el usuario autenticado está haciendo el cambio
             var correoAutenticado = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Name)?.Value;
-
             if (string.IsNullOrEmpty(correoAutenticado))
-            {
-                // Redirigir al login si no hay un usuario autenticado
                 return RedirectToAction("Login", "Acceso");
-            }
 
-            // Buscar al usuario autenticado en la base de datos
             var usuario = await _appDBContext.Usuario
                 .FirstOrDefaultAsync(u => u.correo == correoAutenticado);
 
             if (usuario == null)
-            {
                 return NotFound();
-            }
 
-            // Actualizar la contraseña
+            // Actualizar la contraseña y la fecha
             usuario.password_c = modelo.NuevaContrasena;
+            usuario.FechaCambioPassword = DateTime.Now;
+
             await _appDBContext.SaveChangesAsync();
 
-            // Eliminar la sesión actual para desloguear al usuario
-            await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme); // Limpiar sesión
+            await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
 
-            // Redirigir al login para que el usuario ingrese sus credenciales nuevamente
             TempData["Mensaje"] = "Contraseña actualizada exitosamente. Por favor ingrese sus credenciales nuevamente.";
             return RedirectToAction("Login", "Acceso");
         }
