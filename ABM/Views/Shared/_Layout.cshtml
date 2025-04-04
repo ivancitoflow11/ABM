@@ -12,14 +12,6 @@
     var menus = await dataService2.ObtenerMenusRol(resultado.IdUsuario);
 }
 
-@if (User.Identity.IsAuthenticated)
-{
-    var fechaClaim = User.Claims.FirstOrDefault(c => c.Type == "FechaCambioPassword")?.Value;
-    if (DateTime.TryParse(fechaClaim, out DateTime cambio) && cambio.AddMinutes(2) < DateTime.Now)
-    {
-        Context.Response.Redirect(Url.Action("CambiarPasswordPrimerInicio", "Acceso"));
-    }
-}
 
 <!DOCTYPE html>
 <html lang="en" dir="ltr" data-bs-theme="light" data-color-theme="Blue_Theme" data-layout="vertical">
