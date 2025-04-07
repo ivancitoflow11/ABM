@@ -100,7 +100,7 @@
                             <span class="hide-menu" id="get-url">Menú</span>
                         </li>
 
-                      @*   @if (menus != null && menus.Any())
+                        @*  @if (menus != null && menus.Any())
                         {
                             @foreach (var item in menus)
                             {
@@ -149,23 +149,23 @@
                                                         </a>
                                                     </li>
                                                 }
-                                            } *@
-                                            @* <li class="sidebar-item">
+                                            } 
+                                             <li class="sidebar-item">
                                 <a href="@Url.Action("Historicos","Excepciones")" class="sidebar-link sublink">
                                 <div class="round-16 d-flex align-items-center justify-content-center">
                                 <iconify-icon icon="solar:stop-circle-line-duotone"></iconify-icon>
                                 </div>
                                 <span class="hide-menu">Histórico Excepciones</span>
                                 </a>
-                                </li> *@
+                                </li> 
                                         </ul>
                                     </li>
                                 }
 
                             }
                         }
-
-                        @*
+ *@
+                        
                         <li class="sidebar-item">
                         <a class="sidebar-link" href="@Url.Action("AlertaSistema","Home")" id="get-url">
                         <iconify-icon icon="solar:shield-warning-linear" class="aside-icon"></iconify-icon>
@@ -207,12 +207,12 @@
                         </a>
                         </li>
                         </ul>
-                        </li> *@
+                        </li> 
 
                         <!-- ---------------------------------- -->
                         <!-- Dashboard -->
                         <!-- ---------------------------------- -->
-                        @* <li class="sidebar-item">
+                         <li class="sidebar-item">
                         <a class="sidebar-link has-arrow" href="javascript:void(0)" aria-expanded="false">
                         <iconify-icon icon="solar:notes-outline" class="aside-icon"></iconify-icon>
                         <span class="hide-menu">Reportes</span>
@@ -296,7 +296,7 @@
                         <iconify-icon icon="solar:remote-controller-minimalistic-broken" class="aside-icon"></iconify-icon>
                         <span class="hide-menu">Mantenedor Usuarios</span>
                         </a>
-                        <ul aria-expanded="false" class="collapse first-level">
+                        <ul aria-expanded="false" class="collapse first-level">//
                         <li class="sidebar-item">
                         <a href="@Url.Action("Registrarse","Acceso")" class="sidebar-link sublink">
                         <div class="round-16 d-flex align-items-center justify-content-center">
@@ -305,27 +305,7 @@
                         <span class="hide-menu">Crear Usuario</span>
                         </a>
                         </li>
-                        <li class="sidebar-item">
-                        <a href="@Url.Action("CrearRol","Acceso")" class="sidebar-link sublink">
-                        <div class="round-16 d-flex align-items-center justify-content-center">
-                        <iconify-icon icon="solar:user-bold"></iconify-icon>
-                        </div>
-                        <span class="hide-menu">Crear Rol</span>
-                        </a>
-                        </li>
-                        <li class="sidebar-item">
-                        <a href="@Url.Action("ListaUsuarios","Home")" class="sidebar-link sublink">
-                        <div class="round-16 d-flex align-items-center justify-content-center">
-                        <iconify-icon icon="solar:user-bold"></iconify-icon>
-                        </div>
-                        <span class="hide-menu">Lista Usuarios</span>
-                        </a>
-                        </li>
                         </ul>
-                        *@
-                        @* </li> *@
-
-
 
                         <li class="sidebar-item">
                             <a class="sidebar-link" asp-controller="Home" asp-action="Salir">
@@ -333,10 +313,7 @@
                                 <span class="hide-menu">Cerrar sesión</span>
                             </a>
                         </li>
-                        <!-- ---------------------------------- -->
-                        <!-- UI -->
-                        <!-- ---------------------------------- -->
-                        @* </ul> *@
+                         </ul> 
                     </ul>
                 </nav>
 

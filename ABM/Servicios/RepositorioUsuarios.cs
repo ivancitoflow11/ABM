@@ -9,14 +9,17 @@ namespace ABM.Servicios
 {
     public interface IRepositorioUsuarios
     {
-        // Obtiene todos los usuarios (para listar, por ejemplo)
+
         Task<List<ListaUsuariosViewModel>> ObtenerTodosLosUsuarios();
 
-        // Obtiene los datos del usuario que está autenticado
         Task<Usuario> ObtenerDatosUsuarioPerfilLogeado();
 
-        // Valida las credenciales de login (correo y repeat_password)
+
         Task<Usuario> ValidarUsuario(string correo, string repeat_password);
+
+        Task<int> RegistrarUsuario(Usuario usuario);
+        Task<bool> ExisteCorreo(string correo);
+        Task<bool> ExisteUsuario(string usuario);
     }
 
     public class RepositorioUsuarios : IRepositorioUsuarios
@@ -68,6 +71,75 @@ namespace ABM.Servicios
                                  WHERE correo = @correo 
                                  AND repeat_password = @repeat_password";
                 return await dbdapper.QueryFirstOrDefaultAsync<Usuario>(query, new { correo, repeat_password });
+            }
+        }
+        public async Task<int> RegistrarUsuario(Usuario usuario)
+        {
+            using (IDbConnection dbdapper = new SqlConnection(connectionString))
+            {
+                try
+                {
+                    string query = @"
+                INSERT INTO usuario (
+                    nombre, 
+                    apellidos, 
+                    rut, 
+                    telefono, 
+                    correo, 
+                    usuario, 
+                    password, 
+                    repeat_password, 
+                    Fcreacion, 
+                    otc, 
+                    inicioOtc, 
+                    MesesExpiracionClave,
+                    estado,
+                    estado_password
+                )
+                VALUES (
+                    @nombre, 
+                    @apellidos, 
+                    @rut, 
+                    @telefono, 
+                    @correo, 
+                    @usuario, 
+                    @password, 
+                    @repeat_password, 
+                    @Fcreacion, 
+                    @otc, 
+                    @inicioOtc, 
+                    @MesesExpiracionClave,
+                    @estado,
+                    '1'
+                );
+                SELECT CAST(SCOPE_IDENTITY() as int)";
+                    return await dbdapper.ExecuteScalarAsync<int>(query, usuario);
+                }
+                catch (Exception ex)
+                {
+                    // Aquí puedes registrar el error o mostrarlo para depuración
+                    throw new Exception("Error al registrar el usuario: " + ex.Message, ex);
+                }
+            }
+        }
+
+        public async Task<bool> ExisteCorreo(string correo)
+        {
+            using (IDbConnection dbdapper = new SqlConnection(connectionString))
+            {
+                string query = "SELECT COUNT(1) FROM usuario WHERE correo = @correo";
+                int count = await dbdapper.ExecuteScalarAsync<int>(query, new { correo });
+                return count > 0;
+            }
+        }
+
+        public async Task<bool> ExisteUsuario(string usuario)
+        {
+            using (IDbConnection dbdapper = new SqlConnection(connectionString))
+            {
+                string query = "SELECT COUNT(1) FROM usuario WHERE usuario = @usuario";
+                int count = await dbdapper.ExecuteScalarAsync<int>(query, new { usuario });
+                return count > 0;
             }
         }
     }

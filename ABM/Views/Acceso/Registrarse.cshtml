@@ -1,9 +1,24 @@
-﻿@model ABM.ViewModels.UsuarioVM;
+﻿@model ABM.Models.RegistroUsuarioVM
+
+<style>
+    .validation-summary-container {
+        margin-bottom: 15px;
+    }
+
+    .custom-validation {
+        border: 1px solid #dc3545;
+        border-radius: 4px;
+        padding: 10px;
+        font-size: 0.9rem;
+    }
+</style>
 
 <div class="col-12" style="margin-top: 90px">
     <h4 style="margin-top:5px;">Crear Usuario</h4>
     <div class="card w-100 border position-relative overflow-hidden mb-0">
         <div class="card-body p-4">
+
+
             <!-- Mensajes de éxito o error -->
             <div class="alert-container">
                 @if (ViewData["Success"] != null)
@@ -12,7 +27,6 @@
                         @ViewData["Success"]
                     </div>
                 }
-
                 @if (ViewData["Error"] != null)
                 {
                     <div class="alert alert-danger" role="alert">
@@ -20,280 +34,105 @@
                     </div>
                 }
             </div>
+
             <form asp-controller="Acceso" asp-action="Registrarse" method="post">
+                @Html.AntiForgeryToken()
                 <div class="row">
+                    <!-- Columna izquierda -->
                     <div class="col-lg-6" style="margin-top:15px;">
                         <div class="mb-3">
-                            <label for="nombre" class="form-label">Nombre Completo</label>
-                            <input class="form-control mb-3" type="text" placeholder="Ejemplo: Javier Osorio" required asp-for="nombre" />
+                            <label for="Nombre" class="form-label">Nombre</label>
+                            <input class="form-control" type="text" placeholder="Ingrese su nombre" asp-for="Nombre" />
+                            @Html.ValidationMessageFor(m => m.Nombre, "", new { @class = "text-danger" })
                         </div>
                         <div class="mb-3">
-                            <label for="password_c" class="form-label">Contraseña</label>
+                            <label for="Apellidos" class="form-label">Apellidos</label>
+                            <input class="form-control" type="text" placeholder="Ingrese sus apellidos" asp-for="Apellidos" />
+                            @Html.ValidationMessageFor(m => m.Apellidos, "", new { @class = "text-danger" })
+                        </div>
+                        <div class="mb-3">
+                            <label for="Rut" class="form-label">RUT</label>
+                            <input class="form-control" type="text" placeholder="Ingrese su RUT" asp-for="Rut" />
+                            @Html.ValidationMessageFor(m => m.Rut, "", new { @class = "text-danger" })
+                        </div>
+                        <div class="mb-3">
+                            <label for="Telefono" class="form-label">Teléfono</label>
+                            <input class="form-control" type="text" placeholder="Ingrese su teléfono" asp-for="Telefono" />
+                            @Html.ValidationMessageFor(m => m.Telefono, "", new { @class = "text-danger" })
+                        </div>
+                    </div>
+
+                    <!-- Columna derecha -->
+                    <div class="col-lg-6" style="margin-top:15px;">
+                        <div class="mb-3">
+                            <label for="Correo" class="form-label">Correo Electrónico</label>
+                            <input class="form-control" type="email" placeholder="correo@ejemplo.com" asp-for="Correo" />
+                            @Html.ValidationMessageFor(m => m.Correo, "", new { @class = "text-danger" })
+                        </div>
+                        <div class="mb-3">
+                            <label for="Usuario" class="form-label">Usuario</label>
+                            <input class="form-control" type="text" placeholder="Nombre de usuario" asp-for="Usuario" />
+                            @Html.ValidationMessageFor(m => m.Usuario, "", new { @class = "text-danger" })
+                        </div>
+                        <div class="mb-3">
+                            <label for="Password" class="form-label">Contraseña</label>
                             <div class="input-group">
-                                <input class="form-control"
-                                       type="password"
-                                       placeholder="Ingrese clave"
-                                       required
-                                       asp-for="password_c"
-                                       id="password_c" />
-                                <span class="input-group-text" id="ojito">
-                                    <i class="fa fa-eye icon" id="icono-ojo"></i>
+                                <input class="form-control" type="password" placeholder="Ingrese su contraseña" asp-for="Password" id="password" />
+                                <span class="input-group-text" id="togglePassword">
+                                    <i class="fa fa-eye" aria-hidden="true"></i>
                                 </span>
                             </div>
-                        </div>
-
-
-                        <div class="mb-3">
-                            <label class="form-label">Asignar Rol</label>
-                            <select class="form-select" aria-label="Default select example" required asp-for="idRol" id="selectRol">
-                                <option disabled selected>Seleccione Rol...</option>
-                                @if (Model.Roles != null && Model.Roles.Any())
-                                {
-                                    @foreach (var item in Model.Roles)
-                                    {
-                                        <option value="@item.idRol">@item.nombre</option>
-                                    }
-                                }
-                            </select>
+                            @Html.ValidationMessageFor(m => m.Password, "", new { @class = "text-danger" })
                         </div>
                         <div class="mb-3">
-                            <label class="form-label">Asignar Gerencia</label>
-                            <select class="form-select" aria-label="Default select example" asp-for="ID_gerencia" id="selectGerencia" onchange="cargarSubgerencias()">
-                                <option disabled selected>Seleccione Gerencia...</option>
-                                <option value="">Todas las gerencias</option>
-                                @if (Model.ListaGerencias != null && Model.ListaGerencias.Any())
-                                {
-                                    @foreach (var item in Model.ListaGerencias)
-                                    {
-                                        <option value="@item.ID_gerencia">@item.Nom_Gerencia</option>
-                                    }
-                                }
-                            </select>
+                            <label for="Repeat_Password" class="form-label">Repetir Contraseña</label>
+                            <div class="input-group">
+                                <input class="form-control" type="password" placeholder="Repita la contraseña" asp-for="Repeat_Password" id="repeatPassword" />
+                                <span class="input-group-text" id="toggleRepeatPassword">
+                                    <i class="fa fa-eye" aria-hidden="true"></i>
+                                </span>
+                            </div>
+                            @Html.ValidationMessageFor(m => m.Repeat_Password, "", new { @class = "text-danger" })
                         </div>
                         <div class="mb-3">
-                            <label class="form-label">Meses para Expiración de Clave</label>
-                            <select class="form-select" asp-for="MesesExpiracionClave" id="selectMesesExpiracionClave">
+                            <label for="MesesExpiracionClave" class="form-label">Meses para Expiración de Clave</label>
+                            <select class="form-select" asp-for="MesesExpiracionClave" id="MesesExpiracionClave">
                                 <option disabled selected>Seleccione meses...</option>
                                 @for (int i = 1; i <= 12; i++)
                                 {
                                     <option value="@i">@i</option>
                                 }
                             </select>
+                            @Html.ValidationMessageFor(m => m.MesesExpiracionClave, "", new { @class = "text-danger" })
                         </div>
-
-
-
                     </div>
 
-                    <div class="col-lg-6" style="margin-top:15px;">
-                        <div class="mb-3">
-                            <label for="correo" class="form-label">Email</label>
-                            <input class="form-control mb-3" type="email" placeholder="Correo electrónico" required asp-for="correo" />
-                        </div>
-
-                        <div class="mb-3">
-                            <label for="ConfirmarClave" class="form-label">Confirmar Contraseña</label>
-                            <div class="input-group">
-                                <input class="form-control"
-                                       type="password"
-                                       placeholder="Confirme clave de usuario"
-                                       required
-                                       asp-for="ConfirmarClave"
-                                       id="ConfirmarClave" />
-                                <span class="input-group-text" id="ojito-confirmar">
-                                    <i class="fa fa-eye icon" id="icono-ojo-confirmar"></i>
-                                </span>
-                            </div>
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label">Estado:</label>
-                            <select class="form-select" aria-label="Default select example" required asp-for="estado">
-                                <option value="1">Activo</option>
-                                <option value="2">Inactivo</option>
-                            </select>
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label">Subgerencia</label>
-                            <select class="form-select" aria-label="Default select example" asp-for="ID_Subgerencia" id="selectSubGerencia">
-                                <option disabled selected>Seleccione Subgerencia...</option>
-                                <option value="">Todas las subgerencias</option>
-                                @if (Model.ListaSubgerencias != null && Model.ListaSubgerencias.Any())
-                                {
-                                    @foreach (var item in Model.ListaSubgerencias)
-                                    {
-                                        <option value="@item.ID_Subgerencia">@item.Nom_Subgerencia</option>
-                                    }
-                                }
-                            </select>
-                        </div>
-
-                        <div class="mb-3">
-                            <label for="firma" class="form-label">Firma</label>
-                            <input type="file" class="form-control mb-3" id="firma" onchange="convertToBase64(this)" />
-                            <input type="hidden" asp-for="firma" />
-                        </div>
-
-                        <div class="mb-3">
-                            <label for="ResponsableFirma" class="form-label">¿Es Responsable de firmar la Matriz de su gerencia?</label>
-                            <div class="form-check form-check-inline">
-                                <input class="form-check-input" type="radio" name="ResponsableFirma" id="ResponsableFirma1" value="true"
-                                @(Model.ResponsableFirma == true ? "checked" : "")>
-                                <label class="form-check-label" for="ResponsableFirma1">Sí</label>
-                            </div>
-                            <div class="form-check form-check-inline">
-                                <input class="form-check-input" type="radio" name="ResponsableFirma" id="ResponsableFirma2" value="false" required
-                                @(Model.ResponsableFirma == false ? "checked" : "")>
-                                <label class="form-check-label" for="ResponsableFirma2">No</label>
-                            </div>
-
-                        </div>
-
-
-
-
-                    </div>
-
+                    <!-- Botón de envío -->
                     <div class="col-12">
                         <div class="d-grid gap-2 mb-3" style="display: flex; justify-content: flex-end;">
-                            <button class="btn btn-primary" style="width: 300px; border-radius:40px; margin-top:15px;" type="submit">Registrar Usuario</button>
+                            <button class="btn btn-primary" type="submit" style="width: 300px; border-radius:40px; margin-top:15px;">Registrar Usuario</button>
                         </div>
                     </div>
-
-
                 </div>
             </form>
         </div>
     </div>
 </div>
 
-<script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-    // Función para manejar el cambio en la selección del rol
-    document.getElementById('selectRol').addEventListener('change', function () {
-        var selectedRole = this.options[this.selectedIndex].text; // Obtener el nombre del rol seleccionado
-        var gerenciaSelect = document.getElementById('selectGerencia'); // Obtener el selector de gerencia
-
-        if (selectedRole === "Admin") {
-            gerenciaSelect.disabled = true; // Deshabilitar el selector de gerencia
-            gerenciaSelect.selectedIndex = 0; // Restablecer selección
-        } else {
-            gerenciaSelect.disabled = false; // Habilitar el selector de gerencia
-        }
-    });
-</script>
-
-<script>
-    // Variable para almacenar el valor anterior de la gerencia
-    var lastSelectedGerencia = null;
-
-    function cargarSubgerencias() {
-        // Obtener el valor de la gerencia seleccionada
-        var codGerencia = document.getElementById('selectGerencia').value;
-
-        console.log('Gerencia seleccionada:', codGerencia);
-
-        // Si la gerencia seleccionada es diferente de la última seleccionada, limpiar el campo de subgerencias
-        if (codGerencia !== lastSelectedGerencia) {
-            // Limpiar el campo de subgerencia
-            var subgerenciaSelect = document.getElementById('selectSubGerencia');
-            subgerenciaSelect.innerHTML = '<option disabled selected>Seleccione Subgerencia...</option><option value="">Todas las subgerencias</option>';
-
-            // Actualizar la última gerencia seleccionada
-            lastSelectedGerencia = codGerencia;
-        }
-
-        // Si no se selecciona una gerencia, no hacemos nada más
-        if (!codGerencia) {
-            return;
-        }
-
-        // Realizar la solicitud AJAX para obtener las subgerencias
-        fetch('@Url.Action("ObtenerSubGerenciasPorGerencia", "Acceso")?codGerencia=' + encodeURIComponent(codGerencia))
-            .then(response => response.json())
-            .then(data => {
-                console.log('Datos recibidos:', data);
-
-                // Limpiar las opciones del select de subgerencia
-                var subgerenciaSelect = document.getElementById('selectSubGerencia');
-                subgerenciaSelect.options.length = 0;  // Elimina todas las opciones
-
-                // Agregar la opción por defecto
-                var optionDefault = new Option('Seleccione Subgerencia...', '', true, true);
-                subgerenciaSelect.appendChild(optionDefault);
-
-                // Verificar si hay subgerencias
-                if (data && Array.isArray(data) && data.length > 0) {
-                    // Agregar las subgerencias al select
-                    data.forEach(subgerencia => {
-                        console.log(`Agregando opción: ${subgerencia.nom_Subgerencia}, ${subgerencia.iD_Subgerencia}`);
-                        var option = new Option(subgerencia.nom_Subgerencia, subgerencia.iD_Subgerencia);
-                        subgerenciaSelect.appendChild(option);
-                    });
-                } else {
-                    // Agregar mensaje de no subgerencias disponibles
-                    var option = new Option('No hay subgerencias disponibles', '', false, false);
-                    subgerenciaSelect.appendChild(option);
-                }
-            })
-            .catch(error => {
-                console.error('Error al obtener las subgerencias:', error);
-                var option = new Option('Error al cargar subgerencias', '', false, false);
-                subgerenciaSelect.appendChild(option);
-            });
-    }
-
-</script>
-
-
-<script>
-    // Función para autocompletar las contraseñas
-    function autocompletarContrasena() {
-        const contrasena = "Imperial.2024";
-        document.getElementById("password_c").value = contrasena;
-        document.getElementById("ConfirmarClave").value = contrasena;
-    }
-
-    // Llamar a la función al cargar la página
-    window.onload = autocompletarContrasena;
-</script>
-
-
-<script>
-    // Convierte la imagen a base64 y la guarda en el input oculto
-    function convertToBase64(input) {
-        const reader = new FileReader();
-        reader.onload = function (e) {
-            document.querySelector('input[name="firma"]').value = e.target.result;
-        };
-        reader.readAsDataURL(input.files[0]);
-    }
-</script>
-
-<script>
-    // Función general para manejar la visibilidad de los campos de contraseña
-    function togglePasswordVisibility(inputId, iconId) {
+    function togglePasswordVisibility(inputId, toggleId) {
         const passwordInput = document.getElementById(inputId);
-        const eyeIcon = document.getElementById(iconId);
-
-        if (passwordInput.type === "password") {
-            passwordInput.type = "text";
-            eyeIcon.classList.remove("fa-eye");
-            eyeIcon.classList.add("fa-eye-slash");
-        } else {
-            passwordInput.type = "password";
-            eyeIcon.classList.remove("fa-eye-slash");
-            eyeIcon.classList.add("fa-eye");
-        }
+        const toggleElement = document.getElementById(toggleId);
+        const newType = passwordInput.getAttribute("type") === "password" ? "text" : "password";
+        passwordInput.setAttribute("type", newType);
+        toggleElement.querySelector("i").classList.toggle("fa-eye-slash");
     }
 
-    // Asociar el evento 'click' para los dos campos
-    document.getElementById("ojito").addEventListener("click", function () {
-        togglePasswordVisibility("password_c", "icono-ojo");
+    document.getElementById("togglePassword").addEventListener("click", function () {
+        togglePasswordVisibility("password", "togglePassword");
     });
 
-    document.getElementById("ojito-confirmar").addEventListener("click", function () {
-        togglePasswordVisibility("ConfirmarClave", "icono-ojo-confirmar");
+    document.getElementById("toggleRepeatPassword").addEventListener("click", function () {
+        togglePasswordVisibility("repeatPassword", "toggleRepeatPassword");
     });
 </script>

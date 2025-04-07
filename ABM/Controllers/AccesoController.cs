@@ -70,5 +70,76 @@ namespace ABM.Controllers
             await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
             return RedirectToAction("Login", "Auth");
         }
+
+        [HttpGet]
+        public IActionResult Registrarse()
+        {
+            return View();
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Registrarse(RegistroUsuarioVM model)
+        {
+            if (!ModelState.IsValid)
+            {
+                return View(model);
+            }
+
+            if (model.Password != model.Repeat_Password)
+            {
+                ModelState.AddModelError("Repeat_Password", "Las contraseñas no coinciden.");
+                return View(model);
+            }
+
+            if (await _repositorioUsuarios.ExisteCorreo(model.Correo))
+            {
+                ModelState.AddModelError("Correo", "El correo ya se encuentra registrado.");
+                return View(model);
+            }
+
+            if (await _repositorioUsuarios.ExisteUsuario(model.Usuario))
+            {
+                ModelState.AddModelError("Usuario", "El nombre de usuario ya está en uso.");
+                return View(model);
+            }
+
+            try
+            {
+                var nuevoUsuario = new Usuario
+                {
+                    nombre = model.Nombre,
+                    apellidos = model.Apellidos,
+                    rut = model.Rut,
+                    telefono = model.Telefono,
+                    correo = model.Correo,
+                    usuario = model.Usuario,
+                    Fcreacion = DateTime.Now,
+                    otc = new Random().Next(1000, 10000).ToString(),
+                    inicioOtc = DateTime.Now,
+                    MesesExpiracionClave = model.MesesExpiracionClave,
+                    estado = "1",
+                    password = HashPassword(model.Password),
+                    repeat_password = model.Repeat_Password
+                };
+
+                int idNuevoUsuario = await _repositorioUsuarios.RegistrarUsuario(nuevoUsuario);
+
+                // Redireccionar si todo va bien
+                return RedirectToAction("Index", "Home");
+            }
+            catch (Exception ex)
+            {
+                // Puedes loguearlo si tienes sistema de logs
+                ModelState.AddModelError("", "Ocurrió un error al registrar el usuario. Intente nuevamente.");
+                return View(model);
+            }
+        }
+
+
+        private string HashPassword(string password)
+        {
+            return BCrypt.Net.BCrypt.HashPassword(password);
+        }
     }
 }
