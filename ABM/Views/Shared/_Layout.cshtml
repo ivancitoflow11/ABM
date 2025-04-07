@@ -2,14 +2,12 @@
 @using ABM.Servicios;
 @using Microsoft.AspNetCore.Identity;
 @using Microsoft.Extensions.DependencyInjection
-@inject IRepositorioCargas repositorioCargas
+
 
 @inject IServiceProvider ServiceProvider
 @{
     var dataService = ServiceProvider.GetService<IRepositorioUsuarios>();
     var resultado = await dataService.ObtenerDatosUsuarioPerfilLogeado();
-    var dataService2 = ServiceProvider.GetService<IRepositorioMenus>();
-    var menus = await dataService2.ObtenerMenusRol(resultado.IdUsuario);
 }
 
 
@@ -102,7 +100,7 @@
                             <span class="hide-menu" id="get-url">Menú</span>
                         </li>
 
-                        @if (menus != null && menus.Any())
+                      @*   @if (menus != null && menus.Any())
                         {
                             @foreach (var item in menus)
                             {
@@ -151,7 +149,7 @@
                                                         </a>
                                                     </li>
                                                 }
-                                            }
+                                            } *@
                                             @* <li class="sidebar-item">
                                 <a href="@Url.Action("Historicos","Excepciones")" class="sidebar-link sublink">
                                 <div class="round-16 d-flex align-items-center justify-content-center">
@@ -409,23 +407,7 @@
                             <div class="d-flex align-items-center justify-content-between py-2 py-lg-0">
                                 <ul class="navbar-nav gap-2 flex-row ms-auto align-items-center justify-content-center">
                                     <!-- Mostrar la última fecha de carga -->
-                                    <li class="nav-item">
-                                        <span class="navbar-text" style="color:white">
-                                            Última fecha de actualizacion:
-                                            @if (repositorioCargas != null)
-                                            {
-                                                var ultimaFecha = await repositorioCargas.ObtenerUltimaFechaDeCarga();
-                                                if (ultimaFecha.HasValue)
-                                                {
-                                                    <span>@ultimaFecha.Value.ToString("dd/MM/yyyy")</span>
-                                                }
-                                                else
-                                                {
-                                                    <span>No disponible</span>
-                                                }
-                                            }
-                                        </span>
-                                    </li>
+                                 
                                     <li class="nav-item nav-icon-hover-bg rounded-circle">
                                         <!-- Icono de la luna y texto a la izquierda -->
                                         <a class="nav-link nav-icon-hover moon dark-layout" href="javascript:void(0)">

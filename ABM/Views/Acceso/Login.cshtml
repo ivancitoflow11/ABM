@@ -1,4 +1,4 @@
-﻿@model ABM.ViewModels.LoginVM;
+﻿@model ABM.Models.LoginViewModel;
 @{
     Layout = null;
 }
@@ -27,10 +27,10 @@
 
         .logo {
             position: center;
-            width: 250px; /* Ajusta el tamaño del logo según tus necesidades */
+            width: 250px;
             align-content: center;
-            height: auto; /* Mantiene la proporción del logo */
-            z-index: 1000; /* Asegura que el logo esté por encima del fondo */
+            height: auto;
+            z-index: 1000;
         }
 
         .bg-img {
@@ -102,12 +102,12 @@
         .show {
             position: absolute;
             right: 13px;
-            top: 12px; /* Ajustado para centrar verticalmente */
-            font-size: 20px; /* Tamaño del ícono */
+            top: 12px;
+            font-size: 20px;
             cursor: pointer;
             color: #222;
-            z-index: 1000; /* Asegura que esté por encima de otros elementos */
-            transform: translateY(-50%); /* Alinea verticalmente con el candado */
+            z-index: 1000;
+            transform: translateY(-50%);
         }
 
         .pass {
@@ -116,20 +116,18 @@
         }
 
             .pass a {
-                color: white !important; /* Asegura que el texto sea blanco */
-                text-decoration: none !important; /* Quita el subrayado predeterminado */
-                background: none !important; /* Elimina cualquier fondo heredado */
-                border: none !important; /* Elimina bordes heredados */
-                padding: 0 !important; /* Elimina cualquier relleno inesperado */
-                box-shadow: none !important; /* Elimina sombras si las hay */
-                display: inline-block; /* Asegura que solo ocupe el espacio del texto */
+                color: white !important;
+                text-decoration: none !important;
+                background: none !important;
+                border: none !important;
+                padding: 0 !important;
+                box-shadow: none !important;
+                display: inline-block;
             }
 
                 .pass a:hover {
-                    text-decoration: underline; /* Agrega el subrayado al pasar el mouse */
+                    text-decoration: underline;
                 }
-
-
 
         .field input[type="submit"] {
             background: #abd600;
@@ -159,10 +157,9 @@
             margin: 0 0 20px 0;
         }
 
-
-        .links i {
-            font-size: 17px;
-        }
+            .links i {
+                font-size: 17px;
+            }
 
         i span {
             margin-left: 8px;
@@ -196,56 +193,54 @@
             font-weight: bold;
             color: white;
             z-index: 1000;
-
-
         }
 
         .alerta {
             text-align: center;
             font-family: Verdana, sans-serif;
             font-weight: normal;
-            color: white; /* Color del texto */
-            background-color: #ff3030; /* Fondo rojo */
-            padding: 10px; /* Espaciado interno para mejorar la apariencia */
-            border-radius: 10px; /* Bordes redondeados, opcional */
+            color: white;
+            background-color: #ff3030;
+            padding: 10px;
+            border-radius: 10px;
             z-index: 1000;
             font-style: italic;
             font-size: 0.9em;
         }
 
         .field .icon {
-            line-height: 45px; /* Alinea verticalmente los iconos con el campo de entrada */
-            font-size: 20px; /* Tamaño de los iconos */
-            margin-right: 10px; /* Espaciado entre el icono y el campo de entrada */
+            line-height: 45px;
+            font-size: 20px;
+            margin-right: 10px;
         }
 
-        #ojito{
-            margin-top:10px;
-            color: #34a012
+        #ojito {
+            margin-top: 10px;
+            color: #34a012;
         }
 
         .underline-effect {
-            color: white; /* Color del texto */
-            text-decoration: none; /* Sin subrayado predeterminado */
-            position: relative; /* Necesario para el pseudo-elemento */
-            display: inline-block; /* Para aplicar el efecto correctamente */
-            font-family: Marlett
+            color: white;
+            text-decoration: none;
+            position: relative;
+            display: inline-block;
+            font-family: Marlett;
         }
 
             .underline-effect::after {
-                content: ""; /* Pseudo-elemento vacío para la línea */
+                content: "";
                 position: absolute;
-                bottom: 0; /* Posiciona la línea justo debajo del texto */
-                left: 50%; /* Centra la línea */
-                width: 0; /* Comienza con una línea de ancho 0 */
-                height: 2px; /* Altura de la línea */
-                background-color: white; /* Color de la línea */
-                transition: all 0.3s ease; /* Transición suave */
+                bottom: 0;
+                left: 50%;
+                width: 0;
+                height: 2px;
+                background-color: white;
+                transition: all 0.3s ease;
             }
 
             .underline-effect:hover::after {
-                width: 100%; /* Extiende la línea al 100% del texto */
-                left: 0; /* Alinea la línea con el inicio del texto */
+                width: 100%;
+                left: 0;
             }
 
         header {
@@ -255,49 +250,43 @@
             text-shadow: -2px -2px 0 #34a012, -2px 0px 0 #34a012, -2px 2px 0 #34a012, 0px -2px 0 #34a012, 0px 2px 0 #34a012, 2px -2px 0 #34a012, 2px 0px 0 #34a012, 2px 2px 0 #34a012;
         }
 
-        #iconosloginusercontra{
-            color: #34a012
+        #iconosloginusercontra {
+            color: #34a012;
         }
-
     </style>
 
 </head>
 
-
 <body>
     <div class="bg-img">
         <div class="content">
-            <img src="~/images/logos/logofalabellalogin.png" alt="Logo Falabella" class="" style="width:350px; margin-left:-15px; margin-bottom:-55px">
-            <br />
-            <br />
+            <img src="~/images/logos/logofalabellalogin.png" alt="Logo Falabella" style="width:350px; margin-left:-15px; margin-bottom:-55px">
+            <br /><br />
             <header>INICIAR SESIÓN</header>
             <form asp-controller="Acceso" asp-action="Login" method="post">
+                @Html.AntiForgeryToken()
                 <div class="field">
                     <span id="iconosloginusercontra" class="fa fa-user"></span>
-                    <input class="form-control" placeholder="correo@ejemplo.com" required asp-for="correo" />
+                    <input class="form-control" placeholder="correo@ejemplo.com" required asp-for="Correo" />
                 </div>
                 <div class="field space">
-                    <span id="iconosloginusercontra" class="fa fa-lock icon"></span> <!-- Icono del candado -->
-                    <input class="form-control pass-key"  type="password" placeholder="Ingrese su contraseña" required asp-for="password_c" />
-                    <span class="show" id="ojito"><i class="fa fa-eye icon"></i></span> <!-- Icono del ojo -->
+                    <span id="iconosloginusercontra" class="fa fa-lock icon"></span>
+                    <input class="form-control pass-key" type="password" placeholder="Ingrese su contraseña" required asp-for="Repeat_Password" />
+                    <span class="show" id="ojito"><i class="fa fa-eye icon"></i></span>
                 </div>
                 <div class="field" style="margin-top:20px">
                     <input type="submit" value="CONÉCTATE">
                 </div>
                 <a asp-controller="Acceso" asp-action="OlvidoClave" class="underline-effect" style="margin-top: 15px; display: inline-block;">¿OLVIDASTE TU CONTRASEÑA?</a>
-
-
-                <br />
-                <br />
+                <br /><br />
 
                 @if (ViewData["Mensaje"] != null)
                 {
                     <div class="alerta" role="alert">
-                        <i class="fa-solid fa-circle-exclamation"></i> <!-- Icono de advertencia -->
+                        <i class="fa-solid fa-circle-exclamation"></i>
                         @ViewData["Mensaje"]
                     </div>
                 }
-
             </form>
         </div>
         <div class="footer-text">
@@ -312,10 +301,10 @@
             showBtn.addEventListener("click", function () {
                 if (pass_field.type === "password") {
                     pass_field.type = "text";
-                    showBtn.innerHTML = '<i class="fa fa-eye-slash"></i>'; // Cambiado a icono de ojo cerrado
+                    showBtn.innerHTML = '<i class="fa fa-eye-slash"></i>';
                 } else {
                     pass_field.type = "password";
-                    showBtn.innerHTML = '<i class="fa fa-eye"></i>'; // Icono de ojo abierto
+                    showBtn.innerHTML = '<i class="fa fa-eye"></i>';
                 }
             });
         });

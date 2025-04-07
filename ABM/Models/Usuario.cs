@@ -1,33 +1,30 @@
-﻿using Microsoft.AspNetCore.Identity;
-
-namespace ABM.Models
+﻿namespace ABM.Models
 {
     public class Usuario
     {
-        public int IdUsuario { get; set; }
+        public int idUsuario { get; set; }
         public string nombre { get; set; }
+        public string apellidos { get; set; }
+        public string rut { get; set; }
+        public string telefono { get; set; }
         public string correo { get; set; }
-        public string password_c { get; set; }
+        public string usuario { get; set; }
         public string password { get; set; }
-        public DateTime? ExpiracionToken { get; set; }
-        public string TokenRecuperacion { get; set; } // Campo para token
-        public DateTime? FechaCambioPassword { get; set; }
-        // Propiedad de foreign key
-        public int? idRol { get; set; }
-        public int? ID_gerencia { get; set; }
-        public string? estado { get; set; }
+        public string repeat_password { get; set; }
+        public DateTime? FultimoAcceso { get; set; }
+        public DateTime? FultimaModificacion { get; set; }
+        public DateTime? Fcreacion { get; set; }
+        public string estado { get; set; }
 
-        // Relación con la tabla Rol
-        public Rol Rol { get; set; }
-        public virtual Gerencia Gerencia { get; set; }
-
-        public string firma { get; set; }
-        public int? ID_Subgerencia { get; set; }
-        public Subgerencia Subgerencia { get; set; }
-        public bool? ResponsableFirma { get; set; }
-        public int? COD_OTC { get; set; }
-
+        public int idRol { get; set; }
+        public bool estado_password { get; set; }
+        public string session { get; set; }
+        public string otc { get; set; }
+        public DateTime? inicioOtc { get; set; }
         public int MesesExpiracionClave { get; set; }
+        public DateTime? FechaCambioPassword { get; set; }
+        public byte[] firma { get; set; }
+        public bool? ResponsableFirma { get; set; }
 
     }
 }
