@@ -48,5 +48,6 @@ namespace ABM.ViewModels
 
         [Required(ErrorMessage = "Confirme si es o no responsable!")]
         public bool? ResponsableFirma { get; set; }
+        public int MesesExpiracionClave { get; set; }
     }
 }

@@ -4,6 +4,7 @@ using ABM.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,10 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace ABM.Migrations
 {
     [DbContext(typeof(AppDBContext))]
-    partial class AppDBContextModelSnapshot : ModelSnapshot
+    [Migration("20250407043814_AddCODOTCColumn")]
+    partial class AddCODOTCColumn
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -86,7 +88,7 @@ namespace ABM.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("IdUsuario"), 1L, 1);
 
-                    b.Property<int?>("COD_OTC")
+                    b.Property<int>("COD_OTC")
                         .HasColumnType("int");
 
                     b.Property<DateTime?>("ExpiracionToken")
@@ -99,9 +101,6 @@ namespace ABM.Migrations
                         .HasColumnType("int");
 
                     b.Property<int?>("ID_gerencia")
-                        .HasColumnType("int");
-
-                    b.Property<int>("MesesExpiracionClave")
                         .HasColumnType("int");
 
                     b.Property<bool?>("ResponsableFirma")

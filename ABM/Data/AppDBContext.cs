@@ -32,7 +32,8 @@ namespace ABM.Data
                 tb.Property(col => col.ExpiracionToken).IsRequired(false);
                 tb.Property(col => col.estado).HasColumnType("char(1)").IsRequired(false);
                 tb.Property(col => col.ResponsableFirma).HasColumnType("bit").IsRequired(false);
-
+                tb.Property(u => u.COD_OTC);
+                tb.Property(u => u.MesesExpiracionClave);
                 tb.HasOne(u => u.Gerencia)
               .WithMany() 
               .HasForeignKey(u => u.ID_gerencia);
@@ -52,6 +53,8 @@ namespace ABM.Data
                 tb.HasKey(r => r.idRol);
                 tb.Property(r => r.nombre).HasMaxLength(50);
             });
+
+
 
             modelBuilder.Entity<Gerencia>(tb =>
             {

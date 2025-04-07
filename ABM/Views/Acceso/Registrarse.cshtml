@@ -70,6 +70,17 @@
                                 }
                             </select>
                         </div>
+                        <div class="mb-3">
+                            <label class="form-label">Meses para Expiración de Clave</label>
+                            <select class="form-select" asp-for="MesesExpiracionClave" id="selectMesesExpiracionClave">
+                                <option disabled selected>Seleccione meses...</option>
+                                @for (int i = 1; i <= 12; i++)
+                                {
+                                    <option value="@i">@i</option>
+                                }
+                            </select>
+                        </div>
+
 
 
                     </div>
@@ -138,6 +149,8 @@
                             </div>
 
                         </div>
+
+
 
 
                     </div>

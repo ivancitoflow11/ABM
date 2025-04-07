@@ -25,6 +25,9 @@ namespace ABM.Models
         public int? ID_Subgerencia { get; set; }
         public Subgerencia Subgerencia { get; set; }
         public bool? ResponsableFirma { get; set; }
+        public int? COD_OTC { get; set; }
+
+        public int MesesExpiracionClave { get; set; }
 
     }
 }

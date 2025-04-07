@@ -152,8 +152,14 @@ namespace ABM.Controllers
                     ID_gerencia = modelo.ID_gerencia,
                     ID_Subgerencia = modelo.ID_Subgerencia,
                     firma = modelo.firma,
-                    ResponsableFirma = modelo.ResponsableFirma
+                    ResponsableFirma = modelo.ResponsableFirma,
+                    MesesExpiracionClave = modelo.MesesExpiracionClave,
+
                 };
+
+
+                Random random = new Random();
+                usuario.COD_OTC = random.Next(10000, 100000);
 
                 await _appDBContext.Usuario.AddAsync(usuario);
                 await _appDBContext.SaveChangesAsync();
@@ -478,9 +484,9 @@ namespace ABM.Controllers
                 return RedirectToAction("CambiarPasswordPrimerInicio");
             }
 
-            // Verificar si la contraseña ha expirado (más de 2 meses desde último cambio)
+            // Verificar expiración de la contraseña usando el nuevo campo MesesExpiracionClave
             if (usuario_encontrado.FechaCambioPassword == null ||
-                usuario_encontrado.FechaCambioPassword.Value.AddMonths(2) < DateTime.Now)
+                usuario_encontrado.FechaCambioPassword.Value.AddMonths(usuario_encontrado.MesesExpiracionClave) < DateTime.Now)
             {
                 List<Claim> claims = new List<Claim>
         {
