@@ -16,7 +16,7 @@
         public DateTime? Fcreacion { get; set; }
         public string estado { get; set; }
 
-        public int idRol { get; set; }
+        public int? idRol { get; set; }
         public bool estado_password { get; set; }
         public string session { get; set; }
         public string otc { get; set; }

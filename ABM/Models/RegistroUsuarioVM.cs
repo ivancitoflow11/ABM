@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 
 namespace ABM.Models
 {
@@ -31,5 +32,9 @@ namespace ABM.Models
 
         [Range(1, 12, ErrorMessage = "Seleccione un valor válido para meses.")]
         public int MesesExpiracionClave { get; set; }
+        [Required(ErrorMessage = "Debe seleccionar un rol.")]
+        public int? RolId { get; set; }
+
+        public IEnumerable<Rol> RolesDisponibles { get; set; }
     }
 }

@@ -20,6 +20,7 @@ namespace ABM.Servicios
         Task<int> RegistrarUsuario(Usuario usuario);
         Task<bool> ExisteCorreo(string correo);
         Task<bool> ExisteUsuario(string usuario);
+        Task<IEnumerable<Rol>> ObtenerRoles();
     }
 
     public class RepositorioUsuarios : IRepositorioUsuarios
@@ -94,7 +95,8 @@ namespace ABM.Servicios
                     inicioOtc, 
                     MesesExpiracionClave,
                     estado,
-                    estado_password
+                    estado_password,
+                    idRol
                 )
                 VALUES (
                     @nombre, 
@@ -110,7 +112,8 @@ namespace ABM.Servicios
                     @inicioOtc, 
                     @MesesExpiracionClave,
                     @estado,
-                    '1'
+                    '1',
+                    @idRol
                 );
                 SELECT CAST(SCOPE_IDENTITY() as int)";
                     return await dbdapper.ExecuteScalarAsync<int>(query, usuario);
@@ -142,5 +145,16 @@ namespace ABM.Servicios
                 return count > 0;
             }
         }
+
+        public async Task<IEnumerable<Rol>> ObtenerRoles()
+        {
+            using (IDbConnection dbdapper = new SqlConnection(connectionString))
+            {
+                return await dbdapper.QueryAsync<Rol>(
+                    @"SELECT idRol, nombre FROM rol ORDER BY nombre;
+                        ");
+            }
+        }
+
     }
 }

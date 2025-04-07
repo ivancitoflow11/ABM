@@ -72,10 +72,16 @@ namespace ABM.Controllers
         }
 
         [HttpGet]
-        public IActionResult Registrarse()
+        public async Task<IActionResult> Registrarse()
         {
-            return View();
+            var model = new RegistroUsuarioVM
+            {
+                RolesDisponibles = await _repositorioUsuarios.ObtenerRoles()
+            };
+
+            return View(model);
         }
+
 
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -83,24 +89,28 @@ namespace ABM.Controllers
         {
             if (!ModelState.IsValid)
             {
+                model.RolesDisponibles = await _repositorioUsuarios.ObtenerRoles();
                 return View(model);
             }
 
             if (model.Password != model.Repeat_Password)
             {
                 ModelState.AddModelError("Repeat_Password", "Las contraseñas no coinciden.");
+                model.RolesDisponibles = await _repositorioUsuarios.ObtenerRoles();
                 return View(model);
             }
 
             if (await _repositorioUsuarios.ExisteCorreo(model.Correo))
             {
                 ModelState.AddModelError("Correo", "El correo ya se encuentra registrado.");
+                model.RolesDisponibles = await _repositorioUsuarios.ObtenerRoles();
                 return View(model);
             }
 
             if (await _repositorioUsuarios.ExisteUsuario(model.Usuario))
             {
                 ModelState.AddModelError("Usuario", "El nombre de usuario ya está en uso.");
+                model.RolesDisponibles = await _repositorioUsuarios.ObtenerRoles();
                 return View(model);
             }
 
@@ -120,21 +130,22 @@ namespace ABM.Controllers
                     MesesExpiracionClave = model.MesesExpiracionClave,
                     estado = "1",
                     password = HashPassword(model.Password),
-                    repeat_password = model.Repeat_Password
+                    repeat_password = model.Repeat_Password,
+                    idRol = model.RolId
                 };
 
                 int idNuevoUsuario = await _repositorioUsuarios.RegistrarUsuario(nuevoUsuario);
 
-                // Redireccionar si todo va bien
                 return RedirectToAction("Index", "Home");
             }
             catch (Exception ex)
             {
-                // Puedes loguearlo si tienes sistema de logs
                 ModelState.AddModelError("", "Ocurrió un error al registrar el usuario. Intente nuevamente.");
+                model.RolesDisponibles = await _repositorioUsuarios.ObtenerRoles();
                 return View(model);
             }
         }
+
 
 
         private string HashPassword(string password)
