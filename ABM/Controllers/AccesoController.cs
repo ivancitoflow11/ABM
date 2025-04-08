@@ -34,13 +34,21 @@ namespace ABM.Controllers
 
             if (usuario != null)
             {
+                // Si es el primer inicio, redirigimos a la vista para cambio de contraseña
+                if (usuario.primerInicio)
+                {
+                    // Opcionalmente, podrías guardar algún dato en TempData para usar en la vista
+                    TempData["idUsuario"] = usuario.idUsuario;
+                    return RedirectToAction("CambiarPasswordPrimerInicio", "Acceso");
+                }
+
                 // Configuración de claims para el usuario autenticado
                 var claims = new List<Claim>
-                {
-                    new Claim(ClaimTypes.NameIdentifier, usuario.idUsuario.ToString()),
-                    new Claim(ClaimTypes.Name, usuario.nombre),
-                    // Se pueden agregar más claims según la necesidad
-                };
+        {
+            new Claim(ClaimTypes.NameIdentifier, usuario.idUsuario.ToString()),
+            new Claim(ClaimTypes.Name, usuario.nombre),
+            // Se pueden agregar más claims si se requiere
+        };
 
                 var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
                 var authProperties = new AuthenticationProperties
@@ -53,8 +61,7 @@ namespace ABM.Controllers
                     new ClaimsPrincipal(claimsIdentity),
                     authProperties);
 
-                // Actualizar el campo FultimoAcceso u otros campos, si es necesario
-
+                // Aquí puedes actualizar campos como FultimoAcceso si es necesario
                 return RedirectToAction("Index", "Home");
             }
             else
@@ -63,6 +70,7 @@ namespace ABM.Controllers
                 return View(model);
             }
         }
+
 
         [HttpPost]
         public async Task<IActionResult> Logout()
@@ -146,6 +154,61 @@ namespace ABM.Controllers
             }
         }
 
+        [HttpGet]
+        public IActionResult CambiarPasswordPrimerInicio()
+        {
+            // Se asume que en el login se almacenó el Id del usuario en TempData, por ejemplo TempData["idUsuario"]
+            if (TempData["idUsuario"] == null)
+            {
+                TempData["MensajeError"] = "Ocurrió un error, por favor inicie sesión nuevamente.";
+                return RedirectToAction("Login");
+            }
+
+            // Convertir el valor de TempData a int y asignarlo al modelo
+            int idUsuario = Convert.ToInt32(TempData["idUsuario"]);
+            // Si deseas conservar TempData para el post, puedes reasignarlo
+            TempData.Keep("idUsuario");
+
+            var model = new CambioPasswordVM
+            {
+                IdUsuario = idUsuario
+            };
+
+            return View(model);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> CambiarPasswordPrimerInicio(CambioPasswordVM model)
+        {
+            if (!ModelState.IsValid)
+            {
+                return View(model);
+            }
+
+            if (model.IdUsuario <= 0)
+            {
+                TempData["MensajeError"] = "Ocurrió un error, por favor inicie sesión nuevamente.";
+                return RedirectToAction("Login");
+            }
+
+            // Calcula el hash de la nueva contraseña.
+            string hashedPassword = HashPassword(model.NuevaContrasena);
+
+            // Se llama al método actualizado del repositorio enviando tanto el hash como la contraseña original
+            bool actualizado = await _repositorioUsuarios.ActualizarPasswordPrimerInicio(model.IdUsuario, hashedPassword, model.NuevaContrasena);
+
+            if (actualizado)
+            {
+                TempData["Mensaje"] = "Contraseña actualizada correctamente. Por favor, inicie sesión.";
+                return RedirectToAction("Login");
+            }
+            else
+            {
+                ModelState.AddModelError("", "No se pudo actualizar la contraseña. Intente nuevamente.");
+                return View(model);
+            }
+        }
 
 
         private string HashPassword(string password)

@@ -25,6 +25,7 @@
         public DateTime? FechaCambioPassword { get; set; }
         public byte[] firma { get; set; }
         public bool? ResponsableFirma { get; set; }
+        public bool primerInicio { get; set; }
 
     }
 }

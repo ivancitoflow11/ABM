@@ -15,6 +15,6 @@ namespace ABM.Models
 
         [Compare("NuevaContrasena", ErrorMessage = "Las contraseñas no coinciden.")]
         public string ConfirmarContrasena { get; set; }
-        public string Correo { get; set; }
+
     }
 }

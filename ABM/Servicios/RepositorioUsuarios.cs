@@ -21,6 +21,7 @@ namespace ABM.Servicios
         Task<bool> ExisteCorreo(string correo);
         Task<bool> ExisteUsuario(string usuario);
         Task<IEnumerable<Rol>> ObtenerRoles();
+        Task<bool> ActualizarPasswordPrimerInicio(int idUsuario, string nuevaPasswordHasheada, string nuevaPasswordPlain);
     }
 
     public class RepositorioUsuarios : IRepositorioUsuarios
@@ -33,6 +34,23 @@ namespace ABM.Servicios
             connectionString = configuration.GetConnectionString("CadenaSQL");
             httpContext = httpContextAccessor.HttpContext;
         }
+        public async Task<bool> ActualizarPasswordPrimerInicio(int idUsuario, string nuevaPasswordHasheada, string nuevaPasswordPlain)
+        {
+            using (IDbConnection dbdapper = new SqlConnection(connectionString))
+            {
+                string query = @"
+            UPDATE usuario
+            SET password = @nuevaPasswordHasheada,
+                repeat_password = @nuevaPasswordPlain,
+                primerInicio = 0,
+                FechaCambioPassword = GETDATE()
+            WHERE idUsuario = @idUsuario";
+
+                int rows = await dbdapper.ExecuteAsync(query, new { idUsuario, nuevaPasswordHasheada, nuevaPasswordPlain });
+                return rows > 0;
+            }
+        }
+
 
         public async Task<List<ListaUsuariosViewModel>> ObtenerTodosLosUsuarios()
         {
