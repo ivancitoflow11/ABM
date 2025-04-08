@@ -67,7 +67,10 @@ namespace ABM.Controllers
                     new ClaimsPrincipal(claimsIdentity),
                     authProperties);
 
-                return RedirectToAction("Index", "Home");
+                ViewBag.PedirOTC = true;
+                ViewBag.IdUsuario = usuario.idUsuario;
+                return View(model);
+
             }
             else
             {
@@ -76,6 +79,17 @@ namespace ABM.Controllers
             }
         }
 
+        [HttpGet]
+        public async Task<IActionResult> ValidarOTC(int idUsuario, string otcIngresado)
+        {
+            var usuario = await _repositorioUsuarios.ObtenerPorId(idUsuario);
+
+            if (usuario == null)
+                return Json(new { valido = false });
+
+            bool esValido = usuario.otc.ToString() == otcIngresado;
+            return Json(new { valido = esValido });
+        }
 
 
         [HttpPost]

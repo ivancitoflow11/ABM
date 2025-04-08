@@ -16,7 +16,7 @@ namespace ABM.Servicios
 
 
         Task<Usuario> ValidarUsuario(string correo, string repeat_password);
-
+        Task<Usuario> ObtenerPorId(int idUsuario);
         Task<int> RegistrarUsuario(Usuario usuario);
         Task<bool> ExisteCorreo(string correo);
         Task<bool> ExisteUsuario(string usuario);
@@ -61,6 +61,16 @@ namespace ABM.Servicios
                     @"SELECT * FROM usuario")).ToList();
             }
         }
+
+        public async Task<Usuario> ObtenerPorId(int idUsuario)
+        {
+            using (IDbConnection dbdapper = new SqlConnection(connectionString))
+            {
+                return await dbdapper.QueryFirstOrDefaultAsync<Usuario>(
+                    "SELECT * FROM usuario WHERE idUsuario = @id", new { id = idUsuario });
+            }
+        }
+
 
         public async Task<Usuario> ObtenerDatosUsuarioPerfilLogeado()
         {

@@ -311,3 +311,68 @@
     </script>
 </body>
 </html>
+@if (ViewBag.PedirOTC != null && (bool)ViewBag.PedirOTC)
+{
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        /* Asegura que Swal2 use tu fuente principal */
+        .swal2-popup {
+            font-family: 'Segoe UI', 'Helvetica Neue', sans-serif !important;
+        }
+    </style>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            pedirOTC();
+        });
+
+        function pedirOTC() {
+            Swal.fire({
+                title: '<strong style="color:#3a3a3a;">🔐 Verificación OTC</strong>',
+                html: `
+                            <p style="font-size:16px; color:#4a4a4a;">
+                                Por favor, ingresa tu código de verificación de 4 dígitos para continuar.<br>
+                                <span style="color:#7ac143; font-weight:bold;">ABM FALABELLA</span>
+                            </p>
+                        `,
+                input: 'text',
+                inputPlaceholder: 'Ej: 1234',
+                inputAttributes: {
+                    maxlength: 4,
+                    style: 'text-align: center; font-size: 22px; letter-spacing: 5px;'
+                },
+                background: '#fcfdf8',
+                confirmButtonText: 'Validar',
+                confirmButtonColor: '#7ac143',
+                allowOutsideClick: false,
+                allowEscapeKey: false,
+                showLoaderOnConfirm: true,
+                preConfirm: (valorOTC) => {
+                    return fetch(`/Acceso/ValidarOTC?idUsuario=@ViewBag.IdUsuario&otcIngresado=${valorOTC}`)
+                        .then(response => {
+                            if (!response.ok) {
+                                throw new Error(response.statusText)
+                            }
+                            return response.json()
+                        })
+                        .then(data => {
+                            if (!data.valido) {
+                                throw new Error('OTC INCORRECTO');
+                            }
+                        })
+                        .catch(error => {
+                            Swal.showValidationMessage(
+                                ` ${error}`
+                            )
+                        });
+                }
+            }).then((resultado) => {
+                if (resultado.isConfirmed) {
+                    window.location.href = '/Home/Index';
+                } else {
+                    pedirOTC(); // reintento si se cancela
+                }
+            });
+        }
+    </script>
+}

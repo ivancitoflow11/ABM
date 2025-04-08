@@ -1,0 +1,52 @@
+﻿@model ABM.Models.Usuario
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            pedirOTC();
+        });
+
+        function pedirOTC() {
+            Swal.fire({
+                title: 'Ingrese su OTC',
+                input: 'text',
+                inputLabel: 'Código de 4 dígitos',
+                inputPlaceholder: '1234',
+                inputAttributes: {
+                    maxlength: 4,
+                    autocapitalize: 'off',
+                    autocorrect: 'off'
+                },
+                showCancelButton: false,
+                confirmButtonText: 'Validar',
+                preConfirm: (valorOTC) => {
+                    return fetch(`/Acceso/ValidarOTC?idUsuario=${@Model.idUsuario}&otcIngresado=${valorOTC}`)
+                        .then(response => {
+                            if (!response.ok) {
+                                throw new Error(response.statusText)
+                            }
+                            return response.json()
+                        })
+                        .then(data => {
+                            if (!data.valido) {
+                                throw new Error('OTC incorrecto');
+                            }
+                        })
+                        .catch(error => {
+                            Swal.showValidationMessage(
+                                `Error: ${error}`
+                            )
+                        });
+                }
+            }).then((resultado) => {
+                if (resultado.isConfirmed) {
+                    // Redirigir si OTC fue correcto
+                    window.location.href = '/Home/Index';
+                } else {
+                    pedirOTC(); // si se cancela o falla, volver a pedir
+                }
+            });
+        }
+    </script>
+}
