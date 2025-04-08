@@ -34,34 +34,39 @@ namespace ABM.Controllers
 
             if (usuario != null)
             {
-                // Si es el primer inicio, redirigimos a la vista para cambio de contraseña
+                // Si es el primer inicio, redirigimos a cambiar contraseña
                 if (usuario.primerInicio)
                 {
-                    // Opcionalmente, podrías guardar algún dato en TempData para usar en la vista
                     TempData["idUsuario"] = usuario.idUsuario;
                     return RedirectToAction("CambiarPasswordPrimerInicio", "Acceso");
                 }
+                if (usuario.FechaCambioPassword != null)
+                {
+                    var fechaExpiracion = usuario.FechaCambioPassword.Value.AddMonths(usuario.MesesExpiracionClave);
+                    if (DateTime.Now >= fechaExpiracion)
+                    {
+                        TempData["idUsuario"] = usuario.idUsuario;
+                        TempData["ExpiracionClave"] = true;
+                        return RedirectToAction("CambiarPasswordPrimerInicio", "Acceso");
+                    }
+                }
 
-                // Configuración de claims para el usuario autenticado
+
+                // Si todo bien, iniciar sesión
                 var claims = new List<Claim>
         {
             new Claim(ClaimTypes.NameIdentifier, usuario.idUsuario.ToString()),
             new Claim(ClaimTypes.Name, usuario.nombre),
-            // Se pueden agregar más claims si se requiere
         };
 
                 var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
-                var authProperties = new AuthenticationProperties
-                {
-                    IsPersistent = true
-                };
+                var authProperties = new AuthenticationProperties { IsPersistent = true };
 
                 await HttpContext.SignInAsync(
                     CookieAuthenticationDefaults.AuthenticationScheme,
                     new ClaimsPrincipal(claimsIdentity),
                     authProperties);
 
-                // Aquí puedes actualizar campos como FultimoAcceso si es necesario
                 return RedirectToAction("Index", "Home");
             }
             else
@@ -70,6 +75,7 @@ namespace ABM.Controllers
                 return View(model);
             }
         }
+
 
 
         [HttpPost]

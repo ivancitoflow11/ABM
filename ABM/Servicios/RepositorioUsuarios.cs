@@ -22,6 +22,7 @@ namespace ABM.Servicios
         Task<bool> ExisteUsuario(string usuario);
         Task<IEnumerable<Rol>> ObtenerRoles();
         Task<bool> ActualizarPasswordPrimerInicio(int idUsuario, string nuevaPasswordHasheada, string nuevaPasswordPlain);
+
     }
 
     public class RepositorioUsuarios : IRepositorioUsuarios
@@ -92,6 +93,25 @@ namespace ABM.Servicios
                 return await dbdapper.QueryFirstOrDefaultAsync<Usuario>(query, new { correo, repeat_password });
             }
         }
+
+        private int CalcularMesesDiferencia(DateTime fechaInicio, DateTime fechaFin)
+        {
+            // Calcula la diferencia en años y meses
+            int aniosDiferencia = fechaFin.Year - fechaInicio.Year;
+            int mesesDiferencia = (aniosDiferencia * 12) + (fechaFin.Month - fechaInicio.Month);
+
+            // Ajuste opcional si consideras que el "día" debe impactar en la cuenta de meses
+            // Por ejemplo, si el día actual es menor que el día de la fechaInicio, 
+            // podrías restar 1 al conteo, dependiendo de la lógica del negocio.
+
+            if (fechaFin.Day < fechaInicio.Day)
+            {
+                mesesDiferencia--;
+            }
+
+            return mesesDiferencia;
+        }
+
         public async Task<int> RegistrarUsuario(Usuario usuario)
         {
             using (IDbConnection dbdapper = new SqlConnection(connectionString))
