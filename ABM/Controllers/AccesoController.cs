@@ -1,4 +1,5 @@
-﻿using ABM.Models;
+﻿using Microsoft.AspNetCore.Authorization;
+using ABM.Models;
 using ABM.Servicios;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
@@ -7,6 +8,7 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 
 namespace ABM.Controllers
 {
+    [Authorize]
     public class AccesoController : Controller
     {
         private readonly IRepositorioUsuarios _repositorioUsuarios;
@@ -16,12 +18,14 @@ namespace ABM.Controllers
             _repositorioUsuarios = repositorioUsuarios;
         }
 
+        [AllowAnonymous]
         [HttpGet]
         public IActionResult Login()
         {
             return View();
         }
 
+        [AllowAnonymous]
         [HttpPost]
         public async Task<IActionResult> Login(LoginViewModel model)
         {
@@ -79,6 +83,7 @@ namespace ABM.Controllers
             }
         }
 
+        [AllowAnonymous]
         [HttpGet]
         public async Task<IActionResult> ValidarOTC(int idUsuario, string otcIngresado)
         {
@@ -174,6 +179,7 @@ namespace ABM.Controllers
             }
         }
 
+        [AllowAnonymous]
         [HttpGet]
         public IActionResult CambiarPasswordPrimerInicio()
         {
@@ -197,6 +203,7 @@ namespace ABM.Controllers
             return View(model);
         }
 
+        [AllowAnonymous]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> CambiarPasswordPrimerInicio(CambioPasswordVM model)

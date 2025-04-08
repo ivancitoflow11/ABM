@@ -26,7 +26,7 @@
     <!-- Core Css -->
     <link rel="stylesheet" href="~/css/styles.css" asp-append-version="true" />
 
-    <title>ABM Imperial</title>
+    <title>ABM Falabella</title>
 </head>
 
 <body>
@@ -50,7 +50,7 @@
                          style="">
                         <!-- User profile image -->
                         <div class="profile-img">
-                            <img src="~/images/avatar.png" alt="user" class="w-100 rounded-circle overflow-hidden" />
+                            <img src="~/images/imavatar.png" alt="user" class="w-100 rounded-circle overflow-hidden" />
                         </div>
                         <!-- User profile text-->
                         <div class="profile-text hide-menu pt-1 dropdown">
@@ -64,7 +64,7 @@
                                     <i data-feather="credit-card" class="feather-sm text-info "></i>
                                     Notas
                                 </a>*@
-                                <a class="dropdown-item d-flex gap-2" href="/Manual/ManualUsuariosImperial.pdf" target="_blank">
+                                <a class="dropdown-item d-flex gap-2" href="" target="_blank">
                                     <i data-feather="settings" class="feather-sm text-success"></i>
                                 Manual de Usuario
                                 </a>
@@ -323,7 +323,7 @@
         <!--  Sidebar End -->
         <div class="page-wrapper">
             <!--  Header Start -->
-            <header class="topbar rounded-0 border-0 bg-primary">
+            <header class="topbar rounded-0 border-0" style="background-color: #aad500;">
                 <div class="with-vertical">
                     <!-- ---------------------------------- -->
                     <!-- Start Vertical Layout Header -->
@@ -401,13 +401,13 @@
                                     <li class="nav-item hover-dd dropdown">
                                         <a class="nav-link nav-icon-hover" href="javascript:void(0)" id="drop2" aria-expanded="false">
                                             <!-- Texto antes de la imagen de perfil -->
-                                            <img src="~/images/avatar.png" alt="user" class="profile-pic rounded-circle round-30" />
+                                            <img src="~/images/imavatar.png" alt="user" class="profile-pic rounded-circle round-30" />
                                         </a>
                                         <div class="dropdown-menu pt-0 content-dd overflow-hidden pt-0 dropdown-menu-end user-dd" aria-labelledby="drop2">
                                             <div class="profile-dropdown position-relative" data-simplebar>
                                                 <div class="py-3 border-bottom">
                                                     <div class="d-flex align-items-center px-3">
-                                                        <img src="~/images/avatar.png" class="rounded-circle round-50" alt="" />
+                                                        <img src="~/images/imavatar.png" class="rounded-circle round-50" alt="" />
                                                         <div class="ms-3">
                                                             <h5 class="mb-1 fs-4">@User.Claims.Where(c => c.Type == ClaimTypes.Name).Select(c => c.Value).SingleOrDefault()</h5>
                                                             <p class="mb-0 fs-2 d-flex align-items-center text-muted">
@@ -420,7 +420,7 @@
                                                     <!-- Aquí se puede agregar más texto si es necesario en los elementos del menú -->
                                                     <div class="px-3">
                                                         <div class="py-8 px-3 d-flex justify-content-between dropdown-item align-items-center h6 mb-0 rounded-2 link">
-                                                            <a href="/Manual/ManualUsuariosImperial.pdf" class="" target="_blank">
+                                                            <a href="" class="" target="_blank">
                                                                 <i data-feather="settings" class="feather-sm text-success"></i>
                                                                 Manual de usuario
                                                             </a>
@@ -435,7 +435,7 @@
                                                             <div class="card">
                                                                 <div class="card-body">
                                                                     <h5 class="card-title">¿En qué podemos ayudarte?</h5>
-                                                                    <p class="card-text">Para consultas, por favor enviar un correo a: <strong style="color: #00BFFF;">soporteabmmatriz@imperial.cl</strong></p>
+                                                                    <p class="card-text">Para consultas, por favor enviar un correo a: <strong style="color: #00BFFF;"></strong></p>
                                                                 </div>
                                                             </div>
                                                         </div>
@@ -798,7 +798,7 @@
     <div class="dark-transparent sidebartoggler"></div>
     <footer class="border-top footer text-muted">
         <div class="container text-center">
-            2024 - ABM Imperial
+            2025 - ABM Falabella
         </div>
     </footer>
     <!-- Import Js Files -->

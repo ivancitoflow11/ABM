@@ -3,25 +3,29 @@
     ViewData["Title"] = "Inicio";
 }
 
-<div style="background: linear-gradient(135deg, #d6e700, #a3c900); height: 100vh; display: flex; justify-content: center; align-items: center; text-align: center; font-family: Arial, sans-serif;">
+<div style="min-height: 100vh; display: flex; justify-content: center; align-items: center; text-align: center; font-family: 'Segoe UI', sans-serif;">
     @if (User.Identity!.IsAuthenticated)
     {
-        <div style="background: rgba(255, 255, 255, 0.95); border-radius: 20px; padding: 40px; max-width: 600px; width: 90%; box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);">
-            <h1 style="font-size: 3rem; color: #7a9a01; font-weight: bold;">Bienvenido(a),</h1>
-            <h2 style="font-size: 2rem; color: #555; margin: 10px 0;">
+        <div style="backdrop-filter: blur(10px); background: rgba(255, 255, 255, 0.07); border: 1px solid rgba(170, 213, 0, 0.6); border-radius: 20px; padding: 40px; max-width: 600px; width: 90%; box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);">
+            <h1 style="font-size: 2.8rem; color: #aad500; font-weight: bold;">Bienvenido(a),</h1>
+            <h2 style="font-size: 1.8rem; color: #e0e0e0; margin: 10px 0;">
                 @User.Claims.Where(c => c.Type == ClaimTypes.Name).Select(c => c.Value).SingleOrDefault()
             </h2>
-            <p style="font-size: 1.2rem; color: #7a9a01; line-height: 1.8; margin-top: 20px;">
-                <strong>ABM FALABELLA</strong>
+            <p style="font-size: 1.2rem; margin-top: 20px; font-weight: bold;">
+                <span style="color: #005be6;">ABM</span>
+                <span style="color: #aad500;"> FALABELLA</span>
             </p>
         </div>
     }
     else
     {
-        <div style="background: rgba(255, 255, 255, 0.95); border-radius: 20px; padding: 40px; max-width: 600px; width: 90%; box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);">
-            <h1 style="font-size: 3rem; color: #7a9a01; font-weight: bold;">Bienvenido a</h1>
-            <h2 style="font-size: 2.5rem; color: #555; font-weight: bold; margin-bottom: 20px;">ABM FALABELLA</h2>
-            <p style="font-size: 1.2rem; color: #7a9a01; line-height: 1.8;">
+        <div style="backdrop-filter: blur(10px); background: rgba(255, 255, 255, 0.07); border: 1px solid rgba(170, 213, 0, 0.6); border-radius: 20px; padding: 40px; max-width: 600px; width: 90%; box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);">
+            <h1 style="font-size: 2.8rem; color: #aad500; font-weight: bold;">Bienvenido a</h1>
+            <h2 style="font-size: 2.3rem; color: #e0e0e0; font-weight: bold; margin-bottom: 20px;">
+                <span style="color: #5bc0ff;">ABM</span>
+                <span style="color: #aad500;"> FALABELLA</span>
+            </h2>
+            <p style="font-size: 1.2rem; color: #d0d0d0;">
                 Por favor, inicia sesión para acceder a todas las funcionalidades del sistema.
             </p>
         </div>
