@@ -2,12 +2,16 @@
 {
     public class ListaUsuariosViewModel
     {
-        public int IdUsuario { get; set; }
+        public int idUsuario {  get; set; }
         public string nombre { get; set; }
-        public string correo { get; set; }
-        public string password_c { get; set; }
         public string apellidos { get; set; }
+
         public string rut { get; set; }
-        public long telefono { get; set; }
+
+        public int telefono { get; set; }
+        public string usuario { get; set; }
+        public string correo { get; set; }
+
+        public string RolNombre { get; set; }
     }
 }

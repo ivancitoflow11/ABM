@@ -18,10 +18,13 @@ namespace ABM.Servicios
         Task<Usuario> ValidarUsuario(string correo, string repeat_password);
         Task<Usuario> ObtenerPorId(int idUsuario);
         Task<int> RegistrarUsuario(Usuario usuario);
+        Task<bool> ActualizarUsuario(Usuario usuario);
         Task<bool> ExisteCorreo(string correo);
         Task<bool> ExisteUsuario(string usuario);
         Task<IEnumerable<Rol>> ObtenerRoles();
         Task<bool> ActualizarPasswordPrimerInicio(int idUsuario, string nuevaPasswordHasheada, string nuevaPasswordPlain);
+
+        Task<List<ListaUsuariosViewModel>> ObtenerTodosLosUsuariosYRoles();
 
     }
 
@@ -51,6 +54,31 @@ namespace ABM.Servicios
                 return rows > 0;
             }
         }
+
+        public async Task<List<ListaUsuariosViewModel>> ObtenerTodosLosUsuariosYRoles()
+        {
+            using (IDbConnection dbdapper = new SqlConnection(connectionString))
+            {
+                string query = @"
+            SELECT 
+                u.idUsuario,
+                u.nombre, 
+                u.apellidos, 
+                u.usuario, 
+                u.correo, 
+                u.rut,
+                u.telefono,
+                r.nombre AS RolNombre
+            FROM usuario u
+            INNER JOIN rol r ON u.idRol = r.idRol
+            ORDER BY u.nombre ASC, u.apellidos ASC;
+            ";
+
+                var resultado = await dbdapper.QueryAsync<ListaUsuariosViewModel>(query);
+                return resultado.ToList();
+            }
+        }
+
 
 
         public async Task<List<ListaUsuariosViewModel>> ObtenerTodosLosUsuarios()
@@ -106,13 +134,9 @@ namespace ABM.Servicios
 
         private int CalcularMesesDiferencia(DateTime fechaInicio, DateTime fechaFin)
         {
-            // Calcula la diferencia en años y meses
+            // Cálculo de la diferencia en años y meses
             int aniosDiferencia = fechaFin.Year - fechaInicio.Year;
             int mesesDiferencia = (aniosDiferencia * 12) + (fechaFin.Month - fechaInicio.Month);
-
-            // Ajuste opcional si consideras que el "día" debe impactar en la cuenta de meses
-            // Por ejemplo, si el día actual es menor que el día de la fechaInicio, 
-            // podrías restar 1 al conteo, dependiendo de la lógica del negocio.
 
             if (fechaFin.Day < fechaInicio.Day)
             {
@@ -171,6 +195,27 @@ namespace ABM.Servicios
                     // Aquí puedes registrar el error o mostrarlo para depuración
                     throw new Exception("Error al registrar el usuario: " + ex.Message, ex);
                 }
+            }
+        }
+
+        public async Task<bool> ActualizarUsuario(Usuario usuario)
+        {
+            using (IDbConnection dbdapper = new SqlConnection(connectionString))
+            {
+                string query = @"
+            UPDATE usuario
+            SET nombre = @nombre,
+                apellidos = @apellidos,
+                rut = @rut,
+                telefono = @telefono,
+                correo = @correo,
+                usuario = @usuario,
+                idRol = @idRol,
+                FultimaModificacion = GETDATE()
+            WHERE idUsuario = @idUsuario";
+
+                int filas = await dbdapper.ExecuteAsync(query, usuario);
+                return filas > 0;
             }
         }
 

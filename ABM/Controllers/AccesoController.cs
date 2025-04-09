@@ -169,15 +169,17 @@ namespace ABM.Controllers
 
                 int idNuevoUsuario = await _repositorioUsuarios.RegistrarUsuario(nuevoUsuario);
 
-                return RedirectToAction("Index", "Home");
+                TempData["SuccessMessage"] = "Usuario registrado correctamente.";
+                return RedirectToAction("ListaUsuarios");
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                ModelState.AddModelError("", "Ocurrió un error al registrar el usuario. Intente nuevamente.");
+                TempData["ErrorMessage"] = "Ocurrió un error al registrar el usuario. Intente nuevamente.";
                 model.RolesDisponibles = await _repositorioUsuarios.ObtenerRoles();
                 return View(model);
             }
         }
+
 
         [AllowAnonymous]
         [HttpGet]
@@ -233,6 +235,101 @@ namespace ABM.Controllers
             else
             {
                 ModelState.AddModelError("", "No se pudo actualizar la contraseña. Intente nuevamente.");
+                return View(model);
+            }
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> ListaUsuarios()
+        {
+            var usuarios = await _repositorioUsuarios.ObtenerTodosLosUsuariosYRoles();
+            return View(usuarios);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> EditarUsuario(int id)
+        {
+            var usuario = await _repositorioUsuarios.ObtenerPorId(id);
+
+            if (usuario == null)
+            {
+                TempData["ErrorMessage"] = "Usuario no encontrado.";
+                return RedirectToAction("ListaUsuarios");
+            }
+
+            var roles = await _repositorioUsuarios.ObtenerRoles();
+
+            var model = new EditarUsuarioVM
+            {
+                IdUsuario = usuario.idUsuario,
+                Nombre = usuario.nombre,
+                Apellidos = usuario.apellidos,
+                Rut = usuario.rut,
+                Telefono = usuario.telefono,
+                Correo = usuario.correo,
+                Usuario = usuario.usuario,
+                RolId = usuario.idRol,
+                RolesDisponibles = roles
+            };
+
+            return View(model);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> EditarUsuario(EditarUsuarioVM model)
+        {
+            if (!ModelState.IsValid)
+            {
+                model.RolesDisponibles = await _repositorioUsuarios.ObtenerRoles();
+                return View(model);
+            }
+
+            var usuarioExistente = await _repositorioUsuarios.ObtenerPorId(model.IdUsuario);
+            if (usuarioExistente == null)
+            {
+                TempData["ErrorMessage"] = "Usuario no encontrado.";
+                return RedirectToAction("ListaUsuarios");
+            }
+
+            // Verifica si otro usuario ya usa el mismo correo
+            var correoUsado = await _repositorioUsuarios.ExisteCorreo(model.Correo);
+            if (correoUsado && !string.Equals(usuarioExistente.correo, model.Correo, StringComparison.OrdinalIgnoreCase))
+            {
+                ModelState.AddModelError("Correo", "El correo ya se encuentra registrado.");
+                model.RolesDisponibles = await _repositorioUsuarios.ObtenerRoles();
+                return View(model);
+            }
+
+            // Verifica si otro usuario ya usa el mismo nombre de usuario
+            var usuarioUsado = await _repositorioUsuarios.ExisteUsuario(model.Usuario);
+            if (usuarioUsado && !string.Equals(usuarioExistente.usuario, model.Usuario, StringComparison.OrdinalIgnoreCase))
+            {
+                ModelState.AddModelError("Usuario", "El nombre de usuario ya está en uso.");
+                model.RolesDisponibles = await _repositorioUsuarios.ObtenerRoles();
+                return View(model);
+            }
+
+            // Actualiza
+            usuarioExistente.nombre = model.Nombre;
+            usuarioExistente.apellidos = model.Apellidos;
+            usuarioExistente.rut = model.Rut;
+            usuarioExistente.telefono = model.Telefono;
+            usuarioExistente.correo = model.Correo;
+            usuarioExistente.usuario = model.Usuario;
+            usuarioExistente.idRol = model.RolId;
+
+            bool actualizado = await _repositorioUsuarios.ActualizarUsuario(usuarioExistente);
+
+            if (actualizado)
+            {
+                TempData["SuccessMessage"] = "Usuario actualizado correctamente.";
+                return RedirectToAction("ListaUsuarios");
+            }
+            else
+            {
+                ModelState.AddModelError("", "No se pudo actualizar el usuario.");
+                model.RolesDisponibles = await _repositorioUsuarios.ObtenerRoles();
                 return View(model);
             }
         }
