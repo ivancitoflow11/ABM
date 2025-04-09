@@ -25,6 +25,7 @@ namespace ABM.Servicios
         Task<bool> ActualizarPasswordPrimerInicio(int idUsuario, string nuevaPasswordHasheada, string nuevaPasswordPlain);
 
         Task<List<ListaUsuariosViewModel>> ObtenerTodosLosUsuariosYRoles();
+        Task<bool> ActualizarOTC(int idUsuario, int codigoOTC);
 
     }
 
@@ -248,6 +249,17 @@ namespace ABM.Servicios
                         ");
             }
         }
+
+        public async Task<bool> ActualizarOTC(int idUsuario, int codigoOTC)
+        {
+            using (IDbConnection dbdapper = new SqlConnection(connectionString))
+            {
+                string query = "UPDATE usuario SET otc = @codigoOTC, inicioOtc = GETDATE() WHERE idUsuario = @idUsuario";
+                int filas = await dbdapper.ExecuteAsync(query, new { idUsuario, codigoOTC });
+                return filas > 0;
+            }
+        }
+
 
     }
 }

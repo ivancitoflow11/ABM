@@ -5,6 +5,8 @@ using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using System.Net.Mail;
+using System.Net;
 
 namespace ABM.Controllers
 {
@@ -12,10 +14,12 @@ namespace ABM.Controllers
     public class AccesoController : Controller
     {
         private readonly IRepositorioUsuarios _repositorioUsuarios;
+        private readonly IConfiguration _configuration;
 
-        public AccesoController(IRepositorioUsuarios repositorioUsuarios)
+        public AccesoController(IRepositorioUsuarios repositorioUsuarios, IConfiguration configuration)
         {
             _repositorioUsuarios = repositorioUsuarios;
+            _configuration = configuration;
         }
 
         [AllowAnonymous]
@@ -44,6 +48,7 @@ namespace ABM.Controllers
                     TempData["idUsuario"] = usuario.idUsuario;
                     return RedirectToAction("CambiarPasswordPrimerInicio", "Acceso");
                 }
+
                 if (usuario.FechaCambioPassword != null)
                 {
                     var fechaExpiracion = usuario.FechaCambioPassword.Value.AddMonths(usuario.MesesExpiracionClave);
@@ -55,8 +60,17 @@ namespace ABM.Controllers
                     }
                 }
 
+                // Generar código OTC aleatorio de 4 dígitos
+                var random = new Random();
+                int codigoOTC = random.Next(1000, 10000);
 
-                // Si todo bien, iniciar sesión
+                // Actualizar OTC en base de datos
+                await _repositorioUsuarios.ActualizarOTC(usuario.idUsuario, codigoOTC);
+
+                // Enviar código OTC por correo
+                await EnviarCorreoOTC(usuario.correo, codigoOTC);
+
+                // Crear la sesión
                 var claims = new List<Claim>
         {
             new Claim(ClaimTypes.NameIdentifier, usuario.idUsuario.ToString()),
@@ -74,12 +88,47 @@ namespace ABM.Controllers
                 ViewBag.PedirOTC = true;
                 ViewBag.IdUsuario = usuario.idUsuario;
                 return View(model);
-
             }
             else
             {
                 ModelState.AddModelError("", "Credenciales inválidas.");
                 return View(model);
+            }
+        }
+
+        private async Task EnviarCorreoOTC(string correoDestino, int codigo)
+        {
+            var smtpServer = _configuration["EmailSettings:ServidorSMTP"];
+            var puerto = int.Parse(_configuration["EmailSettings:Puerto"]);
+            var remitente = _configuration["EmailSettings:CorreoRemitente"];
+            var nombreRemitente = _configuration["EmailSettings:NombreRemitente"];
+            var password = _configuration["EmailSettings:Password"];
+
+            // HTML del correo
+            string html = $@"
+        <div style='font-family: Arial, sans-serif; color: #333; padding: 20px;'>
+            <h2 style='color: #4CAF50;'>Código de verificación</h2>
+            <p>Hola,</p>
+            <p>Tu código de verificación para ingresar al sistema es:</p>
+            <p style='font-size: 24px; font-weight: bold; color: #4CAF50;'>{codigo}</p>
+            <hr />
+            <p style='font-size: 12px; color: #888;'>Este código es válido por un tiempo limitado. No lo compartas con nadie.</p>
+            <p style='font-size: 12px;'>Gracias por usar nuestro sistema.</p>
+        </div>
+    ";
+
+            var mensaje = new MailMessage();
+            mensaje.From = new MailAddress(remitente, nombreRemitente);
+            mensaje.To.Add(correoDestino);
+            mensaje.Subject = "Tu código de verificación OTC";
+            mensaje.Body = html;
+            mensaje.IsBodyHtml = true;
+
+            using (var smtp = new SmtpClient(smtpServer, puerto))
+            {
+                smtp.Credentials = new NetworkCredential(remitente, password);
+                smtp.EnableSsl = true;
+                await smtp.SendMailAsync(mensaje);
             }
         }
 
