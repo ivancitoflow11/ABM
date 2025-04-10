@@ -1,0 +1,145 @@
+﻿@model IEnumerable<ABM.Models.RolConPNSViewModel>
+
+@{
+    ViewBag.Title = "Listar Roles";
+}
+
+<style>
+    .dataTables_wrapper .dataTables_paginate .paginate_button {
+        background-color: #28a745 !important;
+        color: white !important;
+        border: none !important;
+        border-radius: 4px;
+        padding: 5px 10px;
+        margin: 2px;
+    }
+
+        .dataTables_wrapper .dataTables_paginate .paginate_button.current {
+            background-color: #218838 !important;
+        }
+
+        .dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+            background-color: #218838 !important;
+            color: white !important;
+        }
+
+    .tabla-usuarios {
+        background-color: #f8fdfa;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+    }
+
+        .tabla-usuarios thead {
+            background-color: #d3f2c7;
+            color: #2d572c;
+        }
+
+        .tabla-usuarios th, .tabla-usuarios td {
+            vertical-align: middle;
+            text-align: left;
+            padding: 12px 16px;
+            font-size: 14px;
+        }
+
+        .tabla-usuarios tbody tr:nth-child(even) {
+            background-color: #eef9e9;
+        }
+
+        .tabla-usuarios tbody tr:hover {
+            background-color: #d3f2c7;
+            cursor: pointer;
+        }
+</style>
+
+<div class="row" style="margin-top:50px;">
+    <div class="col-md-12">
+        <div class="card mb-4">
+            <div class="card-body">
+                <h4 class="mt-3 text-center">Listado de Roles</h4>
+                <div class="col-lg-12 table-responsive">
+                    <table id="tableLista" class="table table-bordered table-hover tabla-usuarios" style="width:100%; table-layout: auto;">
+                        <thead>
+                            <tr>
+                                <th># Rol</th>
+                                <th>Nombre Rol</th>
+                                <th>País</th>
+                                <th>Negocio</th>
+                                <th>Sistemas</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var rol in Model)
+                            {
+                                foreach (var pn in rol.PaisesNegocios)
+                                {
+                                    <tr>
+                                        <td style="white-space: nowrap;">@rol.idRol</td>
+                                        <td style="white-space: nowrap;">@rol.nombreRol</td>
+                                        <td style="white-space: nowrap;">@pn.pais</td>
+                                        <td style="white-space: nowrap;">@pn.negocio</td>
+                                        <td>
+                                            @if (pn.sistemas.Count > 1)
+                                            {
+                                                var idCollapse = $"collapse_{rol.idRol}_{pn.negocio.Replace(" ", "")}";
+                                                <div>
+                                                    <span>@pn.sistemas.First()</span>
+                                                    <button class="btn btn-link p-0 ms-2" type="button" data-bs-toggle="collapse" data-bs-target="#@idCollapse" aria-expanded="false" aria-controls="@idCollapse" style="font-size: 13px;">
+                                                        Ver más
+                                                    </button>
+                                                </div>
+                                                <div class="collapse mt-1" id="@idCollapse">
+                                                    @foreach (var sistema in pn.sistemas.Skip(1))
+                                                    {
+                                                        <div>- @sistema</div>
+                                                    }
+                                                </div>
+                                            }
+                                            else
+                                            {
+                                                <span>@pn.sistemas.FirstOrDefault()</span>
+                                            }
+                                        </td>
+                                        <td>
+
+                                        </td>
+                                    </tr>
+                                }
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section scripts {
+    <script src="/libs/datatables.net/js/jquery.dataTables.min.js"></script>
+    <script src="/js/datatable/datatable-advanced.init.js" asp-append-version="true"></script>
+    <script>
+        $(document).ready(function () {
+            $('#tableLista').DataTable({
+                responsive: false,
+                dom: "Bfrtip",
+                lengthMenu: [[10, 20, 50, -1], [10, 20, 50, "Todos"]],
+                pageLength: 20,
+                language: {
+                    search: "Buscar:",
+                    lengthMenu: "Mostrar _MENU_ registros",
+                    info: "Mostrando _START_ a _END_ de _TOTAL_ entradas",
+                    infoEmpty: "Mostrando 0 a 0 de 0 entradas",
+                    infoFiltered: "(filtrado de _MAX_ entradas totales)",
+                    zeroRecords: "No se encontraron registros",
+                    paginate: {
+                        first: "Primero",
+                        last: "Último",
+                        next: "Siguiente",
+                        previous: "Anterior"
+                    }
+                }
+            });
+        });
+    </script>
+}

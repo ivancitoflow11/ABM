@@ -68,7 +68,7 @@ namespace ABM.Controllers
                 await _repositorioUsuarios.ActualizarOTC(usuario.idUsuario, codigoOTC);
 
                 // Enviar código OTC por correo
-                await EnviarCorreoOTC(usuario.correo, codigoOTC);
+                //await EnviarCorreoOTC(usuario.correo, codigoOTC);
 
                 // Crear la sesión
                 var claims = new List<Claim>
@@ -96,41 +96,41 @@ namespace ABM.Controllers
             }
         }
 
-        private async Task EnviarCorreoOTC(string correoDestino, int codigo)
-        {
-            var smtpServer = _configuration["EmailSettings:ServidorSMTP"];
-            var puerto = int.Parse(_configuration["EmailSettings:Puerto"]);
-            var remitente = _configuration["EmailSettings:CorreoRemitente"];
-            var nombreRemitente = _configuration["EmailSettings:NombreRemitente"];
-            var password = _configuration["EmailSettings:Password"];
+    //    private async Task EnviarCorreoOTC(string correoDestino, int codigo)
+    //    {
+    //        var smtpServer = _configuration["EmailSettings:ServidorSMTP"];
+    //        var puerto = int.Parse(_configuration["EmailSettings:Puerto"]);
+    //        var remitente = _configuration["EmailSettings:CorreoRemitente"];
+    //        var nombreRemitente = _configuration["EmailSettings:NombreRemitente"];
+    //        var password = _configuration["EmailSettings:Password"];
 
-            // HTML del correo
-            string html = $@"
-        <div style='font-family: Arial, sans-serif; color: #333; padding: 20px;'>
-            <h2 style='color: #4CAF50;'>Código de verificación</h2>
-            <p>Hola,</p>
-            <p>Tu código de verificación para ingresar al sistema es:</p>
-            <p style='font-size: 24px; font-weight: bold; color: #4CAF50;'>{codigo}</p>
-            <hr />
-            <p style='font-size: 12px; color: #888;'>Este código es válido por un tiempo limitado. No lo compartas con nadie.</p>
-            <p style='font-size: 12px;'>Gracias por usar nuestro sistema.</p>
-        </div>
-    ";
+    //        // HTML del correo
+    //        string html = $@"
+    //    <div style='font-family: Arial, sans-serif; color: #333; padding: 20px;'>
+    //        <h2 style='color: #4CAF50;'>Código de verificación</h2>
+    //        <p>Hola,</p>
+    //        <p>Tu código de verificación para ingresar al sistema es:</p>
+    //        <p style='font-size: 24px; font-weight: bold; color: #4CAF50;'>{codigo}</p>
+    //        <hr />
+    //        <p style='font-size: 12px; color: #888;'>Este código es válido por un tiempo limitado. No lo compartas con nadie.</p>
+    //        <p style='font-size: 12px;'>Gracias por usar nuestro sistema.</p>
+    //    </div>
+    //";
 
-            var mensaje = new MailMessage();
-            mensaje.From = new MailAddress(remitente, nombreRemitente);
-            mensaje.To.Add(correoDestino);
-            mensaje.Subject = "Tu código de verificación OTC";
-            mensaje.Body = html;
-            mensaje.IsBodyHtml = true;
+    //        var mensaje = new MailMessage();
+    //        mensaje.From = new MailAddress(remitente, nombreRemitente);
+    //        mensaje.To.Add(correoDestino);
+    //        mensaje.Subject = "Tu código de verificación OTC";
+    //        mensaje.Body = html;
+    //        mensaje.IsBodyHtml = true;
 
-            using (var smtp = new SmtpClient(smtpServer, puerto))
-            {
-                smtp.Credentials = new NetworkCredential(remitente, password);
-                smtp.EnableSsl = true;
-                await smtp.SendMailAsync(mensaje);
-            }
-        }
+    //        using (var smtp = new SmtpClient(smtpServer, puerto))
+    //        {
+    //            smtp.Credentials = new NetworkCredential(remitente, password);
+    //            smtp.EnableSsl = true;
+    //            await smtp.SendMailAsync(mensaje);
+    //        }
+    //    }
 
         [AllowAnonymous]
         [HttpGet]
@@ -234,7 +234,6 @@ namespace ABM.Controllers
         [HttpGet]
         public IActionResult CambiarPasswordPrimerInicio()
         {
-            // Se asume que en el login se almacenó el Id del usuario en TempData, por ejemplo TempData["idUsuario"]
             if (TempData["idUsuario"] == null)
             {
                 TempData["MensajeError"] = "Ocurrió un error, por favor inicie sesión nuevamente.";
@@ -243,7 +242,6 @@ namespace ABM.Controllers
 
             // Convertir el valor de TempData a int y asignarlo al modelo
             int idUsuario = Convert.ToInt32(TempData["idUsuario"]);
-            // Si deseas conservar TempData para el post, puedes reasignarlo
             TempData.Keep("idUsuario");
 
             var model = new CambioPasswordVM
