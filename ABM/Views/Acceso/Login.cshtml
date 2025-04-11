@@ -313,19 +313,131 @@
 </html>
 @if (ViewBag.PedirOTC != null && (bool)ViewBag.PedirOTC)
 {
+    <!-- Incluir SweetAlert2 -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
-        /* Asegura que Swal2 use tu fuente principal */
         .swal2-popup {
             font-family: 'Segoe UI', 'Helvetica Neue', sans-serif !important;
         }
     </style>
 
     <script>
+        // Convertir la lista de países/negocios de ViewBag a JSON
+        var paisNegocioData = @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject((List<ABM.Models.PaisNegocioViewModel>)ViewBag.PaisesNegocios));
+        // Extraer la lista única de países
+        var uniqueCountries = [...new Set(paisNegocioData.map(x => x.pais))];
+
         document.addEventListener("DOMContentLoaded", function () {
-            pedirOTC();
+            seleccionarPaisNegocio();
         });
 
+        function seleccionarPaisNegocio() {
+            Swal.fire({
+                title: '<strong style="color:#3a3a3a;">Seleccione País y Negocio</strong>',
+                html: `
+                            <div style="display: flex; flex-direction: column; gap: 15px; text-align: left;">
+                                <!-- Campo País -->
+                                <div style="display: flex; flex-direction: column; gap: 5px;">
+                                    <label for="selectPais" style="font-weight:600;">País</label>
+                                    <select id="selectPais" class="swal2-select" style="width:100%;">
+                                        <option value="">-- Seleccione un país --</option>
+                                    </select>
+                                </div>
+                                <!-- Campo Negocio -->
+                                <div style="display: flex; flex-direction: column; gap: 5px;">
+                                    <label for="selectNegocio" style="font-weight:600;">Negocio</label>
+                                    <select id="selectNegocio" class="swal2-select" style="width:100%;" disabled>
+                                        <option value="">Debe seleccionar primero un país</option>
+                                    </select>
+                                </div>
+                            </div>
+                        `,
+                focusConfirm: false,
+                confirmButtonText: 'Continuar',
+                preConfirm: () => {
+                    var pais = document.getElementById('selectPais').value;
+                    var negocio = document.getElementById('selectNegocio').value;
+                    if (!pais || !negocio || negocio === "NA") {
+                        Swal.showValidationMessage("Debe seleccionar un país y un negocio.");
+                        return false;
+                    }
+                    return { pais: pais, negocio: negocio };
+                }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    console.log("Selección:", result.value);
+                    // Llamamos al endpoint para enviar el OTC
+                    enviarOTC();
+                } else {
+                    seleccionarPaisNegocio();
+                }
+            });
+
+            // Poblar el select de países
+            var selectPais = document.getElementById("selectPais");
+            // Se asume que ya está incluida la opción default en el HTML del modal.
+            uniqueCountries.forEach(function (pais) {
+                var option = document.createElement("option");
+                option.value = pais;
+                option.text = pais;
+                selectPais.add(option);
+            });
+
+            // Al cambiar la selección del país se actualiza el select de negocios
+            selectPais.addEventListener("change", function () {
+                var selectedCountry = this.value;
+                var selectNegocio = document.getElementById("selectNegocio");
+                selectNegocio.innerHTML = "";
+                if (selectedCountry === "") {
+                    var defaultOpt = document.createElement("option");
+                    defaultOpt.value = "";
+                    defaultOpt.text = "Debe seleccionar primero un país";
+                    selectNegocio.add(defaultOpt);
+                    selectNegocio.disabled = true;
+                } else {
+                    var negocios = paisNegocioData.filter(x => x.pais === selectedCountry).map(x => x.negocio);
+                    var uniqueNegocios = [...new Set(negocios)];
+                    if (uniqueNegocios.length === 0) {
+                        var opt = document.createElement("option");
+                        opt.value = "NA";
+                        opt.text = "No hay negocios disponibles para el país seleccionado";
+                        selectNegocio.add(opt);
+                        selectNegocio.disabled = true;
+                    } else {
+                        uniqueNegocios.forEach(function (negocio) {
+                            var option = document.createElement("option");
+                            option.value = negocio;
+                            option.text = negocio;
+                            selectNegocio.add(option);
+                        });
+                        selectNegocio.disabled = false;
+                    }
+                }
+            });
+        }
+
+        // Función para enviar el OTC mediante AJAX
+        function enviarOTC() {
+            fetch('/Acceso/EnviarOTC', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+                // Opcional: se puede incluir la selección de país y negocio en el body
+                // body: JSON.stringify({ pais: document.getElementById("selectPais").value, negocio: document.getElementById("selectNegocio").value })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        pedirOTC();
+                    } else {
+                        Swal.fire({ icon: 'error', title: 'Error', text: data.message });
+                    }
+                })
+                .catch(error => {
+                    Swal.fire({ icon: 'error', title: 'Error', text: error });
+                });
+        }
+
+        // Función para mostrar el modal de validación del OTC
         function pedirOTC() {
             Swal.fire({
                 title: '<strong style="color:#3a3a3a;">🔐 Verificación OTC</strong>',
@@ -351,9 +463,9 @@
                     return fetch(`/Acceso/ValidarOTC?idUsuario=@ViewBag.IdUsuario&otcIngresado=${valorOTC}`)
                         .then(response => {
                             if (!response.ok) {
-                                throw new Error(response.statusText)
+                                throw new Error(response.statusText);
                             }
-                            return response.json()
+                            return response.json();
                         })
                         .then(data => {
                             if (!data.valido) {
@@ -361,16 +473,14 @@
                             }
                         })
                         .catch(error => {
-                            Swal.showValidationMessage(
-                                ` ${error}`
-                            )
+                            Swal.showValidationMessage(`${error}`);
                         });
                 }
             }).then((resultado) => {
                 if (resultado.isConfirmed) {
                     window.location.href = '/Home/Index';
                 } else {
-                    pedirOTC(); // reintento si se cancela
+                    pedirOTC();
                 }
             });
         }

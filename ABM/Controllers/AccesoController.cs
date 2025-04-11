@@ -14,11 +14,13 @@ namespace ABM.Controllers
     public class AccesoController : Controller
     {
         private readonly IRepositorioUsuarios _repositorioUsuarios;
+        private readonly IRepositorioRoles _repositorioRoles;
         private readonly IConfiguration _configuration;
 
-        public AccesoController(IRepositorioUsuarios repositorioUsuarios, IConfiguration configuration)
+        public AccesoController(IRepositorioUsuarios repositorioUsuarios, IRepositorioRoles repositorioRoles, IConfiguration configuration)
         {
             _repositorioUsuarios = repositorioUsuarios;
+            _repositorioRoles = repositorioRoles;
             _configuration = configuration;
         }
 
@@ -60,17 +62,15 @@ namespace ABM.Controllers
                     }
                 }
 
-                // Generar código OTC aleatorio de 4 dígitos
-                var random = new Random();
-                int codigoOTC = random.Next(1000, 10000);
+                // Cargar la información de países y negocios según el rol
+                var rolesConPNS = await _repositorioRoles.ObtenerRolesConPNS();
+                var rolConPNS = rolesConPNS.FirstOrDefault(r => r.idRol == usuario.idRol);
+                if (rolConPNS != null)
+                {
+                    ViewBag.PaisesNegocios = rolConPNS.PaisesNegocios; // List< PaisNegocioViewModel >
+                }
 
-                // Actualizar OTC en base de datos
-                await _repositorioUsuarios.ActualizarOTC(usuario.idUsuario, codigoOTC);
-
-                // Enviar código OTC por correo
-                await EnviarCorreoOTC(usuario.correo, codigoOTC);
-
-                // Crear la sesión
+                // Crear la sesión sin enviar el OTC todavía
                 var claims = new List<Claim>
         {
             new Claim(ClaimTypes.NameIdentifier, usuario.idUsuario.ToString()),
@@ -85,8 +85,13 @@ namespace ABM.Controllers
                     new ClaimsPrincipal(claimsIdentity),
                     authProperties);
 
+                // Indicador para que se muestre el modal en la vista
                 ViewBag.PedirOTC = true;
                 ViewBag.IdUsuario = usuario.idUsuario;
+
+                // Guardamos el id en TempData para poder usarlo en la acción EnviarOTC (opcionalmente también en Session)
+                TempData["idUsuario"] = usuario.idUsuario;
+
                 return View(model);
             }
             else
@@ -95,6 +100,7 @@ namespace ABM.Controllers
                 return View(model);
             }
         }
+
 
         private async Task EnviarCorreoOTC(string correoDestino, int codigo)
         {
@@ -131,6 +137,40 @@ namespace ABM.Controllers
                 await smtp.SendMailAsync(mensaje);
             }
         }
+
+        [AllowAnonymous]
+        [HttpPost]
+        public async Task<IActionResult> EnviarOTC()
+        {
+            // Recupera el id del usuario (puedes obtenerlo desde TempData, Session o un parámetro seguro)
+            if (TempData["idUsuario"] == null)
+            {
+                return Json(new { success = false, message = "Usuario no encontrado." });
+            }
+
+            int idUsuario = Convert.ToInt32(TempData["idUsuario"]);
+            var usuario = await _repositorioUsuarios.ObtenerPorId(idUsuario);
+            if (usuario == null)
+            {
+                return Json(new { success = false, message = "Usuario no encontrado." });
+            }
+
+            // Genera el código OTC aleatorio de 4 dígitos
+            var random = new Random();
+            int codigoOTC = random.Next(1000, 10000);
+
+            // Actualiza el OTC en la base de datos
+            await _repositorioUsuarios.ActualizarOTC(usuario.idUsuario, codigoOTC);
+
+            // Envía el código OTC por correo
+            await EnviarCorreoOTC(usuario.correo, codigoOTC);
+
+            // Opcional: Reestablece TempData["idUsuario"] si lo necesitas en otros flujos
+            TempData["idUsuario"] = usuario.idUsuario;
+
+            return Json(new { success = true });
+        }
+
 
         [AllowAnonymous]
         [HttpGet]
