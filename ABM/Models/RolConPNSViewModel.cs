@@ -10,8 +10,10 @@
     public class PaisNegocioViewModel
     {
         public string pais { get; set; }
+        public int idPais { get; set; }
         public string negocio { get; set; }
-        public List<string> sistemas { get; set; } = new();
+        public int idNegocio { get; set; }
+        public List<string> sistemas { get; set; }
     }
 
 }

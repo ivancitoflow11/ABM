@@ -39,16 +39,17 @@ namespace ABM.Servicios
             using var connection = new SqlConnection(connectionString);
 
             var query = @"
-        SELECT r.idRol, r.nombre AS nombreRol,
-               pns.pais, pns.negocio, pns.sistema, pns.idNegocio
-        FROM rol r
-        JOIN detalle_rol dr ON r.idRol = dr.idRol
-        JOIN PNS pns ON dr.idPaisNegocioSistema = pns.idPaisNegocioSistema
-        ORDER BY r.idRol, pns.pais, pns.idNegocio, pns.sistema";
+    SELECT r.idRol, r.nombre AS nombreRol,
+           pns.pais, pns.idPais,
+           pns.negocio, pns.idNegocio,
+           pns.sistema
+    FROM rol r
+    JOIN detalle_rol dr ON r.idRol = dr.idRol
+    JOIN PNS pns ON dr.idPaisNegocioSistema = pns.idPaisNegocioSistema
+    ORDER BY r.idRol, pns.pais, pns.idNegocio, pns.sistema";
 
             var datos = await connection.QueryAsync(query);
 
-            // Agrupamos con LINQ
             var resultado = datos
                 .GroupBy(x => new { x.idRol, x.nombreRol })
                 .Select(grupoRol => new RolConPNSViewModel
@@ -56,17 +57,20 @@ namespace ABM.Servicios
                     idRol = grupoRol.Key.idRol,
                     nombreRol = grupoRol.Key.nombreRol,
                     PaisesNegocios = grupoRol
-                        .GroupBy(x => new { x.pais, x.negocio })
+                        .GroupBy(x => new { x.pais, x.idPais, x.negocio, x.idNegocio })
                         .Select(grupoPN => new PaisNegocioViewModel
                         {
                             pais = grupoPN.Key.pais,
+                            idPais = grupoPN.Key.idPais,
                             negocio = grupoPN.Key.negocio,
+                            idNegocio = grupoPN.Key.idNegocio,
                             sistemas = grupoPN.Select(x => (string)x.sistema).Distinct().ToList()
                         }).ToList()
                 });
 
             return resultado;
         }
+
 
     }
 }

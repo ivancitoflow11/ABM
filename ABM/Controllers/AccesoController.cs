@@ -174,14 +174,23 @@ namespace ABM.Controllers
 
         [AllowAnonymous]
         [HttpGet]
-        public async Task<IActionResult> ValidarOTC(int idUsuario, string otcIngresado)
+        public async Task<IActionResult> ValidarOTC(int idUsuario, string otcIngresado, int idPais, string pais, int idNegocio, string negocio)
         {
             var usuario = await _repositorioUsuarios.ObtenerPorId(idUsuario);
-
             if (usuario == null)
                 return Json(new { valido = false });
 
             bool esValido = usuario.otc.ToString() == otcIngresado;
+
+            if (esValido)
+            {
+                // Guardar los valores de país y negocio en la sesión
+                HttpContext.Session.SetString("Pais", pais);
+                HttpContext.Session.SetString("Negocio", negocio);
+                HttpContext.Session.SetInt32("IdPais", idPais);
+                HttpContext.Session.SetInt32("IdNegocio", idNegocio);
+            }
+
             return Json(new { valido = esValido });
         }
 

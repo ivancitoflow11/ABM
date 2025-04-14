@@ -326,46 +326,72 @@
         var paisNegocioData = @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject((List<ABM.Models.PaisNegocioViewModel>)ViewBag.PaisesNegocios));
         // Extraer la lista única de países
         var uniqueCountries = [...new Set(paisNegocioData.map(x => x.pais))];
+        
+        // Variables para almacenar la selección
+        var selectedPais, selectedIdPais, selectedNegocio, selectedIdNegocio;
 
         document.addEventListener("DOMContentLoaded", function () {
             seleccionarPaisNegocio();
         });
-
+        
         function seleccionarPaisNegocio() {
             Swal.fire({
                 title: '<strong style="color:#3a3a3a;">Seleccione País y Negocio</strong>',
                 html: `
-                            <div style="display: flex; flex-direction: column; gap: 15px; text-align: left;">
-                                <!-- Campo País -->
-                                <div style="display: flex; flex-direction: column; gap: 5px;">
-                                    <label for="selectPais" style="font-weight:600;">País</label>
-                                    <select id="selectPais" class="swal2-select" style="width:100%;">
-                                        <option value="">-- Seleccione un país --</option>
-                                    </select>
-                                </div>
-                                <!-- Campo Negocio -->
-                                <div style="display: flex; flex-direction: column; gap: 5px;">
-                                    <label for="selectNegocio" style="font-weight:600;">Negocio</label>
-                                    <select id="selectNegocio" class="swal2-select" style="width:100%;" disabled>
-                                        <option value="">Debe seleccionar primero un país</option>
-                                    </select>
-                                </div>
-                            </div>
-                        `,
+                <div style="display: flex; flex-direction: column; gap: 15px; text-align: left; font-family: 'Segoe UI', sans-serif; font-size: 15px; color: #4a4a4a;">
+                    <!-- Campo País -->
+                    <div style="display: flex; flex-direction: column; gap: 5px;">
+                        <label for="selectPais" style="font-weight:600;"> País</label>
+                        <select id="selectPais" class="swal2-input" style="height: 42px; padding: 5px 10px; font-size: 16px; color: #333; border-radius: 5px; border: 1px solid #ccc;">
+                            <option value="">-- Seleccione un país --</option>
+                        </select>
+                    </div>
+                    <!-- Campo Negocio -->
+                    <div style="display: flex; flex-direction: column; gap: 5px;">
+                        <label for="selectNegocio" style="font-weight:600;"> Negocio</label>
+                        <select id="selectNegocio" class="swal2-input" style="height: 42px; padding: 5px 10px; font-size: 16px; color: #333; border-radius: 5px; border: 1px solid #ccc;" disabled>
+                            <option value="">Debe seleccionar primero un país</option>
+                        </select>
+                    </div>
+                </div>
+                `,
                 focusConfirm: false,
                 confirmButtonText: 'Continuar',
+                confirmButtonColor: '#7ac143',
+
                 preConfirm: () => {
-                    var pais = document.getElementById('selectPais').value;
-                    var negocio = document.getElementById('selectNegocio').value;
-                    if (!pais || !negocio || negocio === "NA") {
+                    const idPais = document.getElementById('selectPais').value;
+                    const idNegocio = document.getElementById('selectNegocio').value;
+
+                    if (!idPais || !idNegocio || idNegocio === "NA") {
                         Swal.showValidationMessage("Debe seleccionar un país y un negocio.");
                         return false;
                     }
-                    return { pais: pais, negocio: negocio };
+
+                    // Guardar la selección en variables globales
+                    selectedIdPais = idPais;
+                    selectedIdNegocio = idNegocio;
+                    selectedPais = document.getElementById('selectPais').options[document.getElementById('selectPais').selectedIndex].text;
+                    selectedNegocio = document.getElementById('selectNegocio').options[document.getElementById('selectNegocio').selectedIndex].text;
+
+                    return { idPais, idNegocio };
                 }
             }).then((result) => {
                 if (result.isConfirmed) {
-                    console.log("Selección:", result.value);
+                    console.log("Selección:", selectedPais, selectedNegocio);
+
+                    // 🔄 Mostrar loading antes de enviar OTC
+                    Swal.fire({
+                        title: 'Cargando...',
+                        html: 'Generando OTC, revise su correo registrado.',
+                        didOpen: () => {
+                            Swal.showLoading();
+                        },
+                        allowOutsideClick: false,
+                        allowEscapeKey: false,
+                        showConfirmButton: false
+                    });
+
                     // Llamamos al endpoint para enviar el OTC
                     enviarOTC();
                 } else {
@@ -373,41 +399,43 @@
                 }
             });
 
-            // Poblar el select de países
-            var selectPais = document.getElementById("selectPais");
-            // Se asume que ya está incluida la opción default en el HTML del modal.
-            uniqueCountries.forEach(function (pais) {
-                var option = document.createElement("option");
-                option.value = pais;
-                option.text = pais;
+            // Poblar el select de países con ID y nombre
+            const selectPais = document.getElementById("selectPais");
+            const paisesUnicos = [...new Map(paisNegocioData.map(item => [item.idPais, item])).values()];
+            paisesUnicos.forEach(function (item) {
+                const option = document.createElement("option");
+                option.value = item.idPais;
+                option.text = item.pais;
                 selectPais.add(option);
             });
 
-            // Al cambiar la selección del país se actualiza el select de negocios
+            // Al cambiar país, poblar negocios filtrando por idPais
             selectPais.addEventListener("change", function () {
-                var selectedCountry = this.value;
-                var selectNegocio = document.getElementById("selectNegocio");
+                const selectedCountryId = this.value;
+                const selectNegocio = document.getElementById("selectNegocio");
                 selectNegocio.innerHTML = "";
-                if (selectedCountry === "") {
-                    var defaultOpt = document.createElement("option");
+
+                if (selectedCountryId === "") {
+                    const defaultOpt = document.createElement("option");
                     defaultOpt.value = "";
                     defaultOpt.text = "Debe seleccionar primero un país";
                     selectNegocio.add(defaultOpt);
                     selectNegocio.disabled = true;
                 } else {
-                    var negocios = paisNegocioData.filter(x => x.pais === selectedCountry).map(x => x.negocio);
-                    var uniqueNegocios = [...new Set(negocios)];
+                    const negocios = paisNegocioData.filter(x => x.idPais == selectedCountryId);
+                    const uniqueNegocios = [...new Map(negocios.map(item => [item.idNegocio, item])).values()];
+
                     if (uniqueNegocios.length === 0) {
-                        var opt = document.createElement("option");
+                        const opt = document.createElement("option");
                         opt.value = "NA";
                         opt.text = "No hay negocios disponibles para el país seleccionado";
                         selectNegocio.add(opt);
                         selectNegocio.disabled = true;
                     } else {
-                        uniqueNegocios.forEach(function (negocio) {
-                            var option = document.createElement("option");
-                            option.value = negocio;
-                            option.text = negocio;
+                        uniqueNegocios.forEach(function (item) {
+                            const option = document.createElement("option");
+                            option.value = item.idNegocio;
+                            option.text = item.negocio;
                             selectNegocio.add(option);
                         });
                         selectNegocio.disabled = false;
@@ -422,7 +450,7 @@
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' }
                 // Opcional: se puede incluir la selección de país y negocio en el body
-                // body: JSON.stringify({ pais: document.getElementById("selectPais").value, negocio: document.getElementById("selectNegocio").value })
+                // body: JSON.stringify({ pais: selectedIdPais, negocio: selectedIdNegocio })
             })
                 .then(response => response.json())
                 .then(data => {
@@ -460,7 +488,7 @@
                 allowEscapeKey: false,
                 showLoaderOnConfirm: true,
                 preConfirm: (valorOTC) => {
-                    return fetch(`/Acceso/ValidarOTC?idUsuario=@ViewBag.IdUsuario&otcIngresado=${valorOTC}`)
+                    return fetch(`/Acceso/ValidarOTC?idUsuario=@ViewBag.IdUsuario&otcIngresado=${valorOTC}&idPais=${selectedIdPais}&pais=${encodeURIComponent(selectedPais)}&idNegocio=${selectedIdNegocio}&negocio=${encodeURIComponent(selectedNegocio)}`)
                         .then(response => {
                             if (!response.ok) {
                                 throw new Error(response.statusText);
