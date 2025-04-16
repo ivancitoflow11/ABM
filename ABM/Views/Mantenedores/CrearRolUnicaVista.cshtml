@@ -5,10 +5,11 @@
 @{
     ViewData["Title"] = "Crear Rol Wizard";
 }
-<link rel="stylesheet" href="~/css/flag-icons.min.css" />
 
-<div class="d-flex align-items-center justify-content-center" style="min-height: 100vh; background-color: #f8f9fa; font-family: 'Segoe UI', sans-serif;">
-    <div class="card shadow" style="max-width: 600px; width: 90%;">
+<link rel="stylesheet" href="~/css/site.css" />
+
+<div class="d-flex align-items-center justify-content-center" style="min-height:100vh; background-color:#f8f9fa; font-family:'Segoe UI',sans-serif;">
+    <div class="card shadow" style="max-width:600px; width:90%;">
         <div class="card-body p-4 p-md-5">
             <h3 class="card-title text-center mb-4 fw-bold">
                 <span class="flag-icon flag-icon-cl me-2"></span>
@@ -16,7 +17,8 @@
             </h3>
 
             <div asp-validation-summary="All" class="text-danger mb-3"></div>
-            <form asp-action="CrearRolWizard" method="post">
+
+            <form asp-action="CrearRolWizard" method="post" id="wizardForm">
                 @Html.AntiForgeryToken()
 
                 <!-- PASO 1: Nombre del Rol -->
@@ -66,7 +68,7 @@
                 <!-- PASO 3: Selección de Menú de inicio -->
                 <div id="paso3" class="wizard-step" style="display:none;">
                     <div class="mb-4">
-                        <label asp-for="MenuInicioSeleccionadoId" class="form-label fw-semibold">Vista de inicio</label>
+                        <label asp-for="MenuInicioSeleccionadoId" class="form-label fw-semibold">Menú de inicio</label>
                         <select asp-for="MenuInicioSeleccionadoId" class="form-select form-select-lg" id="MenuInicioSeleccionadoId">
                             <option value="">Seleccione...</option>
                         </select>
@@ -78,22 +80,42 @@
                     </div>
                 </div>
 
-                <!-- PASO 4: Seleccionar País y Negocio -->
+                <!-- PASO 4: Selección de País/Negocio/Sistema -->
                 <div id="paso4" class="wizard-step" style="display:none;">
                     <div class="mb-4">
-                        <label asp-for="SelectedPaisNegocioSistemaId" class="form-label fw-semibold">País y Negocio</label>
-                        <select asp-for="SelectedPaisNegocioSistemaId" class="form-select form-select-lg" id="SelectedPaisNegocioSistemaId">
-                            <option value="">Seleccione...</option>
-                            @if (ViewBag.PaisNegocioList != null)
+                        <label asp-for="ListaPNSSeleccionados" class="form-label fw-semibold d-block mb-2">
+                            Seleccione sistemas y negocios por país
+                        </label>
+                        <div class="pns-list-container" style="max-height:300px; overflow:auto; border:1px solid #ddd; border-radius:4px; padding:10px;">
+                            @foreach (var grupo in ((IEnumerable<PaisNegocioSistemaModel>)ViewBag.PNSModelList)
+                            .GroupBy(x => x.CodPais.ToLower()))
                             {
-                                foreach (SelectListItem item in (IEnumerable<SelectListItem>)ViewBag.PaisNegocioList)
-                                {
-                                    bool isSelected = (Model.SelectedPaisNegocioSistemaId?.ToString() == item.Value);
-                                    <option value="@item.Value" selected="@(isSelected ? "selected" : null)">@item.Text</option>
-                                }
+                                <div class="mb-3">
+                                    <h6 class="fw-semibold mb-2">
+                                        <span class="flag-icon flag-icon-@grupo.Key me-2"></span>
+                                        @grupo.First().Pais
+                                    </h6>
+                                    <div class="row">
+                                        @foreach (var item in grupo)
+                                        {
+                                            <div class="col-12 col-md-6">
+                                                <div class="form-check">
+                                                    <input class="form-check-input"
+                                                           type="checkbox"
+                                                           name="ListaPNSSeleccionados"
+                                                           id="pns_@item.IdPaisNegocioSistema"
+                                                           value="@item.IdPaisNegocioSistema" />
+                                                    <label class="form-check-label" for="pns_@item.IdPaisNegocioSistema">
+                                                        @item.Negocio — @item.Sistema
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        }
+                                    </div>
+                                </div>
                             }
-                        </select>
-                        <span asp-validation-for="SelectedPaisNegocioSistemaId" class="text-danger"></span>
+                        </div>
+                        <span asp-validation-for="ListaPNSSeleccionados" class="text-danger"></span>
                     </div>
                     <div class="d-flex justify-content-between">
                         <button type="button" class="btn btn-secondary btn-lg" onclick="Prev(4)">Anterior</button>
@@ -115,30 +137,26 @@
                         <button type="submit" class="btn btn-success btn-lg">Guardar Rol</button>
                     </div>
                 </div>
+
             </form>
         </div>
     </div>
 </div>
 
 @section Scripts {
-    <script src="~/lib/jquery/dist/jquery.min.js"></script>
-    <script src="~/lib/jquery-validation/dist/jquery.validate.min.js"></script>
-    <script src="~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js"></script>
+    <script src="~/js/sweetalert/sweetalert.min.js"></script>
     <script>
         const form = document.getElementById('wizardForm');
         let currentStep = 1;
 
-        // Siempre impedir ENTER para que no haga submit
-        form.addEventListener('keydown', e => {
-            if (e.key === 'Enter') e.preventDefault();
-        });
+        // Impedir ENTER accidental
+        form.addEventListener('keydown', e => { if (e.key === 'Enter') e.preventDefault(); });
 
         function showError(msg) {
             const summary = document.querySelector('.text-danger.mb-3');
-            summary.innerHTML = '<ul><li>' + msg + '</li></ul>';
+            summary.innerHTML = `<ul><li>${msg}</li></ul>`;
             summary.style.display = 'block';
         }
-
         function clearError() {
             const summary = document.querySelector('.text-danger.mb-3');
             summary.innerHTML = '';
@@ -148,77 +166,55 @@
         function Next(step) {
             clearError();
 
-            // 1) Paso 1 → validar sólo NombreRol
             if (step === 1) {
-                if (!$('#NombreRol').valid()) {
+                if (!document.getElementById('NombreRol').value.trim()) {
+                    showError('El nombre del rol es obligatorio.');
                     return;
                 }
             }
-
-            // 2) Paso 2 → validar que haya al menos un menú
             if (step === 2) {
-                if (document.querySelectorAll('input[name="ListaMenusSeleccionados"]:checked').length === 0) {
+                const marc = document.querySelectorAll('input[name="ListaMenusSeleccionados"]:checked');
+                if (!marc.length) {
                     showError('Debe seleccionar al menos un Menú para el Rol.');
                     return;
                 }
+                const selIni = document.getElementById('MenuInicioSeleccionadoId');
+                selIni.innerHTML = '<option value="">Seleccione...</option>';
+                marc.forEach(item => {
+                    const opt = document.createElement('option');
+                    opt.value = item.value;
+                    opt.text = item.getAttribute('data-nombre') || item.parentElement.querySelector('label').innerText.trim();
+                    selIni.appendChild(opt);
+                });
             }
-
-            // 3) Paso 3 → validar MenuInicioSeleccionadoId
             if (step === 3) {
-                if (!$('#MenuInicioSeleccionadoId').val()) {
+                if (!document.getElementById('MenuInicioSeleccionadoId').value) {
                     showError('Debes elegir un Menú de inicio.');
                     return;
                 }
             }
-
-            // 4) Paso 4 → validar país y negocio
             if (step === 4) {
-                if (!$('#SelectedPaisNegocioSistemaId').val()) {
-                    showError('Debe seleccionar país y negocio.');
+                if (!document.querySelectorAll('input[name="ListaPNSSeleccionados"]:checked').length) {
+                    showError('Debe seleccionar al menos un País/Negocio/Sistema.');
                     return;
                 }
             }
 
-            // Si pasaron todas las validaciones, navegar al siguiente paso
             document.getElementById('paso' + step).style.display = 'none';
-            const nextStep = step + 1;
+            const next = step + 1;
+            document.getElementById('paso' + next).style.display = 'block';
+            currentStep = next;
 
-            // Llenar select de Menú de inicio en la transición 2→3
-            if (step === 2 && nextStep === 3) {
-                const selectInicio = document.getElementById('MenuInicioSeleccionadoId');
-                selectInicio.innerHTML = '<option value="">Seleccione...</option>';
-                document.querySelectorAll('input[name="ListaMenusSeleccionados"]:checked')
-                    .forEach(item => {
-                        const opt = document.createElement('option');
-                        opt.value = item.value;
-                        opt.text = item.getAttribute('data-nombre') ||
-                            item.parentElement.querySelector('label').innerText;
-                        selectInicio.appendChild(opt);
-                    });
-            }
-
-            document.getElementById('paso' + nextStep).style.display = 'block';
-            currentStep = nextStep;
-
-            // Si es el paso 5, rellenar el resumen
             if (currentStep === 5) {
-                document.getElementById('lblNombreRol').innerText =
-                    document.getElementById('NombreRol').value;
-
-                const menues = Array.from(
+                document.getElementById('lblNombreRol').innerText = document.getElementById('NombreRol').value.trim();
+                document.getElementById('lblMenus').innerText = Array.from(
                     document.querySelectorAll('input[name="ListaMenusSeleccionados"]:checked')
-                ).map(item => item.parentElement.querySelector('label').innerText.trim());
-                document.getElementById('lblMenus').innerText = menues.join(', ');
-
-                const inicioText = document
-                    .getElementById('MenuInicioSeleccionadoId')
+                ).map(i => i.parentElement.querySelector('label').innerText.trim()).join(', ');
+                document.getElementById('lblVista').innerText = document.getElementById('MenuInicioSeleccionadoId')
                     .selectedOptions[0]?.text || '';
-                document.getElementById('lblVista').innerText = inicioText;
-
-                const pnsText = document
-                    .getElementById('SelectedPaisNegocioSistemaId')
-                    .selectedOptions[0]?.text || '';
-                document.getElementById('lblPNS').innerText = pnsText;
+                document.getElementById('lblPNS').innerText = Array.from(
+                    document.querySelectorAll('input[name="ListaPNSSeleccionados"]:checked')
+                ).map(i => i.parentElement.querySelector('label').innerText.trim()).join(', ');
             }
         }
 
