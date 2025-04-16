@@ -7,6 +7,10 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using System.Net.Mail;
 using System.Net;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using System.Linq;
+using System.Threading.Tasks;
+
 
 namespace ABM.Controllers
 {
@@ -204,6 +208,85 @@ namespace ABM.Controllers
         {
             var rolesConPNS = await _repositorioRoles.ObtenerRolesConPNS();
             return View(rolesConPNS);
+        }
+
+
+        // GET: Muestra el wizard en una única vista
+        public async Task<IActionResult> CrearRolWizard()
+        {
+            var model = new RolWizardViewModel();
+
+            // 1) Lista de país-negocio
+            var paisNegocioList = await _repositorioRoles.ObtenerPaisNegocioSistemasActivos();
+            ViewBag.PaisNegocioList = paisNegocioList
+                .Select(p => new SelectListItem
+                {
+                    Value = p.IdPaisNegocioSistema.ToString(),
+                    Text = $"{p.Pais} - {p.Negocio} - {p.Sistema}"
+                })
+                .ToList();
+
+            // 2) Lista de menús disponibles (cada menú tiene su campo VISTA)
+            var listaMenus = await _repositorioRoles.ObtenerMenus();
+            ViewBag.MenusDisponibles = listaMenus;
+
+            return View("CrearRolUnicaVista", model);
+        }
+
+        // POST: Recibe toda la data del wizard y crea el rol
+        [HttpPost]
+        public async Task<IActionResult> CrearRolWizard(RolWizardViewModel model)
+        {
+            if (!ModelState.IsValid)
+            {
+                // Recargar listas en caso de error
+                var paisNegocioList = await _repositorioRoles.ObtenerPaisNegocioSistemasActivos();
+                ViewBag.PaisNegocioList = paisNegocioList
+                    .Select(p => new SelectListItem
+                    {
+                        Value = p.IdPaisNegocioSistema.ToString(),
+                        Text = $"{p.Pais} - {p.Negocio} - {p.Sistema}"
+                    })
+                    .ToList();
+
+                ViewBag.MenusDisponibles = await _repositorioRoles.ObtenerMenus();
+                return View("CrearRolUnicaVista", model);
+            }
+
+            // 1) Crear el Rol (asignamos el Nombre y la Vista seleccionada)
+            var nuevoRol = new RolModel
+            {
+                Nombre = model.NombreRol,
+                Vista = model.VistaSeleccionada   // Guardamos la cadena de la vista seleccionada
+            };
+
+            var listaPaisNegocio = await _repositorioRoles.ObtenerPaisNegocioSistemasActivos();
+            var paisNegocioSeleccionado = listaPaisNegocio
+                .FirstOrDefault(x => x.IdPaisNegocioSistema == model.SelectedPaisNegocioSistemaId);
+            if (paisNegocioSeleccionado != null)
+            {
+                nuevoRol.IdPais = paisNegocioSeleccionado.IdPais;
+                nuevoRol.IdNegocio = paisNegocioSeleccionado.IdNegocio;
+            }
+
+            int idRol = await _repositorioRoles.CrearRol(nuevoRol);
+
+            // 2) Insertar en la tabla detalle_rol
+            var detalle = new DetalleRolModel
+            {
+                IdRol = idRol,
+                IdPaisNegocioSistema = model.SelectedPaisNegocioSistemaId.Value
+            };
+            await _repositorioRoles.CrearDetalleRol(detalle);
+
+            // 3) Insertar los menús seleccionados en ftc_PermisosMenu
+            if (model.ListaMenusSeleccionados != null && model.ListaMenusSeleccionados.Any())
+            {
+                await _repositorioRoles.InsertarPermisosMenu(idRol, model.ListaMenusSeleccionados);
+            }
+
+            TempData["SuccessMessage"] = "Rol creado exitosamente";
+            return RedirectToAction("Index", "Home");
         }
     }
 }

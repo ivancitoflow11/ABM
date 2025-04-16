@@ -1,0 +1,189 @@
+﻿@using Microsoft.AspNetCore.Mvc.Rendering
+@using ABM.Models
+@model ABM.Models.RolWizardViewModel
+
+@{
+    ViewData["Title"] = "Crear Rol Wizard";
+}
+<link rel="stylesheet" href="~/css/flag-icons.min.css" />
+
+<div class="d-flex align-items-center justify-content-center" style="min-height: 100vh; background-color: #f8f9fa; font-family: 'Segoe UI', sans-serif;">
+    <div class="card shadow" style="max-width: 600px; width: 90%;">
+        <div class="card-body p-4 p-md-5">
+            <h3 class="card-title text-center mb-4 fw-bold">
+                <span class="flag-icon flag-icon-cl me-2"></span>
+                Crear Rol
+            </h3>
+
+            <div asp-validation-summary="All" class="text-danger mb-3"></div>
+            <form asp-action="CrearRolWizard" method="post">
+                @Html.AntiForgeryToken()
+                <!-- PASO 1: Nombre del Rol -->
+                <div id="paso1" class="wizard-step" style="display:block;">
+                    <div class="mb-4">
+                        <label asp-for="NombreRol" class="form-label fw-semibold">Nombre del Rol</label>
+                        <input asp-for="NombreRol" class="form-control form-control-lg" id="NombreRol" />
+                        <span asp-validation-for="NombreRol" class="text-danger"></span>
+                    </div>
+                    <div class="d-flex justify-content-end">
+                        <button type="button" class="btn btn-primary btn-lg" onclick="Next(1)">Siguiente</button>
+                    </div>
+                </div>
+
+                <!-- PASO 2: Selección de Menús -->
+                <div id="paso2" class="wizard-step" style="display:none;">
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold">Seleccione Menús para el Rol</label>
+                        @if (ViewBag.MenusDisponibles != null)
+                        {
+                            foreach (var menu in (IEnumerable<MenuModel>)ViewBag.MenusDisponibles)
+                            {
+                                <div class="form-check mb-2">
+                                    <input type="checkbox"
+                                           class="form-check-input"
+                                           name="ListaMenusSeleccionados"
+                                           value="@menu.IdMenu"
+                                           id="menu_@menu.IdMenu"
+                                           data-vista="@menu.Vista" />
+                                    <label class="form-check-label" for="menu_@menu.IdMenu">
+                                        @menu.NombreMenu
+                                    </label>
+                                </div>
+                            }
+                        }
+                        else
+                        {
+                            <p>No hay menús disponibles.</p>
+                        }
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <button type="button" class="btn btn-secondary btn-lg" onclick="Prev(2)">Anterior</button>
+                        <button type="button" class="btn btn-primary btn-lg" onclick="Next(2)">Siguiente</button>
+                    </div>
+                </div>
+
+                <!-- PASO 3: Selección de Vista (Filtrada según Menús seleccionados) -->
+                <div id="paso3" class="wizard-step" style="display:none;">
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold">Vista</label>
+                        <!-- Usamos VistaSeleccionada (string) -->
+                        <select asp-for="VistaSeleccionada" class="form-select form-select-lg" id="VistaSeleccionada">
+                            <option value="">Seleccione...</option>
+                        </select>
+                        <span asp-validation-for="VistaSeleccionada" class="text-danger"></span>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <button type="button" class="btn btn-secondary btn-lg" onclick="Prev(3)">Anterior</button>
+                        <button type="button" class="btn btn-primary btn-lg" onclick="Next(3)">Siguiente</button>
+                    </div>
+                </div>
+
+                <!-- PASO 4: Seleccionar País y Negocio -->
+                <div id="paso4" class="wizard-step" style="display:none;">
+                    <div class="mb-4">
+                        <label asp-for="SelectedPaisNegocioSistemaId" class="form-label fw-semibold">País y Negocio</label>
+                        <select asp-for="SelectedPaisNegocioSistemaId" class="form-select form-select-lg" id="SelectedPaisNegocioSistemaId">
+                            <option value="">Seleccione...</option>
+                            @if (ViewBag.PaisNegocioList != null)
+                            {
+                                foreach (SelectListItem item in (IEnumerable<SelectListItem>)ViewBag.PaisNegocioList)
+                                {
+                                    bool isSelected = (Model.SelectedPaisNegocioSistemaId?.ToString() == item.Value);
+                                    <option value="@item.Value" selected="@(isSelected)">@item.Text</option>
+                                }
+                            }
+                        </select>
+                        <span asp-validation-for="SelectedPaisNegocioSistemaId" class="text-danger"></span>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <button type="button" class="btn btn-secondary btn-lg" onclick="Prev(4)">Anterior</button>
+                        <button type="button" class="btn btn-primary btn-lg" onclick="Next(4)">Siguiente</button>
+                    </div>
+                </div>
+
+                <!-- PASO 5: Resumen y Confirmación -->
+                <div id="paso5" class="wizard-step" style="display:none;">
+                    <div class="mb-4">
+                        <h5 class="mb-3 fw-bold">Revisar Datos</h5>
+                        <p class="fs-5"><strong>Nombre del Rol:</strong> <span id="lblNombreRol"></span></p>
+                        <p class="fs-5"><strong>Menús:</strong> <span id="lblMenus"></span></p>
+                        <p class="fs-5"><strong>Vista:</strong> <span id="lblVista"></span></p>
+                        <p class="fs-5"><strong>País y Negocio:</strong> <span id="lblPNS"></span></p>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <button type="button" class="btn btn-secondary btn-lg" onclick="Prev(5)">Anterior</button>
+                        <button type="submit" class="btn btn-success btn-lg">Guardar Rol</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/sweetalert/sweetalert.min.js"></script>
+    <script>
+        // Función que pasa del paso 2 al 3:
+        // Se extraen los valores de data-vista de los checkboxes seleccionados y se llenan en el select.
+        let currentStep = 1;
+        function Next(step) {
+            document.getElementById('paso' + step).style.display = 'none';
+            let nextStep = step + 1;
+
+            if (step === 2 && nextStep === 3) {
+                let vistasSeleccionadas = new Set();
+                document.querySelectorAll('input[name="ListaMenusSeleccionados"]:checked').forEach(function (item) {
+                    let vista = item.getAttribute('data-vista');
+                    if (vista) { vistasSeleccionadas.add(vista); }
+                });
+                let selectVista = document.getElementById('VistaSeleccionada');
+                selectVista.innerHTML = '<option value="">Seleccione...</option>';
+                if (vistasSeleccionadas.size > 0) {
+                    vistasSeleccionadas.forEach(function (vistaStr) {
+                        let option = document.createElement('option');
+                        option.value = vistaStr;
+                        option.text = vistaStr;
+                        selectVista.appendChild(option);
+                    });
+                } else {
+                    let option = document.createElement('option');
+                    option.value = "";
+                    option.text = "No se encuentran vistas asociadas a los Menús seleccionados";
+                    selectVista.appendChild(option);
+                }
+            }
+
+            document.getElementById('paso' + nextStep).style.display = 'block';
+            currentStep = nextStep;
+
+            // Al llegar al paso 5, llenar el resumen
+            if (currentStep === 5) {
+                document.getElementById('lblNombreRol').innerText = document.getElementById('NombreRol').value;
+
+                // Menús: recopilar textos de checkboxes seleccionados
+                let menues = [];
+                document.querySelectorAll('input[name="ListaMenusSeleccionados"]:checked').forEach(function (item) {
+                    let label = item.parentElement.querySelector('label');
+                    if (label) { menues.push(label.innerText.trim()); }
+                });
+                document.getElementById('lblMenus').innerText = menues.join(', ');
+
+                // Vista: tomar el texto del option seleccionado
+                let vistaSelect = document.getElementById('VistaSeleccionada');
+                let vistaText = vistaSelect.options[vistaSelect.selectedIndex].text;
+                document.getElementById('lblVista').innerText = vistaText;
+
+                // País y Negocio:
+                let pnsSelect = document.getElementById('SelectedPaisNegocioSistemaId');
+                let pnsText = pnsSelect.options[pnsSelect.selectedIndex].text;
+                document.getElementById('lblPNS').innerText = pnsText;
+            }
+        }
+        function Prev(step) {
+            document.getElementById('paso' + step).style.display = 'none';
+            let prevStep = step - 1;
+            document.getElementById('paso' + prevStep).style.display = 'block';
+            currentStep = prevStep;
+        }
+    </script>
+}

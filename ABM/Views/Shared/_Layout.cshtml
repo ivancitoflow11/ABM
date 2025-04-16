@@ -313,6 +313,14 @@
 										<span class="hide-menu">Roles</span>
 									</a>
 								</li>
+								<li class="sidebar-item">
+									<a href="@Url.Action("CrearRolWizard","Mantenedores")" class="sidebar-link sublink">
+										<div class="round-16 d-flex align-items-center justify-content-center">
+											<iconify-icon icon="solar:user-bold"></iconify-icon>
+										</div>
+										<span class="hide-menu">Crear Rol</span>
+									</a>
+								</li>
 							</ul>
 						</li>
 						<li class="sidebar-item">
@@ -821,6 +829,7 @@
 	<script src="/lib/jquery/dist/jquery.min.js"></script>
 	<script src="/libs/bootstrap-datepicker/dist/js/bootstrap-datepicker.min.js"></script>
 	<script src="/js/forms/datepicker-init.js"></script>
+	<script src="/js/font-awesome-min.js"></script>
 	<!-- iconos-->
 	<script src="~/js/plugins/all.min.js"></script>
 	<script>
@@ -839,62 +848,7 @@
 			}
 		});
 	</script>
-	<script>
-		$(document).ready(function () {
-			var mostrarAlertas = '@TempData["MostrarAlertasInicio"]';
-			if (mostrarAlertas === 'True') {
-				$.ajax({
-					url: '/Excepciones/ObtenerListaExcepcionesPorVencer',
-					type: 'POST',
-					success: function (data) {
-						if (data && Array.isArray(data) && data.length > 0) {
-							const alertContainer = document.getElementById('excepcion-alerta');
-
-							data.forEach(excepcion => {
-								const alertMessage = `
-											La excepción con ID Carga: <strong>${excepcion.idCarga}</strong> está cerca de vencer.
-											Quedan <strong>${Math.ceil(excepcion.diasRestantes)} días</strong> para su vencimiento.
-											<br>
-											<strong>Motivo:</strong> ${excepcion.motivo || "-"}
-											<br>
-											<strong>Responsable:</strong> ${excepcion.responsable || "-"}
-											<br>
-											<strong>Fecha de Autorización:</strong> ${new Date(excepcion.fecha_autorizacion).toLocaleDateString()}
-											<br>
-											<strong>Usuario:</strong> ${excepcion.nombreusuario || "-"}
-										`;
-
-								const alertDiv = document.createElement('div');
-								alertDiv.classList.add('alert', 'alert-danger', 'alert-custom');
-								alertDiv.innerHTML = alertMessage;
-
-								const closeButton = document.createElement('button');
-								closeButton.classList.add('btn-close');
-								closeButton.setAttribute('aria-label', 'Close');
-								closeButton.addEventListener('click', () => {
-									alertDiv.remove();
-								});
-
-								alertDiv.appendChild(closeButton);
-								alertContainer.appendChild(alertDiv);
-
-								setTimeout(() => {
-									alertDiv.remove();
-								}, 10000);
-							});
-						} else if (data.message) {
-							console.log(data.message); // Mostrar mensaje si no tiene gerencia
-						}
-					},
-					error: function (err) {
-						console.error("Error al obtener las excepciones por vencer: ", err);
-					}
-				});
-			}
-		});
-	</script>
-
-
+	
 
 	<!-- solar icons -->
 	@* <script src="/js/dashboards/dashboard1.js"></script> *@

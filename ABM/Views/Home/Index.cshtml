@@ -49,3 +49,19 @@
         </div>
     }
 </div>
+@section Scripts {
+    <script src="~/js/sweetalert/sweetalert.min.js"></script>
+    <script>
+        @if (TempData["SuccessMessage"] != null)
+        {
+            <text>
+                    Swal.fire({
+                        icon: 'success',
+                        title: '@TempData["SuccessMessage"]',
+                        showConfirmButton: false,
+                        timer: 2000
+                    });
+            </text>
+        }
+    </script>
+}
