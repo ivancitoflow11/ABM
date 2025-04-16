@@ -18,6 +18,7 @@
             <div asp-validation-summary="All" class="text-danger mb-3"></div>
             <form asp-action="CrearRolWizard" method="post">
                 @Html.AntiForgeryToken()
+
                 <!-- PASO 1: Nombre del Rol -->
                 <div id="paso1" class="wizard-step" style="display:block;">
                     <div class="mb-4">
@@ -44,7 +45,7 @@
                                            name="ListaMenusSeleccionados"
                                            value="@menu.IdMenu"
                                            id="menu_@menu.IdMenu"
-                                           data-vista="@menu.Vista" />
+                                           data-nombre="@menu.NombreMenu" />
                                     <label class="form-check-label" for="menu_@menu.IdMenu">
                                         @menu.NombreMenu
                                     </label>
@@ -62,15 +63,14 @@
                     </div>
                 </div>
 
-                <!-- PASO 3: Selección de Vista (Filtrada según Menús seleccionados) -->
+                <!-- PASO 3: Selección de Menú de inicio -->
                 <div id="paso3" class="wizard-step" style="display:none;">
                     <div class="mb-4">
-                        <label class="form-label fw-semibold">Vista</label>
-                        <!-- Usamos VistaSeleccionada (string) -->
-                        <select asp-for="VistaSeleccionada" class="form-select form-select-lg" id="VistaSeleccionada">
+                        <label asp-for="MenuInicioSeleccionadoId" class="form-label fw-semibold">Vista de inicio</label>
+                        <select asp-for="MenuInicioSeleccionadoId" class="form-select form-select-lg" id="MenuInicioSeleccionadoId">
                             <option value="">Seleccione...</option>
                         </select>
-                        <span asp-validation-for="VistaSeleccionada" class="text-danger"></span>
+                        <span asp-validation-for="MenuInicioSeleccionadoId" class="text-danger"></span>
                     </div>
                     <div class="d-flex justify-content-between">
                         <button type="button" class="btn btn-secondary btn-lg" onclick="Prev(3)">Anterior</button>
@@ -89,7 +89,7 @@
                                 foreach (SelectListItem item in (IEnumerable<SelectListItem>)ViewBag.PaisNegocioList)
                                 {
                                     bool isSelected = (Model.SelectedPaisNegocioSistemaId?.ToString() == item.Value);
-                                    <option value="@item.Value" selected="@(isSelected)">@item.Text</option>
+                                    <option value="@item.Value" selected="@(isSelected ? "selected" : null)">@item.Text</option>
                                 }
                             }
                         </select>
@@ -107,7 +107,7 @@
                         <h5 class="mb-3 fw-bold">Revisar Datos</h5>
                         <p class="fs-5"><strong>Nombre del Rol:</strong> <span id="lblNombreRol"></span></p>
                         <p class="fs-5"><strong>Menús:</strong> <span id="lblMenus"></span></p>
-                        <p class="fs-5"><strong>Vista:</strong> <span id="lblVista"></span></p>
+                        <p class="fs-5"><strong>Menú de inicio:</strong> <span id="lblVista"></span></p>
                         <p class="fs-5"><strong>País y Negocio:</strong> <span id="lblPNS"></span></p>
                     </div>
                     <div class="d-flex justify-content-between">
@@ -121,69 +121,113 @@
 </div>
 
 @section Scripts {
-    <script src="~/js/sweetalert/sweetalert.min.js"></script>
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/jquery-validation/dist/jquery.validate.min.js"></script>
+    <script src="~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js"></script>
     <script>
-        // Función que pasa del paso 2 al 3:
-        // Se extraen los valores de data-vista de los checkboxes seleccionados y se llenan en el select.
+        const form = document.getElementById('wizardForm');
         let currentStep = 1;
-        function Next(step) {
-            document.getElementById('paso' + step).style.display = 'none';
-            let nextStep = step + 1;
 
-            if (step === 2 && nextStep === 3) {
-                let vistasSeleccionadas = new Set();
-                document.querySelectorAll('input[name="ListaMenusSeleccionados"]:checked').forEach(function (item) {
-                    let vista = item.getAttribute('data-vista');
-                    if (vista) { vistasSeleccionadas.add(vista); }
-                });
-                let selectVista = document.getElementById('VistaSeleccionada');
-                selectVista.innerHTML = '<option value="">Seleccione...</option>';
-                if (vistasSeleccionadas.size > 0) {
-                    vistasSeleccionadas.forEach(function (vistaStr) {
-                        let option = document.createElement('option');
-                        option.value = vistaStr;
-                        option.text = vistaStr;
-                        selectVista.appendChild(option);
-                    });
-                } else {
-                    let option = document.createElement('option');
-                    option.value = "";
-                    option.text = "No se encuentran vistas asociadas a los Menús seleccionados";
-                    selectVista.appendChild(option);
+        // Siempre impedir ENTER para que no haga submit
+        form.addEventListener('keydown', e => {
+            if (e.key === 'Enter') e.preventDefault();
+        });
+
+        function showError(msg) {
+            const summary = document.querySelector('.text-danger.mb-3');
+            summary.innerHTML = '<ul><li>' + msg + '</li></ul>';
+            summary.style.display = 'block';
+        }
+
+        function clearError() {
+            const summary = document.querySelector('.text-danger.mb-3');
+            summary.innerHTML = '';
+            summary.style.display = 'none';
+        }
+
+        function Next(step) {
+            clearError();
+
+            // 1) Paso 1 → validar sólo NombreRol
+            if (step === 1) {
+                if (!$('#NombreRol').valid()) {
+                    return;
                 }
+            }
+
+            // 2) Paso 2 → validar que haya al menos un menú
+            if (step === 2) {
+                if (document.querySelectorAll('input[name="ListaMenusSeleccionados"]:checked').length === 0) {
+                    showError('Debe seleccionar al menos un Menú para el Rol.');
+                    return;
+                }
+            }
+
+            // 3) Paso 3 → validar MenuInicioSeleccionadoId
+            if (step === 3) {
+                if (!$('#MenuInicioSeleccionadoId').val()) {
+                    showError('Debes elegir un Menú de inicio.');
+                    return;
+                }
+            }
+
+            // 4) Paso 4 → validar país y negocio
+            if (step === 4) {
+                if (!$('#SelectedPaisNegocioSistemaId').val()) {
+                    showError('Debe seleccionar país y negocio.');
+                    return;
+                }
+            }
+
+            // Si pasaron todas las validaciones, navegar al siguiente paso
+            document.getElementById('paso' + step).style.display = 'none';
+            const nextStep = step + 1;
+
+            // Llenar select de Menú de inicio en la transición 2→3
+            if (step === 2 && nextStep === 3) {
+                const selectInicio = document.getElementById('MenuInicioSeleccionadoId');
+                selectInicio.innerHTML = '<option value="">Seleccione...</option>';
+                document.querySelectorAll('input[name="ListaMenusSeleccionados"]:checked')
+                    .forEach(item => {
+                        const opt = document.createElement('option');
+                        opt.value = item.value;
+                        opt.text = item.getAttribute('data-nombre') ||
+                            item.parentElement.querySelector('label').innerText;
+                        selectInicio.appendChild(opt);
+                    });
             }
 
             document.getElementById('paso' + nextStep).style.display = 'block';
             currentStep = nextStep;
 
-            // Al llegar al paso 5, llenar el resumen
+            // Si es el paso 5, rellenar el resumen
             if (currentStep === 5) {
-                document.getElementById('lblNombreRol').innerText = document.getElementById('NombreRol').value;
+                document.getElementById('lblNombreRol').innerText =
+                    document.getElementById('NombreRol').value;
 
-                // Menús: recopilar textos de checkboxes seleccionados
-                let menues = [];
-                document.querySelectorAll('input[name="ListaMenusSeleccionados"]:checked').forEach(function (item) {
-                    let label = item.parentElement.querySelector('label');
-                    if (label) { menues.push(label.innerText.trim()); }
-                });
+                const menues = Array.from(
+                    document.querySelectorAll('input[name="ListaMenusSeleccionados"]:checked')
+                ).map(item => item.parentElement.querySelector('label').innerText.trim());
                 document.getElementById('lblMenus').innerText = menues.join(', ');
 
-                // Vista: tomar el texto del option seleccionado
-                let vistaSelect = document.getElementById('VistaSeleccionada');
-                let vistaText = vistaSelect.options[vistaSelect.selectedIndex].text;
-                document.getElementById('lblVista').innerText = vistaText;
+                const inicioText = document
+                    .getElementById('MenuInicioSeleccionadoId')
+                    .selectedOptions[0]?.text || '';
+                document.getElementById('lblVista').innerText = inicioText;
 
-                // País y Negocio:
-                let pnsSelect = document.getElementById('SelectedPaisNegocioSistemaId');
-                let pnsText = pnsSelect.options[pnsSelect.selectedIndex].text;
+                const pnsText = document
+                    .getElementById('SelectedPaisNegocioSistemaId')
+                    .selectedOptions[0]?.text || '';
                 document.getElementById('lblPNS').innerText = pnsText;
             }
         }
+
         function Prev(step) {
+            clearError();
             document.getElementById('paso' + step).style.display = 'none';
-            let prevStep = step - 1;
-            document.getElementById('paso' + prevStep).style.display = 'block';
-            currentStep = prevStep;
+            const prev = step - 1;
+            document.getElementById('paso' + prev).style.display = 'block';
+            currentStep = prev;
         }
     </script>
 }

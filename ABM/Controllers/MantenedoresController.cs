@@ -210,8 +210,7 @@ namespace ABM.Controllers
             return View(rolesConPNS);
         }
 
-
-        // GET: Muestra el wizard en una única vista
+        [HttpGet]
         public async Task<IActionResult> CrearRolWizard()
         {
             var model = new RolWizardViewModel();
@@ -239,7 +238,6 @@ namespace ABM.Controllers
         {
             if (!ModelState.IsValid)
             {
-                // Recargar listas en caso de error
                 var paisNegocioList = await _repositorioRoles.ObtenerPaisNegocioSistemasActivos();
                 ViewBag.PaisNegocioList = paisNegocioList
                     .Select(p => new SelectListItem
@@ -253,25 +251,20 @@ namespace ABM.Controllers
                 return View("CrearRolUnicaVista", model);
             }
 
-            // 1) Crear el Rol (asignamos el Nombre y la Vista seleccionada)
-            var nuevoRol = new RolModel
-            {
-                Nombre = model.NombreRol,
-                Vista = model.VistaSeleccionada   // Guardamos la cadena de la vista seleccionada
-            };
-
             var listaPaisNegocio = await _repositorioRoles.ObtenerPaisNegocioSistemasActivos();
             var paisNegocioSeleccionado = listaPaisNegocio
                 .FirstOrDefault(x => x.IdPaisNegocioSistema == model.SelectedPaisNegocioSistemaId);
-            if (paisNegocioSeleccionado != null)
+
+            var nuevoRol = new RolModel
             {
-                nuevoRol.IdPais = paisNegocioSeleccionado.IdPais;
-                nuevoRol.IdNegocio = paisNegocioSeleccionado.IdNegocio;
-            }
+                Nombre = model.NombreRol,
+                IdPais = paisNegocioSeleccionado?.IdPais ?? 0,
+                IdNegocio = paisNegocioSeleccionado?.IdNegocio ?? 0,
+                IdVistaInicio = model.MenuInicioSeleccionadoId.Value
+            };
 
             int idRol = await _repositorioRoles.CrearRol(nuevoRol);
 
-            // 2) Insertar en la tabla detalle_rol
             var detalle = new DetalleRolModel
             {
                 IdRol = idRol,
@@ -279,7 +272,6 @@ namespace ABM.Controllers
             };
             await _repositorioRoles.CrearDetalleRol(detalle);
 
-            // 3) Insertar los menús seleccionados en ftc_PermisosMenu
             if (model.ListaMenusSeleccionados != null && model.ListaMenusSeleccionados.Any())
             {
                 await _repositorioRoles.InsertarPermisosMenu(idRol, model.ListaMenusSeleccionados);
@@ -288,5 +280,6 @@ namespace ABM.Controllers
             TempData["SuccessMessage"] = "Rol creado exitosamente";
             return RedirectToAction("Index", "Home");
         }
+
     }
 }

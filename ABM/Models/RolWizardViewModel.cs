@@ -17,16 +17,18 @@ using System.ComponentModel.DataAnnotations;
         [Display(Name = "Vista de Inicio")]
         public int? IdVistaInicio { get; set; }
 
-        [Required(ErrorMessage = "Debe seleccionar país y negocio.")]
-        [Display(Name = "País y Negocio")]
-        public int? SelectedPaisNegocioSistemaId { get; set; }
+        [Required(ErrorMessage = "Debe seleccionar al menos un País/Negocio/Sistema.")]
+        [Display(Name = "Países, Negocios y Sistemas")]
+        public List<int> ListaPNSSeleccionados { get; set; }
         public List<int> ListaMenusSeleccionados { get; set; } = new List<int>();
 
 
-        [Required(ErrorMessage = "Debe seleccionar la vista asociada.")]
         [Display(Name = "Vista")]
         public string VistaSeleccionada { get; set; }
 
+        [Required(ErrorMessage = "Debes elegir un Menú de inicio")]
+        [Display(Name = "Menú de inicio")]
+        public int? MenuInicioSeleccionadoId { get; set; }
 
 
     }
