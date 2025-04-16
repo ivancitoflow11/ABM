@@ -86,7 +86,7 @@
                             <label for="Telefono" class="form-label">Teléfono</label>
                             <input class="form-control" type="text" placeholder="Ingrese su teléfono" asp-for="Telefono" />
                             @Html.ValidationMessageFor(m => m.Telefono, "", new { @class = "text-danger" })
-                        </div>                       
+                        </div>
                         <div class="mb-3">
                             <label for="Repeat_Password" class="form-label">Repetir Contraseña</label>
                             <div class="input-group">
@@ -96,7 +96,7 @@
                                 </span>
                             </div>
                             @Html.ValidationMessageFor(m => m.Repeat_Password, "", new { @class = "text-danger" })
-                        </div>                       
+                        </div>
                         <div class="mb-3">
                             <label for="RolId" class="form-label">Rol</label>
                             <select class="form-select" asp-for="RolId" asp-items="@(new SelectList(Model.RolesDisponibles, "idRol", "nombre"))">
@@ -122,21 +122,21 @@
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
 
-<script>
-    function togglePasswordVisibility(inputId, toggleId) {
-        const passwordInput = document.getElementById(inputId);
-        const toggleElement = document.getElementById(toggleId);
-        const newType = passwordInput.getAttribute("type") === "password" ? "text" : "password";
-        passwordInput.setAttribute("type", newType);
-        toggleElement.querySelector("i").classList.toggle("fa-eye-slash");
-    }
+    <script>
+        function togglePasswordVisibility(inputId, toggleId) {
+            const passwordInput = document.getElementById(inputId);
+            const toggleElement = document.getElementById(toggleId);
+            const newType = passwordInput.getAttribute("type") === "password" ? "text" : "password";
+            passwordInput.setAttribute("type", newType);
+            toggleElement.querySelector("i").classList.toggle("fa-eye-slash");
+        }
 
-    document.getElementById("togglePassword").addEventListener("click", function () {
-        togglePasswordVisibility("password", "togglePassword");
-    });
+        document.getElementById("togglePassword").addEventListener("click", function () {
+            togglePasswordVisibility("password", "togglePassword");
+        });
 
-    document.getElementById("toggleRepeatPassword").addEventListener("click", function () {
-        togglePasswordVisibility("repeatPassword", "toggleRepeatPassword");
-    });
-</script>
+        document.getElementById("toggleRepeatPassword").addEventListener("click", function () {
+            togglePasswordVisibility("repeatPassword", "toggleRepeatPassword");
+        });
+    </script>
 }

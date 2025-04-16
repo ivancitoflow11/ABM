@@ -12,7 +12,9 @@ namespace ABM.Models
 
         public string Rut { get; set; }
 
-        public string Telefono { get; set; }
+        [Required(ErrorMessage = "El teléfono es obligatorio")]
+        [Range(1, 9999999999, ErrorMessage = "Solamente se permiten números (máximo 10 dígitos)")]
+        public int Telefono { get; set; }
 
         [Required(ErrorMessage = "El correo es obligatorio.")]
         [EmailAddress(ErrorMessage = "El correo no es válido.")]

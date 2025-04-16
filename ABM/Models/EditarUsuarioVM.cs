@@ -14,7 +14,7 @@ namespace ABM.Models
 
         public string Rut { get; set; }
 
-        public string Telefono { get; set; }
+        public int Telefono { get; set; }
 
         [Required(ErrorMessage = "El correo es obligatorio.")]
         [EmailAddress(ErrorMessage = "El correo no es válido.")]

@@ -68,8 +68,11 @@
 
     <div class="col-md-12">
         <div class="card mb-4">
-            <input type="hidden" id="IdSistema" value="@ViewBag.ID" />
-            @* <a asp-controller="Home" asp-action="ListaRoles" class="btn btn-orange">Modificar Permisos</a> *@
+            <div class="d-flex justify-content-end mt-3 me-3">
+                <a asp-controller="Mantenedores" asp-action="Registrarse" class="btn btn-success">
+                    <i class="fas fa-user-plus"></i> Crear Usuario
+                </a>
+            </div>
             <div class="card-body">
                 <h4 class="mt-3 text-center">Listado de Usuarios</h4>
                 <div class="col-lg-12 table-responsive">
