@@ -13,22 +13,20 @@ namespace ABM.Servicios
 {
     public interface IRepositorioRoles
     {
-        // Métodos existentes
         Task<IEnumerable<Rol>> ObtenerRoles();
         Task<IEnumerable<RolConPNSViewModel>> ObtenerRolesConPNS();
 
-        // Nuevos métodos para el proceso de creación de rol
+        // métodos para el proceso de creación de rol
         Task<int> CrearRol(RolModel rol);
 
         Task<int> CrearDetalleRol(DetalleRolModel detalle);
         Task<IEnumerable<PaisNegocioSistemaModel>> ObtenerPaisNegocioSistemasActivos();
+        Task<bool> ExisteRolConNombre(string nombreRol);
 
         //Menus
         Task<IEnumerable<MenuModel>> ObtenerMenus();
         Task InsertarPermisosMenu(int idRol, List<int> listaMenusSeleccionados);
 		Task<IEnumerable<string>> ObtenerVistasPorMenusAsync(List<int> idsMenus);
-
-        Task<IEnumerable<VistaInicioModel>> ObtenerVistasInicio();
 
     }
 
@@ -89,7 +87,7 @@ namespace ABM.Servicios
             return resultado;
         }
 
-        // Inserta un nuevo rol y retorna el ID generado.
+        // Insertar un nuevo rol y retornar el ID generado.
         public async Task<int> CrearRol(RolModel rol)
 
         {
@@ -104,7 +102,7 @@ namespace ABM.Servicios
             }
         }
 
-        // Inserta en la tabla detalle_rol y retorna el ID generado.
+        // Insertar en la tabla detalle_rol y retornar el ID generado.
         public async Task<int> CrearDetalleRol(DetalleRolModel detalle)
 
         {
@@ -119,7 +117,7 @@ namespace ABM.Servicios
             }
         }
 
-        // Obtiene las combinaciones activas de país, negocio y sistema (vista PNS)
+        // Obtener las combinaciones activas de país, negocio y sistema (vista PNS)
         public async Task<IEnumerable<PaisNegocioSistemaModel>> ObtenerPaisNegocioSistemasActivos()
         {
             using (IDbConnection db = new SqlConnection(connectionString))
@@ -157,7 +155,7 @@ namespace ABM.Servicios
                     [ICONO]         AS Icono,
                     [VISTA]         AS Vista,
                     [CONTROLADOR]   AS Controlador
-                FROM [Abm_APP].[dbo].[ftc_MENU]
+                FROM [ftc_MENU]
                 ORDER BY [ID_Menu];
             ";
                 return await db.QueryAsync<MenuModel>(sql);
@@ -167,11 +165,11 @@ namespace ABM.Servicios
         // 2) Insertar Permisos de Menú en la tabla ftc_PermisosMenu
         public async Task InsertarPermisosMenu(int idRol, List<int> listaMenusSeleccionados)
         {
-            // Suponiendo que PERMITIDO = 1 y FECHA_CREACION = GETDATE() para cada menú marcado
+            // Para PERMITIDO = 1 y FECHA_CREACION = GETDATE() en cada menú marcado
             using (IDbConnection db = new SqlConnection(connectionString))
             {
                 var sql = @"
-                INSERT INTO [Abm_APP].[dbo].[ftc_PermisosMenu]
+                INSERT INTO [ftc_PermisosMenu]
                 (idRol, COD_Menu, PERMITIDO, FECHA_CREACION)
                 VALUES (@IdRol, @CodMenu, 1, GETDATE());
             ";
@@ -198,7 +196,7 @@ namespace ABM.Servicios
 			{
 				var sql = @"
             SELECT DISTINCT VISTA
-            FROM [Abm_APP].[dbo].[ftc_MENU]
+            FROM [ftc_MENU]
             WHERE ID_Menu IN @Ids
               AND VISTA IS NOT NULL
               AND VISTA <> ''
@@ -209,17 +207,17 @@ namespace ABM.Servicios
 			}
 		}
 
-        public async Task<IEnumerable<VistaInicioModel>> ObtenerVistasInicio()
+        public async Task<bool> ExisteRolConNombre(string nombreRol)
         {
             using (IDbConnection db = new SqlConnection(connectionString))
             {
-                var sql = @"
-            SELECT 
-                [idVistaInicio] AS IdVistaInicio,
-                [vistaInicio]   AS VistaInicio
-            FROM [Abm_APP].[dbo].[vista_inicio]
-            ORDER BY vistaInicio;";
-                return await db.QueryAsync<VistaInicioModel>(sql);
+                var query = @"
+            SELECT COUNT(1) 
+            FROM rol 
+            WHERE nombre = @Nombre";
+
+                int count = await db.ExecuteScalarAsync<int>(query, new { Nombre = nombreRol });
+                return count > 0;
             }
         }
 

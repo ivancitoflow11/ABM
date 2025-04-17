@@ -210,19 +210,18 @@ namespace ABM.Controllers
             return View(rolesConPNS);
         }
 
-        // En tu GET CrearRolWizard:
         [HttpGet]
         public async Task<IActionResult> CrearRolWizard()
         {
             var model = new RolWizardViewModel();
 
-            // 1) obtén la lista de modelos
+            // 1) lista de modelos
             var pnsModelList = await _repositorioRoles.ObtenerPaisNegocioSistemasActivos();
 
-            // 2) guárdala sin transformar para el paso 4
+            // 2) guardar sin transformar para el paso 4
             ViewBag.PNSModelList = pnsModelList;
 
-            // 3) si la necesitas como SelectList (p.ej. en un <select>), sigue creando otra:
+            // 3) para SelectList, seguir creando otra:
             ViewBag.PaisNegocioList = pnsModelList
                 .Select(p => new SelectListItem
                 {
@@ -231,20 +230,45 @@ namespace ABM.Controllers
                 })
                 .ToList();
 
-            // resto de tu código...
             ViewBag.MenusDisponibles = await _repositorioRoles.ObtenerMenus();
             return View("CrearRolUnicaVista", model);
         }
 
+        [HttpGet]
+        public async Task<IActionResult> VerificarNombreRol(string nombre)
+        {
+            if (string.IsNullOrEmpty(nombre))
+                return Json(new { existe = false });
 
-        // POST: Recibe toda la data del wizard y crea el rol
+            bool existe = await _repositorioRoles.ExisteRolConNombre(nombre);
+            return Json(new { existe });
+        }
+
         [HttpPost]
         public async Task<IActionResult> CrearRolWizard(RolWizardViewModel model)
         {
             // validaciones estándar
             if (!ModelState.IsValid)
             {
-                // recarga las dos listas
+                // recargar las dos listas
+                ViewBag.MenusDisponibles = await _repositorioRoles.ObtenerMenus();
+                var pnsList = await _repositorioRoles.ObtenerPaisNegocioSistemasActivos();
+                ViewBag.PaisNegocioList = pnsList
+                    .Select(p => new SelectListItem
+                    {
+                        Value = p.IdPaisNegocioSistema.ToString(),
+                        Text = $"{p.Pais} - {p.Negocio} - {p.Sistema}"
+                    })
+                    .ToList();
+                return View("CrearRolUnicaVista", model);
+            }
+
+            // Validar que el nombre del rol no existe
+            bool existeRol = await _repositorioRoles.ExisteRolConNombre(model.NombreRol);
+            if (existeRol)
+            {
+                ModelState.AddModelError("NombreRol", "El nombre del rol ya existe");
+                // recargar las dos listas
                 ViewBag.MenusDisponibles = await _repositorioRoles.ObtenerMenus();
                 var pnsList = await _repositorioRoles.ObtenerPaisNegocioSistemasActivos();
                 ViewBag.PaisNegocioList = pnsList

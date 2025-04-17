@@ -29,7 +29,7 @@
                         <span asp-validation-for="NombreRol" class="text-danger"></span>
                     </div>
                     <div class="d-flex justify-content-end">
-                        <button type="button" class="btn btn-primary btn-lg" onclick="Next(1)">Siguiente</button>
+                        <button type="button" class="btn btn-success btn-lg" onclick="Next(1)">Siguiente</button>
                     </div>
                 </div>
 
@@ -61,7 +61,7 @@
                     </div>
                     <div class="d-flex justify-content-between">
                         <button type="button" class="btn btn-secondary btn-lg" onclick="Prev(2)">Anterior</button>
-                        <button type="button" class="btn btn-primary btn-lg" onclick="Next(2)">Siguiente</button>
+                        <button type="button" class="btn btn-success btn-lg" onclick="Next(2)">Siguiente</button>
                     </div>
                 </div>
 
@@ -76,41 +76,82 @@
                     </div>
                     <div class="d-flex justify-content-between">
                         <button type="button" class="btn btn-secondary btn-lg" onclick="Prev(3)">Anterior</button>
-                        <button type="button" class="btn btn-primary btn-lg" onclick="Next(3)">Siguiente</button>
+                        <button type="button" class="btn btn-success btn-lg" onclick="Next(3)">Siguiente</button>
                     </div>
                 </div>
 
                 <!-- PASO 4: Selección de País/Negocio/Sistema -->
                 <div id="paso4" class="wizard-step" style="display:none;">
                     <div class="mb-4">
-                        <label asp-for="ListaPNSSeleccionados" class="form-label fw-semibold d-block mb-2">
-                            Seleccione sistemas y negocios por país
-                        </label>
-                        <div class="pns-list-container" style="max-height:300px; overflow:auto; border:1px solid #ddd; border-radius:4px; padding:10px;">
+                        <!-- Selección de país con banderas -->
+                        <div class="card border mb-3">
+                            <div class="card-body text-center py-3">
+                                <h6 class="mb-3">Seleccione el País</h6>
+                                <div class="d-flex justify-content-center flex-wrap">
+                                    @foreach (var pais in ((IEnumerable<PaisNegocioSistemaModel>)ViewBag.PNSModelList)
+                                    .Select(x => new { x.CodPais, x.Pais })
+                                    .Distinct())
+                                    {
+                                        <div class="country-flag-selector mx-2">
+                                            <img src="~/img/flags/@(pais.CodPais.ToLower()).png" alt="@pais.Pais"
+                                                 class="flag-selector" data-pais="@pais.CodPais.ToLower()"
+                                                 style="width:48px; height:32px; cursor:pointer; border:2px solid transparent; transition: all 0.2s;" />
+                                            <div class="text-center mt-1 small">@pais.Pais</div>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="paisSistemaContainer">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h6 class="mb-0">Seleccione los sistemas y negocios para el Rol a crear:</h6>
+                                <button type="button" id="selectAllBtn" class="btn btn-sm btn-outline-primary">Seleccionar todos</button>
+                            </div>
+
                             @foreach (var grupo in ((IEnumerable<PaisNegocioSistemaModel>)ViewBag.PNSModelList)
                             .GroupBy(x => x.CodPais.ToLower()))
                             {
-                                <div class="mb-3">
-                                    <h6 class="fw-semibold mb-2">
-                                        <span class="flag-icon flag-icon-@grupo.Key me-2"></span>
-                                        @grupo.First().Pais
-                                    </h6>
-                                    <div class="row">
-                                        @foreach (var item in grupo)
-                                        {
-                                            <div class="col-12 col-md-6">
-                                                <div class="form-check">
-                                                    <input class="form-check-input"
-                                                           type="checkbox"
-                                                           name="ListaPNSSeleccionados"
-                                                           id="pns_@item.IdPaisNegocioSistema"
-                                                           value="@item.IdPaisNegocioSistema" />
-                                                    <label class="form-check-label" for="pns_@item.IdPaisNegocioSistema">
-                                                        @item.Negocio — @item.Sistema
-                                                    </label>
-                                                </div>
+                                <div class="pais-container mb-4" id="pais-@grupo.Key" style="display:none;">
+                                    <div class="card">
+                                        <div class="card-header bg-success text-white">
+                                            <h6 class="mb-0">
+                                                <span class="flag-icon flag-icon-@grupo.Key me-2 text-white"></span>
+                                                Listado @grupo.First().Pais
+                                            </h6>
+                                        </div>
+                                        <div class="card-body p-0">
+                                            <div class="table-responsive" style="max-height: 250px; overflow-y: auto;">
+                                                <table class="table table-striped table-hover mb-0">
+                                                    <thead style="position: sticky; top: 0; background-color: #f8f9fa; z-index: 1;">
+                                                        <tr>
+                                                            <th style="width:50px;"></th>
+                                                            <th>PAÍS</th>
+                                                            <th>NEGOCIO</th>
+                                                            <th>SISTEMA</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        @foreach (var item in grupo)
+                                                        {
+                                                            <tr>
+                                                                <td class="text-center">
+                                                                    <input class="form-check-input pns-checkbox"
+                                                                           type="checkbox"
+                                                                           name="ListaPNSSeleccionados"
+                                                                           id="pns_@item.IdPaisNegocioSistema"
+                                                                           value="@item.IdPaisNegocioSistema"
+                                                                           data-pais="@item.CodPais.ToLower()" />
+                                                                </td>
+                                                                <td>@item.Pais</td>
+                                                                <td>@item.Negocio</td>
+                                                                <td>@item.Sistema</td>
+                                                            </tr>
+                                                        }
+                                                    </tbody>
+                                                </table>
                                             </div>
-                                        }
+                                        </div>
                                     </div>
                                 </div>
                             }
@@ -119,7 +160,7 @@
                     </div>
                     <div class="d-flex justify-content-between">
                         <button type="button" class="btn btn-secondary btn-lg" onclick="Prev(4)">Anterior</button>
-                        <button type="button" class="btn btn-primary btn-lg" onclick="Next(4)">Siguiente</button>
+                        <button type="button" class="btn btn-success btn-lg" onclick="Next(4)">Siguiente</button>
                     </div>
                 </div>
 
@@ -146,12 +187,14 @@
 @section Scripts {
     <script src="~/js/sweetalert/sweetalert.min.js"></script>
     <script>
+        // Prevent form submission on ENTER
         const form = document.getElementById('wizardForm');
         let currentStep = 1;
+        form.addEventListener('keydown', e => {
+            if (e.key === 'Enter') e.preventDefault();
+        });
 
-        // Impedir ENTER accidental
-        form.addEventListener('keydown', e => { if (e.key === 'Enter') e.preventDefault(); });
-
+        // Error handling
         function showError(msg) {
             const summary = document.querySelector('.text-danger.mb-3');
             summary.innerHTML = `<ul><li>${msg}</li></ul>`;
@@ -163,15 +206,38 @@
             summary.style.display = 'none';
         }
 
+        // Wizard navigation
         function Next(step) {
             clearError();
 
             if (step === 1) {
-                if (!document.getElementById('NombreRol').value.trim()) {
+                const nombreRol = document.getElementById('NombreRol').value.trim();
+                if (!nombreRol) {
                     showError('El nombre del rol es obligatorio.');
                     return;
                 }
+
+                // Validación asíncrona para verificar nombre único
+                fetch(`/Mantenedores/VerificarNombreRol?nombre=${encodeURIComponent(nombreRol)}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.existe) {
+                            showError('El nombre del rol ya existe. Por favor, elija otro nombre.');
+                        } else {
+                            // Continuar al siguiente paso si el nombre es único
+                            document.getElementById('paso' + step).style.display = 'none';
+                            const next = step + 1;
+                            document.getElementById('paso' + next).style.display = 'block';
+                            currentStep = next;
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error al verificar el nombre del rol:', error);
+                        showError('Error al verificar el nombre del rol. Intente nuevamente.');
+                    });
+                return; // Importante: detener la ejecución aquí
             }
+
             if (step === 2) {
                 const marc = document.querySelectorAll('input[name="ListaMenusSeleccionados"]:checked');
                 if (!marc.length) {
@@ -214,7 +280,7 @@
                     .selectedOptions[0]?.text || '';
                 document.getElementById('lblPNS').innerText = Array.from(
                     document.querySelectorAll('input[name="ListaPNSSeleccionados"]:checked')
-                ).map(i => i.parentElement.querySelector('label').innerText.trim()).join(', ');
+                ).map(i => i.closest('tr').textContent.trim()).join(', ');
             }
         }
 
@@ -225,5 +291,106 @@
             document.getElementById('paso' + prev).style.display = 'block';
             currentStep = prev;
         }
+
+        // Flag selector helpers
+        function activateFlag(flagElement) {
+            flagElement.style.borderColor = '#007bff';
+            flagElement.style.opacity = '1';
+        }
+
+        function selectPais(paisCode) {
+            document.querySelectorAll('.pais-container').forEach(container => {
+                container.style.display = 'none';
+            });
+            const selectedContainer = document.getElementById('pais-' + paisCode);
+            if (selectedContainer) {
+                selectedContainer.style.display = 'block';
+            }
+        }
+
+        function getCurrentSelectedPais() {
+            const activeFlag = document.querySelector('.flag-selector[style*="opacity: 1"]');
+            return activeFlag ? activeFlag.getAttribute('data-pais') : null;
+        }
+
+        function updateSelectAllButtonStatus() {
+            const currentPaisCode = getCurrentSelectedPais();
+            if (!currentPaisCode) return;
+
+            const currentCheckboxes = document.querySelectorAll(`.pns-checkbox[data-pais="${currentPaisCode}"]`);
+            const checkedCount = document.querySelectorAll(`.pns-checkbox[data-pais="${currentPaisCode}"]:checked`).length;
+            const selectAllBtn = document.getElementById('selectAllBtn');
+
+            if (checkedCount === 0) {
+                selectAllBtn.textContent = 'Seleccionar todos';
+                selectAllBtn.classList.remove('btn-outline-danger');
+                selectAllBtn.classList.add('btn-outline-primary');
+            } else if (checkedCount === currentCheckboxes.length) {
+                selectAllBtn.textContent = 'Deseleccionar todos';
+                selectAllBtn.classList.remove('btn-outline-primary');
+                selectAllBtn.classList.add('btn-outline-danger');
+            } else {
+                selectAllBtn.textContent = 'Seleccionar todos';
+                selectAllBtn.classList.remove('btn-outline-danger');
+                selectAllBtn.classList.add('btn-outline-primary');
+            }
+        }
+
+        // DOMContentLoaded: wizard initialization + flag/select-all logic
+        document.addEventListener('DOMContentLoaded', function () {
+            // Inicializar wizard: mostrar paso 1, ocultar los demás
+            for (let i = 1; i <= 5; i++) {
+                document.getElementById('paso' + i).style.display = (i === 1 ? 'block' : 'none');
+            }
+
+            // Inicializar flags
+            const flags = document.querySelectorAll('.flag-selector');
+            if (flags.length > 0) {
+                const firstPais = flags[0].getAttribute('data-pais');
+                selectPais(firstPais);
+                activateFlag(flags[0]);
+            }
+
+            // Eventos de click en banderas
+            flags.forEach(flag => {
+                flag.addEventListener('click', function () {
+                    // Reset de todas las banderas
+                    flags.forEach(f => {
+                        f.style.borderColor = 'transparent';
+                        f.style.opacity = '0.5';
+                    });
+
+                    // Activar la seleccionada
+                    activateFlag(this);
+
+                    // Mostrar contenido país
+                    const paisCode = this.getAttribute('data-pais');
+                    selectPais(paisCode);
+
+                    // Reset del botón Seleccionar todos
+                    updateSelectAllButtonStatus();
+                });
+            });
+
+            // Botón "Seleccionar todos"
+            const selectAllBtn = document.getElementById('selectAllBtn');
+            if (selectAllBtn) {
+                selectAllBtn.addEventListener('click', function () {
+                    const currentPaisCode = getCurrentSelectedPais();
+                    const currentCheckboxes = document.querySelectorAll(`.pns-checkbox[data-pais="${currentPaisCode}"]`);
+                    const allChecked = Array.from(currentCheckboxes).every(cb => cb.checked);
+                    currentCheckboxes.forEach(cb => cb.checked = !allChecked);
+                    updateSelectAllButtonStatus();
+                });
+            }
+
+            // Escuchar cambios en checkboxes
+            document.querySelectorAll('.pns-checkbox').forEach(checkbox => {
+                checkbox.addEventListener('change', updateSelectAllButtonStatus);
+            });
+
+            // Estado inicial del botón
+            updateSelectAllButtonStatus();
+        });
     </script>
 }
