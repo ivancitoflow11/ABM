@@ -83,10 +83,15 @@
                             @Html.ValidationMessageFor(m => m.Correo, "", new { @class = "text-danger" })
                         </div>
                         <div class="mb-3">
-                            <label for="Telefono" class="form-label">Teléfono</label>
-                            <input class="form-control" type="text" placeholder="Ingrese su teléfono" asp-for="Telefono" />
+                            <label for="Telefono" class="form-label">Teléfonos</label>
+                            <div class="input-group">
+                                <span class="input-group-text">+569</span>
+                                <input type="text" class="form-control" placeholder="Ingrese su teléfono" asp-for="Telefono" />
+                            </div>
                             @Html.ValidationMessageFor(m => m.Telefono, "", new { @class = "text-danger" })
-                        </div>                       
+                        </div>
+
+
                         <div class="mb-3">
                             <label for="Repeat_Password" class="form-label">Repetir Contraseña</label>
                             <div class="input-group">

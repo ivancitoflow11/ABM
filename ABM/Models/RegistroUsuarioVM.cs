@@ -9,12 +9,13 @@ namespace ABM.Models
         public string Nombre { get; set; }
 
         public string Apellidos { get; set; }
-
-        public string Rut { get; set; }
+		[Required(ErrorMessage = "El RUT es obligatorio")]
+		public string Rut { get; set; }
 
         [Required(ErrorMessage = "El teléfono es obligatorio")]
-        [Range(1, 9999999999, ErrorMessage = "Solamente se permiten números (máximo 10 dígitos)")]
-        public int Telefono { get; set; }
+        [RegularExpression(@"^\d{8}$", ErrorMessage = "Debe tener exactamente 8 dígitos")]
+        public string Telefono { get; set; }
+
 
         [Required(ErrorMessage = "El correo es obligatorio.")]
         [EmailAddress(ErrorMessage = "El correo no es válido.")]
@@ -31,8 +32,8 @@ namespace ABM.Models
 
         [Required(ErrorMessage = "Debe repetir la contraseña.")]
         public string Repeat_Password { get; set; }
-
-        [Range(1, 12, ErrorMessage = "Seleccione un valor válido para meses.")]
+		[Required(ErrorMessage = "Los meses de expiracion son obligatorio")]
+		[Range(1, 12, ErrorMessage = "Seleccione un valor válido para meses.")]
         public int MesesExpiracionClave { get; set; }
         [Required(ErrorMessage = "Debe seleccionar un rol.")]
         public int? RolId { get; set; }

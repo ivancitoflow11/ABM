@@ -252,7 +252,8 @@ namespace ABM.Controllers
                     nombre = model.Nombre,
                     apellidos = model.Apellidos,
                     rut = model.Rut,
-                    telefono = model.Telefono,
+                    telefono = string.IsNullOrWhiteSpace(model.Telefono) ? 0 : int.Parse(model.Telefono),
+
                     correo = model.Correo,
                     usuario = model.Usuario,
                     Fcreacion = DateTime.Now,

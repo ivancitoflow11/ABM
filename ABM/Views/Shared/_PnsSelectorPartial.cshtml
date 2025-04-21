@@ -1,0 +1,28 @@
+﻿@model List<ABM.Models.PaisNegocioViewModel>
+
+<!-- metemos el JSON en un elemento oculto -->
+<script id="pns-data" type="application/json">
+    @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(Model))
+</script>
+
+<form id="formCambiarPNS">
+    <div class="mb-3">
+        <label for="selectPais" class="form-label">País</label>
+        <select id="selectPais" class="form-select">
+            <option value="">--Selecciona un país--</option>
+            @foreach (var item in Model.Select(x => new { x.idPais, x.pais }).Distinct())
+            {
+                <option value="@item.idPais">@item.pais</option>
+            }
+        </select>
+    </div>
+
+    <div class="mb-3">
+        <label for="selectNegocio" class="form-label">Negocio</label>
+        <select id="selectNegocio" class="form-select" disabled>
+            <option value="">--Selecciona un negocio--</option>
+        </select>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Cambiar</button>
+</form>

@@ -401,6 +401,13 @@
 								<ul class="navbar-nav gap-2 flex-row ms-auto align-items-center justify-content-center">
 									<!-- Mostrar la última fecha de carga -->
 
+									<ul class="navbar-nav ms-auto">
+										<!-- Icono de edificio -->
+										<li class="nav-item">
+											<a class="nav-link" href="#" data-bs-toggle="modal" data-bs-target="#cambiarPNSModal">
+												<i class="fas fa-building"></i>
+											</a>
+										</li>
 									<li class="nav-item nav-icon-hover-bg rounded-circle">
 										<!-- Icono de la luna y texto a la izquierda -->
 										<a class="nav-link nav-icon-hover moon dark-layout" href="javascript:void(0)">
@@ -809,6 +816,19 @@
 			</script>
 		</div>
 	</div>
+	<div class="modal fade" id="cambiarPNSModal" tabindex="-1" aria-labelledby="cambiarPNSModalLabel" aria-hidden="true">
+		<div class="modal-dialog">
+			<div class="modal-content">
+				<div class="modal-header">
+					<h5 class="modal-title" id="cambiarPNSModalLabel">Seleccionar País y Negocio</h5>
+					<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+				</div>
+				<div class="modal-body">
+					<div id="contenidoCambiarPNS"></div>
+				</div>
+			</div>
+		</div>
+	</div>
 
 
 	<div class="dark-transparent sidebartoggler"></div>
@@ -830,7 +850,66 @@
 	<script src="/lib/jquery/dist/jquery.min.js"></script>
 	<script src="/libs/bootstrap-datepicker/dist/js/bootstrap-datepicker.min.js"></script>
 	<script src="/js/forms/datepicker-init.js"></script>
-	
+	<script>
+		document.addEventListener('DOMContentLoaded', () => {
+			// 1) “Apunta” al modal por su id
+			const modal = document.getElementById('cambiarPNSModal');
+			if (!modal) return;
+
+			// 2) Cuando se abra, carga el contenido…
+			modal.addEventListener('show.bs.modal', function () {
+				const container = document.getElementById('contenidoCambiarPNS');
+				container.innerHTML = '<div class="text-center py-5">Cargando…</div>';
+
+				fetch('@Url.Action("PnsSelectorPartial", "Home")')
+					.then(r => r.text())
+					.then(html => {
+						// inyecta partial + JSON + bindings...
+						container.innerHTML = html;
+
+						const data = JSON.parse(
+							document.getElementById('pns-data').textContent
+						);
+						const $pais = container.querySelector('#selectPais');
+						const $nego = container.querySelector('#selectNegocio');
+						const $form = container.querySelector('#formCambiarPNS');
+
+						$pais.addEventListener('change', () => {
+							const paisId = +$pais.value;
+							const lista = data.filter(x => x.idPais === paisId);
+							$nego.innerHTML = `<option value="">--Selecciona un negocio--</option>`;
+							lista.forEach(x => {
+								$nego.innerHTML += `<option value="${x.idNegocio}">${x.negocio}</option>`;
+							});
+							$nego.disabled = lista.length === 0;
+						});
+
+						$form.addEventListener('submit', e => {
+							e.preventDefault();
+							const idPais = +$pais.value;
+							const paisTxt = $pais.options[$pais.selectedIndex].text;
+							const idNegocio = +$nego.value;
+							const negoTxt = $nego.options[$nego.selectedIndex].text;
+
+							fetch('@Url.Action("CambiarPns", "Home")', {
+								method: 'POST',
+								headers: {
+									'Content-Type': 'application/json',
+									'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
+								},
+								body: JSON.stringify({ idPais, pais: paisTxt, idNegocio, negocio: negoTxt })
+							})
+								.then(r => r.json())
+								.then(r => {
+									if (r.success) location.reload();
+									else alert("No se pudo cambiar el país/negocio.");
+								});
+						});
+					});
+			});
+		});
+	</script>
+
 	<!-- iconos-->
 	<script src="~/js/plugins/all.min.js"></script>
 	<script>
