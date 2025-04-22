@@ -12,7 +12,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
     <!-- Favicon icon-->
-    <link rel="shortcut icon" type="image/png" href="~/images/logos/favicon-32x32q.png" />
+    <link rel="shortcut icon" type="image/png" href="~/images/logos/favicon_abm_32x32.png" />
     <link rel="stylesheet" href="~/css/all.min.css" asp-append-version="true" />
     <title>Inicio de sesión</title>
 
@@ -258,9 +258,18 @@
 
 <body>
     <div class="bg-img">
-        <div class="content">
-            <img src="~/images/logos/logofalabellalogin.png" alt="Logo Falabella" style="width:350px; margin-left:-15px; margin-bottom:-55px">
-            <br /><br />
+        <div class="content" style="text-align: center;">
+            <div style="display: inline-block; text-align: center;">
+                <!-- Logo ABM más pequeño y con menor separación -->
+                <img src="~/images/logos/logoabm-falabella.png" alt="Logo ABM"
+                     style="width: 130px; margin-bottom: -35px; display: block; margin-left: auto; margin-right: auto;" />
+
+                <!-- Logo Falabella justo debajo -->
+                <img src="~/images/logos/logofalabellalogin.png" alt="Logo Falabella"
+                     style="width: 300px; display: block; margin: 0 auto;" />
+            </div>
+
+            <br />
             <header>INICIAR SESIÓN</header>
             <form asp-controller="Acceso" asp-action="Login" method="post">
                 @Html.AntiForgeryToken()
