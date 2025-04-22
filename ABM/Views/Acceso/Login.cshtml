@@ -349,14 +349,14 @@
                 <div style="display: flex; flex-direction: column; gap: 15px; text-align: left; font-family: 'Segoe UI', sans-serif; font-size: 15px; color: #4a4a4a;">
                     <!-- Campo País -->
                     <div style="display: flex; flex-direction: column; gap: 5px;">
-                        <label for="selectPais" style="font-weight:600;"> País</label>
+                                        <label for="selectPais" style="font-weight:600;"> <i class="fas fa-flag" style="margin-right: 5px; color:#3498db;"></i> País</label>
                         <select id="selectPais" class="swal2-input" style="height: 42px; padding: 5px 10px; font-size: 16px; color: #333; border-radius: 5px; border: 1px solid #ccc;">
                             <option value="">-- Seleccione un país --</option>
                         </select>
                     </div>
                     <!-- Campo Negocio -->
                     <div style="display: flex; flex-direction: column; gap: 5px;">
-                        <label for="selectNegocio" style="font-weight:600;"> Negocio</label>
+                                <label for="selectNegocio" style="font-weight:600;"> <i class="fas fa-building-user" style="margin-right: 5px; color:#e74c3c;"></i> Negocio</label>
                         <select id="selectNegocio" class="swal2-input" style="height: 42px; padding: 5px 10px; font-size: 16px; color: #333; border-radius: 5px; border: 1px solid #ccc;" disabled>
                             <option value="">Debe seleccionar primero un país</option>
                         </select>
@@ -476,7 +476,12 @@
         // Función para mostrar el modal de validación del OTC
         function pedirOTC() {
             Swal.fire({
-                title: '<strong style="color:#3a3a3a;">🔐 Verificación OTC</strong>',
+                title: `
+                    <strong style="color:#2c3e50;">
+                        <i class="fas fa-lock" style="color:#7ac143; margin-right: 6px;"></i>
+                        Verificación OTC
+                    </strong>
+                `,
                 html: `
                             <p style="font-size:16px; color:#4a4a4a;">
                                 Por favor, ingresa tu código de verificación de 4 dígitos para continuar.<br>
