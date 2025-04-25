@@ -173,39 +173,50 @@ $("#file_export4").DataTable({
     buttons: [
         {
             extend: 'copy',
-            text: '<i class="fa-regular fa-clipboard"></i>', // Icono para copiar
+            text: '<i class="fa-regular fa-clipboard"></i>',
             titleAttr: 'Copiar',
-            className: 'btn btn-copy' // Azul para copiar
+            className: 'btn btn-copy'
         },
         {
             extend: 'excel',
-            text: '<i class="fa-solid fa-file-excel"></i>', // Icono para Excel
+            text: '<i class="fa-solid fa-file-excel"></i>',
             titleAttr: 'Exportar a Excel',
-            className: 'btn btn-excel' // Verde para Excel
+            className: 'btn btn-excel'
         },
         {
             extend: 'pdf',
             text: '<i class="fa-solid fa-file-pdf"></i>',
             titleAttr: 'Exportar a PDF',
             className: 'btn btn-pdf',
-            orientation: 'landscape', // Cambia la orientación a horizontal
-            pageSize: 'LEGAL', // Aumenta el tamaño de la página
+            orientation: 'landscape',
+            pageSize: 'LEGAL',
             customize: function (doc) {
-                // Ajusta el tamaño de la fuente
                 doc.defaultStyle.fontSize = 8;
-
-                // Ajusta el ancho de la tabla al ancho de la página
                 doc.content[1].table.widths =
-                    Array(doc.content[1].table.body[0].length + 1).join('*').split('');
-
-                // Ajusta los márgenes
+                    Array(doc.content[1].table.body[0].length + 1)
+                        .join('*')
+                        .split('');
                 doc.pageMargins = [10, 10, 10, 10];
             },
             exportOptions: {
-                columns: ':visible' // Solo exporta las columnas visibles
+                columns: ':visible'
             }
         }
-    ]
+    ],
+    language: {
+        search: "Buscar:",
+        lengthMenu: "Mostrar _MENU_ registros",
+        info: "Mostrando _START_ a _END_ de _TOTAL_ entradas",
+        infoEmpty: "Mostrando 0 a 0 de 0 entradas",
+        infoFiltered: "(filtrado de _MAX_ entradas totales)",
+        zeroRecords: "No se encontraron registros",
+        paginate: {
+            first: "Primero",
+            last: "Último",
+            next: "Siguiente",
+            previous: "Anterior"
+        }
+    }
 });
 
 

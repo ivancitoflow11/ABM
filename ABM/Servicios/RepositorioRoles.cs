@@ -46,7 +46,7 @@ namespace ABM.Servicios
             using (IDbConnection db = new SqlConnection(connectionString))
             {
                 return await db.QueryAsync<Rol>(
-                    @"SELECT idRol, nombre FROM rol ORDER BY nombre;");
+                    @"SELECT idRol, nombre FROM ftc_rol ORDER BY nombre;");
             }
         }
 
@@ -55,14 +55,25 @@ namespace ABM.Servicios
             using var connection = new SqlConnection(connectionString);
 
             var query = @"
-    SELECT r.idRol, r.nombre AS nombreRol,
-           pns.pais, pns.idPais,
-           pns.negocio, pns.idNegocio,
-           pns.sistema
-    FROM rol r
-    JOIN detalle_rol dr ON r.idRol = dr.idRol
-    JOIN PNS pns ON dr.idPaisNegocioSistema = pns.idPaisNegocioSistema
-    ORDER BY r.idRol, pns.pais, pns.idNegocio, pns.sistema";
+SELECT 
+    r.idRol, 
+    r.nombre AS nombreRol,
+    pns.idPaisNegocioSistema,
+    pa.pais, 
+    pns.idPais,
+    ne.negocio, 
+    pns.idNegocio,
+    si.sistema,
+    si.codSistema,
+    pns.idSistema,
+    pa.codPais
+FROM ftc_rol r
+JOIN ftc_detalle_rol dr ON r.idRol = dr.idRol
+JOIN ftc_pais_negocio_sistema pns ON dr.idPaisNegocioSistema = pns.idPaisNegocioSistema
+JOIN ftc_pais pa ON pa.idPais = pns.idPais
+JOIN ftc_negocio ne ON ne.idNegocio = pns.idNegocio
+JOIN ftc_sistema si ON si.idSistema = pns.idSistema
+ORDER BY r.idRol, pa.pais, pns.idNegocio, si.sistema";
 
             var datos = await connection.QueryAsync(query);
 
@@ -87,6 +98,7 @@ namespace ABM.Servicios
             return resultado;
         }
 
+
         // Insertar un nuevo rol y retornar el ID generado.
         public async Task<int> CrearRol(RolModel rol)
 
@@ -94,7 +106,7 @@ namespace ABM.Servicios
             using (IDbConnection db = new SqlConnection(connectionString))
             {
                 var query = @"
-                INSERT INTO rol (nombre, idPais, idNegocio, idVistaInicio)
+                INSERT INTO ftc_rol (nombre, idPais, idNegocio, idVistaInicio)
                 VALUES (@Nombre, @IdPais, @IdNegocio, @IdVistaInicio);
                 SELECT CAST(SCOPE_IDENTITY() AS int);";
 
@@ -102,14 +114,14 @@ namespace ABM.Servicios
             }
         }
 
-        // Insertar en la tabla detalle_rol y retornar el ID generado.
+        // Insertar en la tabla ftc_detalle_rol y retornar el ID generado.
         public async Task<int> CrearDetalleRol(DetalleRolModel detalle)
 
         {
             using (IDbConnection db = new SqlConnection(connectionString))
             {
                 var query = @"
-                INSERT INTO detalle_rol (idRol, idPaisNegocioSistema)
+                INSERT INTO ftc_detalle_rol (idRol, idPaisNegocioSistema)
                 VALUES (@IdRol, @IdPaisNegocioSistema);
                 SELECT CAST(SCOPE_IDENTITY() AS int);";
 
@@ -133,10 +145,10 @@ namespace ABM.Servicios
                     s.codSistema, 
                     PNS.idSistema, 
                     p.codPais
-                FROM pais_negocio_sistema AS PNS
-                INNER JOIN pais p ON p.idPais = PNS.idPais
-                INNER JOIN negocio n ON n.idNegocio = PNS.idNegocio
-                INNER JOIN sistema s ON s.idSistema = PNS.idSistema
+                FROM ftc_pais_negocio_sistema AS PNS
+                INNER JOIN ftc_pais p ON p.idPais = PNS.idPais
+                INNER JOIN ftc_negocio n ON n.idNegocio = PNS.idNegocio
+                INNER JOIN ftc_sistema s ON s.idSistema = PNS.idSistema
                 WHERE PNS.estado = 1;";
 
                 return await db.QueryAsync<PaisNegocioSistemaModel>(query);
@@ -213,7 +225,7 @@ namespace ABM.Servicios
             {
                 var query = @"
             SELECT COUNT(1) 
-            FROM rol 
+            FROM ftc_rol 
             WHERE nombre = @Nombre";
 
                 int count = await db.ExecuteScalarAsync<int>(query, new { Nombre = nombreRol });

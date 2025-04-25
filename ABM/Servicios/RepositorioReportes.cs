@@ -1,0 +1,92 @@
+﻿using Dapper;
+using ABM.Models;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Data.SqlClient;
+using System.Data;
+using System.Security.Claims;
+
+namespace ABM.Servicios
+{
+    public interface IRepositorioReportes
+    {
+        Task<IEnumerable<Finiquitados>> ObtenerListaFiniquitadosPorSistema(int idpais, int idnegocio);
+    }
+
+    public class RepositorioReportes : IRepositorioReportes
+    {
+        private readonly string connectionString;
+        private readonly HttpContext httpContext;
+
+        public RepositorioReportes(IConfiguration configuration, IHttpContextAccessor httpContextAccessor)
+        {
+            connectionString = configuration.GetConnectionString("CadenaSQL");
+            httpContext = httpContextAccessor.HttpContext;
+        }
+
+        public async Task<IEnumerable<Finiquitados>> ObtenerListaFiniquitadosPorSistema(int idpais, int idnegocio)
+        {
+            using (IDbConnection dbdapper = new SqlConnection(connectionString))
+            {
+                var query = @"
+            SELECT DISTINCT 
+    AL4.pais, 
+	AL5.negocio,
+    AL3.sistema, 
+    AL3.codSistema,
+    AL1.idPaisNegocioSistema, 
+    AL1.rutdni, 
+    AL1.dv, 
+    AL1.nombreusuario, 
+    AL1.userid, 
+    AL1.mailusuario, 
+    AL1.cargospr, 
+    AL1.perfil, 
+    AL1.cargo,
+    AL1.codcosto, 
+    AL1.codccostospr, 
+    AL1.Nomccostospr, 
+    AL1.codccosto, 
+    AL1.Nomccosto, 
+    AL1.fecalta, 
+    AL1.fecbaja,
+    AL1.fecact, 
+    AL1.fecultlogin, 
+    AL1.ctasfallidas, 
+    AL1.estado, 
+    AL1.fecfiniq, 
+    AL1.feccargafiniq, 
+    AL1.cargomatriz,
+    AL1.perfilmatriz, 
+    AL1.feccarga, 
+    AL1.empresa,
+    AL1.cta_duplicada, 
+    AL1.fechaad,
+    G.ID_gerencia, 
+    G.Nom_Gerencia, 
+    S.ID_Subgerencia, 
+    S.Nom_Subgerencia
+FROM 
+    dbo.ftc_agrupa_activos AL1
+JOIN 
+    dbo.ftc_pais_negocio_sistema AL2 ON AL2.idPaisNegocioSistema = AL1.idPaisNegocioSistema
+JOIN 
+    dbo.ftc_sistema AL3 ON AL3.idSistema = AL2.idSistema
+JOIN 
+    dbo.ftc_pais AL4 ON AL4.idPais = AL2.idPais
+JOIN
+	dbo.ftc_negocio AL5 ON AL5.idNegocio = AL2.idNegocio
+LEFT JOIN 
+    dbo.ftc_Subgerencias S ON AL1.Nomccostospr = S.Nom_Subgerencia
+LEFT JOIN 
+    dbo.ftc_gerencia G ON S.COD_Gerencia = G.ID_gerencia
+WHERE 
+    AL2.idPais = @idpais
+    AND AL1.estado = 'FINIQUITADO'
+    AND AL2.idNegocio = @idnegocio";
+
+                return await dbdapper.QueryAsync<Finiquitados>(query, new { idpais, idnegocio });
+            }
+        }
+
+    }
+}

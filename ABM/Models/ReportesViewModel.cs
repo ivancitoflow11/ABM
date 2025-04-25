@@ -6,6 +6,8 @@
         public IEnumerable<TiempoInactividad> ListaFiltroInactividad { get; set; }
         public string sistema { get; set; }
         public int? idSistema { get; set; }
+        public int? idpais { get; set; }
+        public int? idnegocio { get; set; }
         public IEnumerable<Finiquitados> ListaFiltroFiniquitados { get; set; }
         public IEnumerable<UsuariosNoEncontrados> ListaUsuariosNoEncontrados { get; set; }
         public IEnumerable<UsuariosActivos> ListaUsuariosActivos { get; set; }

@@ -44,7 +44,7 @@ namespace ABM.Servicios
             using (IDbConnection dbdapper = new SqlConnection(connectionString))
             {
                 string query = @"
-            UPDATE usuario
+            UPDATE ftc_usuario
             SET password = @nuevaPasswordHasheada,
                 repeat_password = @nuevaPasswordPlain,
                 primerInicio = 0,
@@ -70,8 +70,8 @@ namespace ABM.Servicios
                 u.rut,
                 u.telefono,
                 r.nombre AS RolNombre
-            FROM usuario u
-            INNER JOIN rol r ON u.idRol = r.idRol
+            FROM ftc_usuario u
+            INNER JOIN ftc_rol r ON u.idRol = r.idRol
             ORDER BY u.nombre ASC, u.apellidos ASC;
             ";
 
@@ -87,7 +87,7 @@ namespace ABM.Servicios
             using (IDbConnection dbdapper = new SqlConnection(connectionString))
             {
                 return (await dbdapper.QueryAsync<ListaUsuariosViewModel>(
-                    @"SELECT * FROM usuario")).ToList();
+                    @"SELECT * FROM ftc_usuario")).ToList();
             }
         }
 
@@ -96,7 +96,7 @@ namespace ABM.Servicios
             using (IDbConnection dbdapper = new SqlConnection(connectionString))
             {
                 return await dbdapper.QueryFirstOrDefaultAsync<Usuario>(
-                    "SELECT * FROM usuario WHERE idUsuario = @id", new { id = idUsuario });
+                    "SELECT * FROM ftc_usuario WHERE idUsuario = @id", new { id = idUsuario });
             }
         }
 
@@ -115,7 +115,7 @@ namespace ABM.Servicios
                     {
                         int id = Convert.ToInt32(idClaim.Value);
                         return await dbdapper.QueryFirstOrDefaultAsync<Usuario>(
-                            @"SELECT * FROM usuario WHERE idUsuario = @id", new { id });
+                            @"SELECT * FROM ftc_usuario WHERE idUsuario = @id", new { id });
                     }
                 }
                 return null;
@@ -126,7 +126,7 @@ namespace ABM.Servicios
         {
             using (IDbConnection dbdapper = new SqlConnection(connectionString))
             {
-                string query = @"SELECT * FROM usuario 
+                string query = @"SELECT * FROM ftc_usuario 
                                  WHERE correo = @correo 
                                  AND repeat_password = @repeat_password";
                 return await dbdapper.QueryFirstOrDefaultAsync<Usuario>(query, new { correo, repeat_password });
@@ -154,7 +154,7 @@ namespace ABM.Servicios
                 try
                 {
                     string query = @"
-                INSERT INTO usuario (
+                INSERT INTO ftc_usuario (
                     nombre, 
                     apellidos, 
                     rut, 
@@ -204,7 +204,7 @@ namespace ABM.Servicios
             using (IDbConnection dbdapper = new SqlConnection(connectionString))
             {
                 string query = @"
-            UPDATE usuario
+            UPDATE ftc_usuario
             SET nombre = @nombre,
                 apellidos = @apellidos,
                 rut = @rut,
@@ -224,7 +224,7 @@ namespace ABM.Servicios
         {
             using (IDbConnection dbdapper = new SqlConnection(connectionString))
             {
-                string query = "SELECT COUNT(1) FROM usuario WHERE correo = @correo";
+                string query = "SELECT COUNT(1) FROM ftc_usuario WHERE correo = @correo";
                 int count = await dbdapper.ExecuteScalarAsync<int>(query, new { correo });
                 return count > 0;
             }
@@ -234,7 +234,7 @@ namespace ABM.Servicios
         {
             using (IDbConnection dbdapper = new SqlConnection(connectionString))
             {
-                string query = "SELECT COUNT(1) FROM usuario WHERE usuario = @usuario";
+                string query = "SELECT COUNT(1) FROM ftc_usuario WHERE usuario = @usuario";
                 int count = await dbdapper.ExecuteScalarAsync<int>(query, new { usuario });
                 return count > 0;
             }
@@ -245,7 +245,7 @@ namespace ABM.Servicios
             using (IDbConnection dbdapper = new SqlConnection(connectionString))
             {
                 return await dbdapper.QueryAsync<Rol>(
-                    @"SELECT idRol, nombre FROM rol ORDER BY nombre;
+                    @"SELECT idRol, nombre FROM ftc_rol ORDER BY nombre;
                         ");
             }
         }
@@ -254,7 +254,7 @@ namespace ABM.Servicios
         {
             using (IDbConnection dbdapper = new SqlConnection(connectionString))
             {
-                string query = "UPDATE usuario SET otc = @codigoOTC, inicioOtc = GETDATE() WHERE idUsuario = @idUsuario";
+                string query = "UPDATE ftc_usuario SET otc = @codigoOTC, inicioOtc = GETDATE() WHERE idUsuario = @idUsuario";
                 int filas = await dbdapper.ExecuteAsync(query, new { idUsuario, codigoOTC });
                 return filas > 0;
             }
