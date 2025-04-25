@@ -50,6 +50,44 @@ namespace ABM.Controllers
             return View(lista);
         }
 
+        [HttpGet]
+        public async Task<IActionResult> UsuariosNoEncontrados()
+        {
+            // 1) Leer de sesión con las mismas claves
+            var idPaisSesion = HttpContext.Session.GetInt32("IdPais");
+            var idNegocioSesion = HttpContext.Session.GetInt32("IdNegocio");
+
+            if (!idPaisSesion.HasValue || !idNegocioSesion.HasValue)
+                // Redirigir al selector si no están
+                return RedirectToAction("PnsSelectorPartial", "Home");
+
+            int idPais = idPaisSesion.Value;
+            int idNegocio = idNegocioSesion.Value;
+
+            var lista = await repositorioReportes
+                .ObtenerListaUsuariosNoEncontrados(idPais, idNegocio);
+
+            return View(lista);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> UltimaConexion()
+        {
+            // 1) Leer de sesión
+            var idPaisSesion = HttpContext.Session.GetInt32("IdPais");
+            var idNegocioSesion = HttpContext.Session.GetInt32("IdNegocio");
+
+            if (!idPaisSesion.HasValue || !idNegocioSesion.HasValue)
+                return RedirectToAction("PnsSelectorPartial", "Home");
+
+            int idPais = idPaisSesion.Value;
+            int idNegocio = idNegocioSesion.Value;
+
+            var lista = await repositorioReportes
+                .ObtenerListaUltimaConexion(idPais, idNegocio);
+
+            return View(lista);
+        }
 
     }
 }

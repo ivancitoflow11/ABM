@@ -24,7 +24,7 @@
         public string fecbaja { get; set; }
         public string fecact { get; set; }
         public string fecultlogin { get; set; }
-        public int? ctasfallidas { get; set; }
+        public string ctasfallidas { get; set; }
         public string estado { get; set; }
         public string fecfiniq { get; set; }
         public string feccargafiniq { get; set; }
@@ -32,7 +32,7 @@
         public string perfilmatriz { get; set; }
         public string feccarga { get; set; }
         public string empresa { get; set; }
-        public bool? cta_duplicada { get; set; }
+        public string cta_duplicada { get; set; }
         public string fechaad { get; set; }
         public int? ID_gerencia { get; set; }
         public string Nom_Gerencia { get; set; }

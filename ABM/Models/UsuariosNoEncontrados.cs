@@ -4,6 +4,7 @@
     {
         public string pais {  get; set; }
         public string sistema { get; set; }
+        public string negocio { get; set; }
         public string codSistema { get; set; }
         public int idPaisNegocioSistema { get; set; }
         public string rutdni {  get; set; }
