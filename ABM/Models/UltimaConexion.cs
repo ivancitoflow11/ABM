@@ -16,5 +16,6 @@
 		public string Nom_Gerencia { get; set; }
 		public string Nom_Subgerencia { get; set; }
 		public int idPaisNegocioSistema { get; set; }
+
     }
 }

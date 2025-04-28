@@ -13,6 +13,7 @@ namespace ABM.Servicios
         Task<IEnumerable<UsuariosNoEncontrados>> ObtenerListaUsuariosNoEncontrados(int idpais, int idnegocio);
         Task<IEnumerable<UltimaConexion>> ObtenerListaUltimaConexion(int idpais, int idnegocio);
         Task<IEnumerable<UsuariosActivos>> ObtenerListaUsuariosActivos(int idpais, int idnegocio);
+        Task<IEnumerable<UsersBuscar>> ObtenerUsuariosPorRutONombre(int idPais, int idNegocio, string rutDni = null, string nombreUsuario = null);
     }
 
     public class RepositorioReportes : IRepositorioReportes
@@ -25,6 +26,9 @@ namespace ABM.Servicios
             connectionString = configuration.GetConnectionString("CadenaSQL");
             httpContext = httpContextAccessor.HttpContext;
         }
+
+
+
 
         public async Task<IEnumerable<Finiquitados>> ObtenerListaFiniquitadosPorSistema(int idpais, int idnegocio)
         {
@@ -92,6 +96,9 @@ WHERE
         }
 
 
+
+
+
         public async Task<IEnumerable<UsuariosNoEncontrados>> ObtenerListaUsuariosNoEncontrados(int idpais, int idnegocio)
         {
             using (IDbConnection dbdapper = new SqlConnection(connectionString))
@@ -157,6 +164,54 @@ WHERE
             }
         }
 
+        public async Task<IEnumerable<UsersBuscar>> ObtenerUsuariosPorRutONombre(int idPais, int idNegocio, string rutDni = null, string nombreUsuario = null)
+        {
+            using (IDbConnection db = new SqlConnection(connectionString))
+            {
+                var sql = @"
+SELECT DISTINCT
+    a.rutdni,
+    a.dv,
+    c.pais,
+    d.negocio,
+    a.nombreusuario,
+    a.cargospr,
+    a.perfil,
+    a.fecultlogin   AS fecultlogin,
+    a.cargomatriz,
+    a.perfilmatriz,
+    a.estado,
+    a.fecfiniq      AS fecfiniq,
+    a.fechaad       AS fechaad,
+    a.Nomccostospr,
+    a.codccostospr,
+    a.codccosto,
+    a.userid,
+    a.empresa,
+    a.idPaisNegocioSistema,
+    g.ID_gerencia,
+    g.Nom_Gerencia,
+    s.ID_Subgerencia,
+    s.Nom_Subgerencia,
+    ROW_NUMBER() OVER (PARTITION BY a.rutdni ORDER BY a.fecultlogin DESC) AS rn
+FROM dbo.ftc_agrupa_activos           AS a
+JOIN dbo.ftc_pais_negocio_sistema    AS b ON b.idPaisNegocioSistema = a.idPaisNegocioSistema
+JOIN dbo.ftc_pais                     AS c ON c.idPais                 = b.idPais
+JOIN dbo.ftc_negocio                  AS d ON d.idNegocio              = b.idNegocio
+LEFT JOIN dbo.ftc_Subgerencias        AS s ON s.Nom_Subgerencia        = a.Nomccostospr
+LEFT JOIN dbo.ftc_gerencia            AS g ON g.ID_gerencia            = s.COD_Gerencia
+WHERE
+    b.idPais     = @idPais
+    AND b.idNegocio = @idNegocio
+    AND (@rutDni        IS NULL OR a.rutdni       LIKE '%' + @rutDni + '%')
+    AND (@nombreUsuario IS NULL OR a.nombreusuario LIKE '%' + @nombreUsuario + '%');";
+
+                return await db.QueryAsync<UsersBuscar>(sql, new { idPais, idNegocio, rutDni, nombreUsuario });
+            }
+        }
+
+
+
         public async Task<IEnumerable<UltimaConexion>> ObtenerListaUltimaConexion(int idpais, int idnegocio)
         {
             using (IDbConnection dbdapper = new SqlConnection(connectionString))
@@ -165,6 +220,7 @@ WHERE
             SELECT DISTINCT 
     a.rutdni, 
     a.dv, 
+    e.sistema
 	c.pais,
 	d.negocio,
     a.nombreusuario, 

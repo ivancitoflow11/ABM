@@ -95,5 +95,30 @@ namespace ABM.Controllers
         }
 
 
+        [HttpGet]
+        public async Task<IActionResult> BuscarUsuarios(string rutDni = null, string nombreUsuario = null)
+        {
+            var idPaisSesion = HttpContext.Session.GetInt32("IdPais");
+            var idNegocioSesion = HttpContext.Session.GetInt32("IdNegocio");
+
+            if (!idPaisSesion.HasValue || !idNegocioSesion.HasValue)
+                return RedirectToAction("PnsSelectorPartial", "Home");
+
+            int idPais = idPaisSesion.Value;
+            int idNegocio = idNegocioSesion.Value;
+
+            // 2) Obtener datos desde el repositorio (pasa filtros opcionales)
+            var lista = await repositorioReportes
+                .ObtenerUsuariosPorRutONombre(idPais, idNegocio, rutDni, nombreUsuario);
+
+            // 3) Mantener los filtros en ViewBag para re-mostrar en el formulario de búsqueda
+            ViewBag.RutDni = rutDni;
+            ViewBag.NombreUsuario = nombreUsuario;
+
+            // 4) Devolver la vista con la lista de UsuariosActivos
+            return View(lista);
+        }
+
+
     }
 }
