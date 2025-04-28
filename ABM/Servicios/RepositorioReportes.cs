@@ -12,6 +12,7 @@ namespace ABM.Servicios
         Task<IEnumerable<Finiquitados>> ObtenerListaFiniquitadosPorSistema(int idpais, int idnegocio);
         Task<IEnumerable<UsuariosNoEncontrados>> ObtenerListaUsuariosNoEncontrados(int idpais, int idnegocio);
         Task<IEnumerable<UltimaConexion>> ObtenerListaUltimaConexion(int idpais, int idnegocio);
+        Task<IEnumerable<UsuariosActivos>> ObtenerListaUsuariosActivos(int idpais, int idnegocio);
     }
 
     public class RepositorioReportes : IRepositorioReportes
@@ -190,6 +191,64 @@ WHERE
 	AND b.idNegocio = @idnegocio";
 
                 return await dbdapper.QueryAsync<UltimaConexion>(query, new { idpais, idnegocio });
+            }
+        }
+
+        public async Task<IEnumerable<UsuariosActivos>> ObtenerListaUsuariosActivos(int idpais, int idnegocio)
+        {
+            using (IDbConnection dbdapper = new SqlConnection(connectionString))
+            {
+                var query = @"
+SELECT DISTINCT
+    AL4.pais,
+    AL3.sistema,
+    AL5.negocio,
+    AL3.codSistema,
+    AL1.idPaisNegocioSistema,
+    AL1.rutdni,
+    AL1.dv,
+    AL1.nombreusuario,
+    AL1.userid,
+    AL1.mailusuario,
+    AL1.cargospr,
+    AL1.perfil,
+    AL1.cargo,
+    AL1.codcosto,
+    AL1.codccostospr,
+    AL1.Nomccostospr,
+    AL1.Nomccosto,
+    AL1.fecalta,
+    AL1.fecbaja,
+    AL1.fecact,
+    AL1.fecultlogin,
+    AL1.ctasfallidas,
+    AL1.estado,
+    AL1.fecfiniq,
+    AL1.feccargafiniq,
+    AL1.cargomatriz,
+    AL1.perfilmatriz,
+    AL1.feccarga,
+    AL1.empresa,
+    AL1.cta_duplicada,
+    AL1.fechaad,
+    G.ID_gerencia,
+    G.Nom_Gerencia,
+    S.ID_Subgerencia,
+    S.Nom_Subgerencia
+FROM dbo.ftc_agrupa_activos           AS AL1
+JOIN dbo.ftc_pais_negocio_sistema    AS AL2 ON AL2.idPaisNegocioSistema = AL1.idPaisNegocioSistema
+JOIN dbo.ftc_sistema                  AS AL3 ON AL3.idSistema               = AL2.idSistema
+JOIN dbo.ftc_pais                     AS AL4 ON AL4.idPais                  = AL2.idPais
+JOIN dbo.ftc_negocio                  AS AL5 ON AL5.idNegocio               = AL2.idNegocio
+LEFT JOIN dbo.ftc_Subgerencias        AS S   ON AL1.Nomccostospr            = S.Nom_Subgerencia
+LEFT JOIN dbo.ftc_gerencia            AS G   ON S.COD_Gerencia              = G.ID_gerencia
+WHERE
+    AL1.estado    <> 'NO ENCONTRADO'
+    AND AL2.idPais    = @idpais
+    AND AL2.idNegocio = @idnegocio;
+";
+
+                return await dbdapper.QueryAsync<UsuariosActivos>(query, new { idpais, idnegocio });
             }
         }
 

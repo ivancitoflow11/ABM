@@ -71,23 +71,29 @@ namespace ABM.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> UltimaConexion()
+        public async Task<IActionResult> UsuariosActivos()
         {
-            // 1) Leer de sesión
+
             var idPaisSesion = HttpContext.Session.GetInt32("IdPais");
             var idNegocioSesion = HttpContext.Session.GetInt32("IdNegocio");
 
+
             if (!idPaisSesion.HasValue || !idNegocioSesion.HasValue)
+            {
                 return RedirectToAction("PnsSelectorPartial", "Home");
+            }
 
             int idPais = idPaisSesion.Value;
             int idNegocio = idNegocioSesion.Value;
 
+            // 2) Obtener datos desde el repositorio
             var lista = await repositorioReportes
-                .ObtenerListaUltimaConexion(idPais, idNegocio);
+                .ObtenerListaUsuariosActivos(idPais, idNegocio);
 
+            // 3) Devolver la vista con la lista de UsuariosActivos
             return View(lista);
         }
+
 
     }
 }
