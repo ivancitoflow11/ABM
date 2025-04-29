@@ -43,6 +43,7 @@ builder.Services.AddTransient<IRepositorioUsuarios, RepositorioUsuarios>();
 builder.Services.AddTransient<IRepositorioRoles, RepositorioRoles>();
 builder.Services.AddTransient<IRepositorioReportes, RepositorioReportes>();
 builder.Services.AddScoped<IPasswordHasher<Usuario>, PasswordHasher<Usuario>>();
+builder.Services.AddTransient<IRepositorioMenus, RepositorioMenus>();
 
 builder.Services.AddTransient<ABM.Servicios.IEmailSender, ABM.Servicios.EmailSender>();
 

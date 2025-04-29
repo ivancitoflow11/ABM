@@ -2,12 +2,32 @@
 @using ABM.Servicios;
 @using Microsoft.AspNetCore.Identity;
 @using Microsoft.Extensions.DependencyInjection
+@using System.Collections.Generic
+@using System.Linq
+@using ABM.Models
+@inject ABM.Servicios.IRepositorioUsuarios DataService
+@inject ABM.Servicios.IRepositorioMenus MenuService
 
-
-@inject IServiceProvider ServiceProvider
 @{
-	var dataService = ServiceProvider.GetService<IRepositorioUsuarios>();
-	var resultado = await dataService.ObtenerDatosUsuarioPerfilLogeado();
+	// 1) Obtengo el usuario y su rol (int?)
+	var usuario = await DataService.ObtenerDatosUsuarioPerfilLogeado();
+	IEnumerable<MenuViewModel> allMenus;
+
+	// 2) Si idRol tiene valor, llamo al repositorio; si no, lista vacía
+	if (usuario.idRol.HasValue)
+	{
+		allMenus = await MenuService.ObtenerMenusPorRol(usuario.idRol.Value);
+	}
+	else
+	{
+		allMenus = Enumerable.Empty<MenuViewModel>();
+	}
+
+	// 3) Filtrar sólo menús con ID válido y ordenarlos
+	var menus = allMenus
+		.Where(m => m.ID_Menu.HasValue)
+		.OrderBy(m => m.ID_Menu.Value)
+		.ToList();
 }
 
 
@@ -100,73 +120,128 @@
 							<i class="fa fa-ellipsis-h nav-small-cap-icon fs-4"></i>
 							<span class="hide-menu" id="get-url">Menú</span>
 						</li>
+						@foreach (var menu in menus)
+						{
+							var subList = menu.Submenus ?? new List<SubmenuViewModel>();
+							bool hasSubs = subList.Any(s => s.ID_Submenu.HasValue);
 
-						@*  @if (menus != null && menus.Any())
-						{
-						@foreach (var item in menus)
-						{
-						@if (item.DESC_Vista != null && item.DESC_Vista != "")
-						{
-						<li class="sidebar-item">
-						<a class="sidebar-link" href="@Url.Action(item.DESC_Vista,item.DESC_Controlador)" id="get-url">
-						<i class="aside-icon @item.DESC_Icono"></i>
-						<span class="hide-menu" title="@item.DESC_NombreMenu">@item.DESC_NombreMenu</span>
-						</a>
-						</li>
-						}
-						else
-						{
-						<li class="sidebar-item">
-						<a class="sidebar-link has-arrow" href="javascript:void(0)" aria-expanded="false">
-						<i class="aside-icon @item.DESC_Icono"></i>
-						<span class="hide-menu" title="@item.DESC_NombreMenu">@item.DESC_NombreMenu</span>
-						</a>
-						<ul aria-expanded="false" class="collapse first-level">
-						@if (item.ListaSubMenu != null && item.ListaSubMenu.Any())
-						{
-						foreach (var item2 in item.ListaSubMenu)
-						{
-						<li class="sidebar-item">
-						@{
-						string url;
-						if (item2.DESC_Vista == "ListaMatrizResumida" && item2.DESC_Controlador == "Archivos")
-						{
-						url = Url.Action(item2.DESC_Vista, item2.DESC_Controlador, new { idUsuarioLogueado = resultado.IdUsuario });
-						}
-						else if (item2.DESC_Vista == "ListaFirmasMatriz" && item2.DESC_Controlador == "Archivos")
-						{
-						url = Url.Action(item2.DESC_Vista, item2.DESC_Controlador, new { idUsuarioLogueado = resultado.IdUsuario });
-						}
-						else
-						{
-						url = Url.Action(item2.DESC_Vista, item2.DESC_Controlador);
-						}
-						}
-						<a href="@url" class="sidebar-link sublink">
-						<div class="round-16 d-flex align-items-center justify-content-center">
-						<i class="fa-solid fa-check"></i>
-						</div>
-						<span class="hide-menu" title="@item2.DESC_NombreMenu">@item2.DESC_NombreMenu</span>
-						</a>
-						</li>
-						}
+							if (hasSubs)
+							{
+								<li class="sidebar-item">
+									<a class="sidebar-link has-arrow"
+									   href="javascript:void(0)"
+									   data-bs-toggle="collapse"
+									   data-bs-target="#menu-@menu.ID_Menu.Value"
+									   aria-expanded="false">
+										@if (!string.IsNullOrEmpty(menu.ICONO))
+										{
+											<iconify-icon icon="@menu.ICONO" class="aside-icon"></iconify-icon>
+										}
+										<span class="hide-menu">@menu.NOMBRE_MENU</span>
+									</a>
+									<ul id="menu-@menu.ID_Menu.Value"
+										class="collapse first-level"
+										data-bs-parent="#side-menu">
+										@foreach (var sub in subList.Where(s => s.COD_Menu == menu.ID_Menu))
+										{
+											<li class="sidebar-item">
+												<a href="@Url.Action(sub.VISTA  ?? "Index", sub.CONTROLADOR ?? "Home")"
+												   class="sidebar-link sublink">
+													<div class="round-16 d-flex align-items-center justify-content-center">
+														<iconify-icon icon="solar:stop-circle-line-duotone"></iconify-icon>
+													</div>
+													<span class="hide-menu">@sub.NOMBRE_SUBMENU</span>
+												</a>
+											</li>
+										}
+									</ul>
+								</li>
+							}
+							else
+							{
+								<li class="sidebar-item">
+									<a class="sidebar-link"
+									   href="@Url.Action(menu.VISTA      ?? "Index",
+                                   menu.CONTROLADOR ?? "Home")">
+										@if (!string.IsNullOrEmpty(menu.ICONO))
+										{
+											<iconify-icon icon="@menu.ICONO" class="aside-icon"></iconify-icon>
+										}
+										<span class="hide-menu">@menu.NOMBRE_MENU</span>
+									</a>
+								</li>
+							}
 						}
 						<li class="sidebar-item">
-						<a href="@Url.Action("Historicos","Excepciones")" class="sidebar-link sublink">
-						<div class="round-16 d-flex align-items-center justify-content-center">
-						<iconify-icon icon="solar:stop-circle-line-duotone"></iconify-icon>
-						</div>
-						<span class="hide-menu">Histórico Excepciones</span>
-						</a>
-						</li>
-						</ul>
-						</li>
-						}
+							<a class="sidebar-link has-arrow" href="javascript:void(0)" aria-expanded="false">
+								<iconify-icon icon="solar:notes-outline" class="aside-icon"></iconify-icon>
+								<span class="hide-menu">Reportes</span>
+							</a>
+							<ul aria-expanded="false" class="collapse first-level">
+								<li class="sidebar-item">
+									<a href="@Url.Action("AsignacionCargoMatriz","Reportes")" class="sidebar-link sublink">
+										<div class="round-16 d-flex align-items-center justify-content-center">
+											<iconify-icon icon="solar:stop-circle-line-duotone"></iconify-icon>
+										</div>
+										<span class="hide-menu">Asignación Cargo Matriz</span>
+									</a>
+								</li>
+								<li class="sidebar-item">
+									<a href="@Url.Action("Finiquitados","Reportes")" class="sidebar-link sublink">
+										<div class="round-16 d-flex align-items-center justify-content-center">
+											<iconify-icon icon="solar:stop-circle-line-duotone"></iconify-icon>
+										</div>
+										<span class="hide-menu">Usuarios Finiquitados</span>
+									</a>
+								</li>
+								<li class="sidebar-item">
+									<a href="@Url.Action("UsuariosNoEncontrados","Reportes")" class="sidebar-link sublink">
+										<div class="round-16 d-flex align-items-center justify-content-center">
+											<iconify-icon icon="solar:stop-circle-line-duotone"></iconify-icon>
+										</div>
+										<span class="hide-menu">Usuarios no Encontrados</span>
+									</a>
+								</li>
+								<li class="sidebar-item">
+									<a href="@Url.Action("BuscarUsuarios","Reportes")" class="sidebar-link sublink">
+										<div class="round-16 d-flex align-items-center justify-content-center">
+											<iconify-icon icon="solar:stop-circle-line-duotone"></iconify-icon>
+										</div>
+										<span class="hide-menu">Búsqueda de Usuarios</span>
+									</a>
+								</li>
 
-						}
-						}
-						*@
+								<li class="sidebar-item">
+									<a href="@Url.Action("DifCargoPerfil","Reportes")" class="sidebar-link sublink">
+										<div class="round-16 d-flex align-items-center justify-content-center">
+											<iconify-icon icon="solar:stop-circle-line-duotone"></iconify-icon>
+										</div>
+										<span class="hide-menu">Dif. Cargo Perfil</span>
+									</a>
+								</li>
+								<li class="sidebar-item">
+									<a href="@Url.Action("UsuariosActivos","Reportes")" class="sidebar-link sublink">
+										<div class="round-16 d-flex align-items-center justify-content-center">
+											<iconify-icon icon="solar:stop-circle-line-duotone"></iconify-icon>
+										</div>
+										<span class="hide-menu">Usuarios Activos</span>
+									</a>
+								</li>
+							</ul>
+						</li>
+						<li class="sidebar-item">
+							<a class="sidebar-link" asp-controller="Home" asp-action="Salir">
+								<i class="fa-solid fa-arrow-right-from-bracket"></i>
+								<span class="hide-menu">Cerrar sesión</span>
+							</a>
+						</li>
+					</ul>
+						
 
+					<!-- ---------------------------------- -->
+					<!-- MENÚS EN DURO -->
+					<!-- ---------------------------------- -->
+					@* <ul id="sidebarnav">
 						<li class="sidebar-item">
 							<a class="sidebar-link" href="@Url.Action("AlertaSistema","Home")" id="get-url">
 								<iconify-icon icon="solar:shield-warning-linear" class="aside-icon"></iconify-icon>
@@ -209,10 +284,6 @@
 								</li>
 							</ul>
 						</li>
-
-						<!-- ---------------------------------- -->
-						<!-- Dashboard -->
-						<!-- ---------------------------------- -->
 						<li class="sidebar-item">
 							<a class="sidebar-link has-arrow" href="javascript:void(0)" aria-expanded="false">
 								<iconify-icon icon="solar:notes-outline" class="aside-icon"></iconify-icon>
@@ -251,22 +322,7 @@
 										<span class="hide-menu">Búsqueda de Usuarios</span>
 									</a>
 								</li>
-@* 								<li class="sidebar-item">
-									<a href="@Url.Action("UltimaConexion","Reportes")" class="sidebar-link sublink">
-										<div class="round-16 d-flex align-items-center justify-content-center">
-											<iconify-icon icon="solar:stop-circle-line-duotone"></iconify-icon>
-										</div>
-										<span class="hide-menu">Última Conexión</span>
-									</a>
-								</li> *@
-@* 								<li class="sidebar-item">
-									<a href="@Url.Action("InactividadUsuarios","Reportes")" class="sidebar-link sublink">
-										<div class="round-16 d-flex align-items-center justify-content-center">
-											<iconify-icon icon="solar:stop-circle-line-duotone"></iconify-icon>
-										</div>
-										<span class="hide-menu">Tiempo Inactividad</span>
-									</a>
-								</li> *@
+
 								<li class="sidebar-item">
 									<a href="@Url.Action("DifCargoPerfil","Reportes")" class="sidebar-link sublink">
 										<div class="round-16 d-flex align-items-center justify-content-center">
@@ -295,7 +351,7 @@
 						<li class="sidebar-item">
 							<a class="sidebar-link has-arrow" href="javascript:void(0)" aria-expanded="false">
 								<iconify-icon icon="solar:remote-controller-minimalistic-broken" class="aside-icon"></iconify-icon>
-								<span class="hide-menu">Mantenedor Usuarios</span>
+								<span class="hide-menu">Mantenedores</span>
 							</a>
 							<ul aria-expanded="false" class="collapse first-level">
 								<li class="sidebar-item">
@@ -330,7 +386,12 @@
 								<span class="hide-menu">Cerrar sesión</span>
 							</a>
 						</li>
-					</ul>
+					</ul> *@
+
+
+
+
+
 				</nav>
 
 				<!-- End Sidebar scroll-->
@@ -351,9 +412,9 @@
 									<b class="logo-icon">
 										<!--You can put here icon as well // <i class="wi wi-sunset"></i> //-->
 										<!-- Dark Logo icon -->
-										<img src="~/images/logos/favicon_abm_32x32.png" alt="homepage" class="dark-logo" style="width: 30px; height: 30px;" />
+										<img src="~/images/logos/abmlogo60x60.png" alt="homepage" class="dark-logo" style="width: 60px; height: 60px;" />
 										<!-- Light Logo icon -->
-										<img src="~/images/logos/favicon_abm_32x32.png" alt="homepage" class="light-logo" style="width: 30px; height: 30px;" />
+										<img src="~/images/logos/abmlogo60x60.png" alt="homepage" class="light-logo" style="width: 60px; height: 60px;" />
 									</b>
 									<!--End Logo icon -->
 
@@ -375,9 +436,9 @@
 									<b class="logo-icon">
 										<!--You can put here icon as well // <i class="wi wi-sunset"></i> //-->
 										<!-- Dark Logo icon -->
-										<img src="~/images/logos/logoabm-falabella.png" alt="homepage" class="dark-logo" style="width: 30px; height: 30px;" />
+										<img src="~/images/logos/abmlogo60x60.png" alt="homepage" class="dark-logo" style="width: 60px; height: 60px;" />
 										<!-- Light Logo icon -->
-										<img src="~/images/logos/logoabm-falabella.png" alt="homepage" class="light-logo" style="width: 30px; height: 30px;" />
+										<img src="~/images/logos/abmlogo60x60.png" alt="homepage" class="light-logo" style="width: 60px; height: 60px;" />
 									</b>
 									<!--End Logo icon -->
 
@@ -512,9 +573,9 @@
 										<b class="logo-icon">
 											<!--You can put here icon as well // <i class="wi wi-sunset"></i> //-->
 											<!-- Dark Logo icon -->
-											<img src="~/images/logos/logoabm-falabella.png" alt="homepage" class="dark-logo" style="width: 30px; height: 30px;" />
+											<img src="~/images/logos/abmlogo60x60.png" alt="homepage" class="dark-logo" style="width: 60px; height: 60px;" />
 											<!-- Light Logo icon -->
-											<img src="~/images/logos/logoabm-falabella.png" alt="homepage" class="light-logo" style="width: 30px; height: 30px;" />
+											<img src="~/images/logos/abmlogo60x60.png" alt="homepage" class="light-logo" style="width: 60px; height: 60px;" />
 										</b>
 
 									</a>
