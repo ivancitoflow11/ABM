@@ -135,7 +135,7 @@
 									   aria-expanded="false">
 										@if (!string.IsNullOrEmpty(menu.ICONO))
 										{
-											<iconify-icon icon="@menu.ICONO" class="aside-icon"></iconify-icon>
+											<i class="@menu.ICONO aside-icon"></i>
 										}
 										<span class="hide-menu">@menu.NOMBRE_MENU</span>
 									</a>
@@ -148,7 +148,7 @@
 												<a href="@Url.Action(sub.VISTA  ?? "Index", sub.CONTROLADOR ?? "Home")"
 												   class="sidebar-link sublink">
 													<div class="round-16 d-flex align-items-center justify-content-center">
-														<iconify-icon icon="solar:stop-circle-line-duotone"></iconify-icon>
+														<i class="fas fa-circle-notch"></i>
 													</div>
 													<span class="hide-menu">@sub.NOMBRE_SUBMENU</span>
 												</a>
@@ -165,102 +165,15 @@
                                    menu.CONTROLADOR ?? "Home")">
 										@if (!string.IsNullOrEmpty(menu.ICONO))
 										{
-											<iconify-icon icon="@menu.ICONO" class="aside-icon"></iconify-icon>
+											<i class="@menu.ICONO aside-icon"></i>
 										}
 										<span class="hide-menu">@menu.NOMBRE_MENU</span>
 									</a>
 								</li>
 							}
 						}
-						<li class="sidebar-item">
-							<a class="sidebar-link has-arrow" href="javascript:void(0)" aria-expanded="false">
-								<iconify-icon icon="solar:remote-controller-minimalistic-broken" class="aside-icon"></iconify-icon>
-								<span class="hide-menu">Mantenedores</span>
-							</a>
-							<ul aria-expanded="false" class="collapse first-level">
-								<li class="sidebar-item">
-									<a href="@Url.Action("ListaUsuarios","Mantenedores")" class="sidebar-link sublink">
-										<div class="round-16 d-flex align-items-center justify-content-center">
-											<iconify-icon icon="solar:user-bold"></iconify-icon>
-										</div>
-										<span class="hide-menu">Usuarios</span>
-									</a>
-								</li>
-								<li class="sidebar-item">
-									<a href="@Url.Action("ListarRoles","Mantenedores")" class="sidebar-link sublink">
-										<div class="round-16 d-flex align-items-center justify-content-center">
-											<iconify-icon icon="solar:user-bold"></iconify-icon>
-										</div>
-										<span class="hide-menu">Roles</span>
-									</a>
-								</li>
-								<li class="sidebar-item">
-									<a href="@Url.Action("CrearRolWizard","Mantenedores")" class="sidebar-link sublink">
-										<div class="round-16 d-flex align-items-center justify-content-center">
-											<iconify-icon icon="solar:user-bold"></iconify-icon>
-										</div>
-										<span class="hide-menu">Crear Rol</span>
-									</a>
-								</li>
-							</ul>
-						</li>
-						<li class="sidebar-item">
-							<a class="sidebar-link has-arrow" href="javascript:void(0)" aria-expanded="false">
-								<iconify-icon icon="solar:notes-outline" class="aside-icon"></iconify-icon>
-								<span class="hide-menu">Reportes</span>
-							</a>
-							<ul aria-expanded="false" class="collapse first-level">
-@* 								<li class="sidebar-item">
-									<a href="@Url.Action("AsignacionCargoMatriz","Reportes")" class="sidebar-link sublink">
-										<div class="round-16 d-flex align-items-center justify-content-center">
-											<iconify-icon icon="solar:stop-circle-line-duotone"></iconify-icon>
-										</div>
-										<span class="hide-menu">Asignación Cargo Matriz</span>
-									</a>
-								</li> *@
-								<li class="sidebar-item">
-									<a href="@Url.Action("Finiquitados","Reportes")" class="sidebar-link sublink">
-										<div class="round-16 d-flex align-items-center justify-content-center">
-											<iconify-icon icon="solar:stop-circle-line-duotone"></iconify-icon>
-										</div>
-										<span class="hide-menu">Usuarios Finiquitados</span>
-									</a>
-								</li>
-								<li class="sidebar-item">
-									<a href="@Url.Action("UsuariosNoEncontrados","Reportes")" class="sidebar-link sublink">
-										<div class="round-16 d-flex align-items-center justify-content-center">
-											<iconify-icon icon="solar:stop-circle-line-duotone"></iconify-icon>
-										</div>
-										<span class="hide-menu">Usuarios no Encontrados</span>
-									</a>
-								</li>
-								<li class="sidebar-item">
-									<a href="@Url.Action("BuscarUsuarios","Reportes")" class="sidebar-link sublink">
-										<div class="round-16 d-flex align-items-center justify-content-center">
-											<iconify-icon icon="solar:stop-circle-line-duotone"></iconify-icon>
-										</div>
-										<span class="hide-menu">Búsqueda de Usuarios</span>
-									</a>
-								</li>
-@* 
-								<li class="sidebar-item">
-									<a href="@Url.Action("DifCargoPerfil","Reportes")" class="sidebar-link sublink">
-										<div class="round-16 d-flex align-items-center justify-content-center">
-											<iconify-icon icon="solar:stop-circle-line-duotone"></iconify-icon>
-										</div>
-										<span class="hide-menu">Dif. Cargo Perfil</span>
-									</a>
-								</li> *@
-								<li class="sidebar-item">
-									<a href="@Url.Action("UsuariosActivos","Reportes")" class="sidebar-link sublink">
-										<div class="round-16 d-flex align-items-center justify-content-center">
-											<iconify-icon icon="solar:stop-circle-line-duotone"></iconify-icon>
-										</div>
-										<span class="hide-menu">Usuarios Activos</span>
-									</a>
-								</li>
-							</ul>
-						</li>
+
+						
 						<li class="sidebar-item">
 							<a class="sidebar-link" asp-controller="Home" asp-action="Salir">
 								<i class="fa-solid fa-arrow-right-from-bracket"></i>
