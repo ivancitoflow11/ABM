@@ -1,4 +1,4 @@
-// 
+Ôªø// 
 //    File export                              //
 // 
 $("#file_export").DataTable({
@@ -21,17 +21,17 @@ $("#file_export").DataTable({
             text: '<i class="fa-solid fa-file-pdf"></i>',
             titleAttr: 'Exportar a PDF',
             className: 'btn btn-pdf',
-            orientation: 'landscape', // Cambia la orientaciÛn a horizontal
-            pageSize: 'LEGAL', // Aumenta el tamaÒo de la p·gina
+            orientation: 'landscape', // Cambia la orientaci√≥n a horizontal
+            pageSize: 'LEGAL', // Aumenta el tama√±o de la p√°gina
             customize: function (doc) {
-                // Ajusta el tamaÒo de la fuente
+                // Ajusta el tama√±o de la fuente
                 doc.defaultStyle.fontSize = 8;
 
-                // Ajusta el ancho de la tabla al ancho de la p·gina
+                // Ajusta el ancho de la tabla al ancho de la p√°gina
                 doc.content[1].table.widths =
                     Array(doc.content[1].table.body[0].length + 1).join('*').split('');
 
-                // Ajusta los m·rgenes
+                // Ajusta los m√°rgenes
                 doc.pageMargins = [10, 10, 10, 10];
             },
             exportOptions: {
@@ -63,17 +63,17 @@ $("#file_export1").DataTable({
             text: '<i class="fa-solid fa-file-pdf"></i>',
             titleAttr: 'Exportar a PDF',
             className: 'btn btn-pdf',
-            orientation: 'landscape', // Cambia la orientaciÛn a horizontal
-            pageSize: 'LEGAL', // Aumenta el tamaÒo de la p·gina
+            orientation: 'landscape', // Cambia la orientaci√≥n a horizontal
+            pageSize: 'LEGAL', // Aumenta el tama√±o de la p√°gina
             customize: function (doc) {
-                // Ajusta el tamaÒo de la fuente
+                // Ajusta el tama√±o de la fuente
                 doc.defaultStyle.fontSize = 8;
 
-                // Ajusta el ancho de la tabla al ancho de la p·gina
+                // Ajusta el ancho de la tabla al ancho de la p√°gina
                 doc.content[1].table.widths =
                     Array(doc.content[1].table.body[0].length + 1).join('*').split('');
 
-                // Ajusta los m·rgenes
+                // Ajusta los m√°rgenes
                 doc.pageMargins = [10, 10, 10, 10];
             },
             exportOptions: {
@@ -104,17 +104,17 @@ $("#file_export2").DataTable({
             text: '<i class="fa-solid fa-file-pdf"></i>',
             titleAttr: 'Exportar a PDF',
             className: 'btn btn-pdf',
-            orientation: 'landscape', // Cambia la orientaciÛn a horizontal
-            pageSize: 'LEGAL', // Aumenta el tamaÒo de la p·gina
+            orientation: 'landscape', // Cambia la orientaci√≥n a horizontal
+            pageSize: 'LEGAL', // Aumenta el tama√±o de la p√°gina
             customize: function (doc) {
-                // Ajusta el tamaÒo de la fuente
+                // Ajusta el tama√±o de la fuente
                 doc.defaultStyle.fontSize = 8;
 
-                // Ajusta el ancho de la tabla al ancho de la p·gina
+                // Ajusta el ancho de la tabla al ancho de la p√°gina
                 doc.content[1].table.widths =
                     Array(doc.content[1].table.body[0].length + 1).join('*').split('');
 
-                // Ajusta los m·rgenes
+                // Ajusta los m√°rgenes
                 doc.pageMargins = [10, 10, 10, 10];
             },
             exportOptions: {
@@ -145,17 +145,17 @@ $("#file_export3").DataTable({
             text: '<i class="fa-solid fa-file-pdf"></i>',
             titleAttr: 'Exportar a PDF',
             className: 'btn btn-pdf',
-            orientation: 'landscape', // Cambia la orientaciÛn a horizontal
-            pageSize: 'LEGAL', // Aumenta el tamaÒo de la p·gina
+            orientation: 'landscape', // Cambia la orientaci√≥n a horizontal
+            pageSize: 'LEGAL', // Aumenta el tama√±o de la p√°gina
             customize: function (doc) {
-                // Ajusta el tamaÒo de la fuente
+                // Ajusta el tama√±o de la fuente
                 doc.defaultStyle.fontSize = 8;
 
-                // Ajusta el ancho de la tabla al ancho de la p·gina
+                // Ajusta el ancho de la tabla al ancho de la p√°gina
                 doc.content[1].table.widths =
                     Array(doc.content[1].table.body[0].length + 1).join('*').split('');
 
-                // Ajusta los m·rgenes
+                // Ajusta los m√°rgenes
                 doc.pageMargins = [10, 10, 10, 10];
             },
             exportOptions: {
@@ -212,12 +212,14 @@ $("#file_export4").DataTable({
         zeroRecords: "No se encontraron registros",
         paginate: {
             first: "Primero",
-            last: "⁄ltimo",
+            last: "√öltimo",
             next: "Siguiente",
             previous: "Anterior"
         }
     }
 });
+
+
 
 
 $("#file_export5").DataTable({
@@ -240,17 +242,17 @@ $("#file_export5").DataTable({
             text: '<i class="fa-solid fa-file-pdf"></i>',
             titleAttr: 'Exportar a PDF',
             className: 'btn btn-pdf',
-            orientation: 'landscape', // Cambia la orientaciÛn a horizontal
-            pageSize: 'LEGAL', // Aumenta el tamaÒo de la p·gina
+            orientation: 'landscape', // Cambia la orientaci√≥n a horizontal
+            pageSize: 'LEGAL', // Aumenta el tama√±o de la p√°gina
             customize: function (doc) {
-                // Ajusta el tamaÒo de la fuente
+                // Ajusta el tama√±o de la fuente
                 doc.defaultStyle.fontSize = 8;
 
-                // Ajusta el ancho de la tabla al ancho de la p·gina
+                // Ajusta el ancho de la tabla al ancho de la p√°gina
                 doc.content[1].table.widths =
                     Array(doc.content[1].table.body[0].length + 1).join('*').split('');
 
-                // Ajusta los m·rgenes
+                // Ajusta los m√°rgenes
                 doc.pageMargins = [10, 10, 10, 10];
             },
             exportOptions: {
@@ -281,17 +283,17 @@ $("#file_export6").DataTable({
             text: '<i class="fa-solid fa-file-pdf"></i>',
             titleAttr: 'Exportar a PDF',
             className: 'btn btn-pdf',
-            orientation: 'landscape', // Cambia la orientaciÛn a horizontal
-            pageSize: 'LEGAL', // Aumenta el tamaÒo de la p·gina
+            orientation: 'landscape', // Cambia la orientaci√≥n a horizontal
+            pageSize: 'LEGAL', // Aumenta el tama√±o de la p√°gina
             customize: function (doc) {
-                // Ajusta el tamaÒo de la fuente
+                // Ajusta el tama√±o de la fuente
                 doc.defaultStyle.fontSize = 8;
 
-                // Ajusta el ancho de la tabla al ancho de la p·gina
+                // Ajusta el ancho de la tabla al ancho de la p√°gina
                 doc.content[1].table.widths =
                     Array(doc.content[1].table.body[0].length + 1).join('*').split('');
 
-                // Ajusta los m·rgenes
+                // Ajusta los m√°rgenes
                 doc.pageMargins = [10, 10, 10, 10];
             },
             exportOptions: {
@@ -323,17 +325,17 @@ $("#file_export7").DataTable({
             text: '<i class="fa-solid fa-file-pdf"></i>',
             titleAttr: 'Exportar a PDF',
             className: 'btn btn-pdf',
-            orientation: 'landscape', // Cambia la orientaciÛn a horizontal
-            pageSize: 'LEGAL', // Aumenta el tamaÒo de la p·gina
+            orientation: 'landscape', // Cambia la orientaci√≥n a horizontal
+            pageSize: 'LEGAL', // Aumenta el tama√±o de la p√°gina
             customize: function (doc) {
-                // Ajusta el tamaÒo de la fuente
+                // Ajusta el tama√±o de la fuente
                 doc.defaultStyle.fontSize = 8;
 
-                // Ajusta el ancho de la tabla al ancho de la p·gina
+                // Ajusta el ancho de la tabla al ancho de la p√°gina
                 doc.content[1].table.widths =
                     Array(doc.content[1].table.body[0].length + 1).join('*').split('');
 
-                // Ajusta los m·rgenes
+                // Ajusta los m√°rgenes
                 doc.pageMargins = [10, 10, 10, 10];
             },
             exportOptions: {
