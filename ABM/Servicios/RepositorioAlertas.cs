@@ -12,6 +12,7 @@ namespace ABM.Servicios
         Task<IEnumerable<EstadisticasUsuarios>> ObtenerEstadisticasUsuarios();
         Task<IEnumerable<Finiquitados>> ObtenerDetalleFiniquitados();
         Task<IEnumerable<UsuariosNoEncontrados>> ObtenerDetalleNoEncontrados();
+        Task<IEnumerable<UsuariosDuplicados>> ObtenerDetalleDuplicados();
 	}
 	public class RepositorioAlertas : IRepositorioAlertas
 	{
