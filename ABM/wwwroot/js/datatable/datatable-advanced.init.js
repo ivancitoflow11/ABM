@@ -219,8 +219,217 @@ $("#file_export4").DataTable({
     }
 });
 
+$("#gestion1").DataTable({
+    dom: "Blfrtip",
+    lengthMenu: [[10, 20, 50, -1], [10, 20, 50, "Todos"]],
+    pageLength: 10,
+    buttons: [
+        {
+            extend: 'copy',
+            text: '<i class="fa-regular fa-clipboard"></i>',
+            titleAttr: 'Copiar',
+            className: 'btn btn-copy'
+        },
+        {
+            extend: 'excel',
+            text: '<i class="fa-solid fa-file-excel"></i>',
+            titleAttr: 'Exportar a Excel',
+            className: 'btn btn-excel'
+        },
+        {
+            extend: 'pdf',
+            text: '<i class="fa-solid fa-file-pdf"></i>',
+            titleAttr: 'Exportar a PDF',
+            className: 'btn btn-pdf',
+            orientation: 'landscape',
+            pageSize: 'LEGAL',
+            customize: function (doc) {
+                doc.defaultStyle.fontSize = 8;
+                doc.content[1].table.widths =
+                    Array(doc.content[1].table.body[0].length + 1)
+                        .join('*')
+                        .split('');
+                doc.pageMargins = [10, 10, 10, 10];
+            },
+            exportOptions: {
+                columns: ':visible'
+            }
+        }
+    ],
+    language: {
+        search: "Buscar:",
+        lengthMenu: "Mostrar _MENU_ registros",
+        info: "Mostrando _START_ a _END_ de _TOTAL_ entradas",
+        infoEmpty: "Mostrando 0 a 0 de 0 entradas",
+        infoFiltered: "(filtrado de _MAX_ entradas totales)",
+        zeroRecords: "No se encontraron registros",
+        paginate: {
+            first: "Primero",
+            last: "Último",
+            next: "Siguiente",
+            previous: "Anterior"
+        }
+    }
+});
 
+$("#gestion2").DataTable({
+    dom: "Blfrtip",
+    lengthMenu: [[10, 20, 50, -1], [10, 20, 50, "Todos"]],
+    pageLength: 10,
+    buttons: [
+        {
+            extend: 'copy',
+            text: '<i class="fa-regular fa-clipboard"></i>',
+            titleAttr: 'Copiar',
+            className: 'btn btn-copy'
+        },
+        {
+            extend: 'excel',
+            text: '<i class="fa-solid fa-file-excel"></i>',
+            titleAttr: 'Exportar a Excel',
+            className: 'btn btn-excel'
+        },
+        {
+            extend: 'pdf',
+            text: '<i class="fa-solid fa-file-pdf"></i>',
+            titleAttr: 'Exportar a PDF',
+            className: 'btn btn-pdf',
+            orientation: 'landscape',
+            pageSize: 'LEGAL',
+            customize: function (doc) {
+                doc.defaultStyle.fontSize = 8;
+                doc.content[1].table.widths =
+                    Array(doc.content[1].table.body[0].length + 1)
+                        .join('*')
+                        .split('');
+                doc.pageMargins = [10, 10, 10, 10];
+            },
+            exportOptions: {
+                columns: ':visible'
+            }
+        }
+    ],
+    language: {
+        search: "Buscar:",
+        lengthMenu: "Mostrar _MENU_ registros",
+        info: "Mostrando _START_ a _END_ de _TOTAL_ entradas",
+        infoEmpty: "Mostrando 0 a 0 de 0 entradas",
+        infoFiltered: "(filtrado de _MAX_ entradas totales)",
+        zeroRecords: "No se encontraron registros",
+        paginate: {
+            first: "Primero",
+            last: "Último",
+            next: "Siguiente",
+            previous: "Anterior"
+        }
+    }
+});
 
+$("#gestion3").DataTable({
+    dom: "Blfrtip",
+    lengthMenu: [[10, 20, 50, -1], [10, 20, 50, "Todos"]],
+    pageLength: 10,
+    buttons: [
+        {
+            extend: 'copy',
+            text: '<i class="fa-regular fa-clipboard"></i>',
+            titleAttr: 'Copiar',
+            className: 'btn btn-copy'
+        },
+        {
+            extend: 'excel',
+            text: '<i class="fa-solid fa-file-excel"></i>',
+            titleAttr: 'Exportar a Excel',
+            className: 'btn btn-excel'
+        },
+        {
+            extend: 'pdf',
+            text: '<i class="fa-solid fa-file-pdf"></i>',
+            titleAttr: 'Exportar a PDF',
+            className: 'btn btn-pdf',
+            orientation: 'landscape',
+            pageSize: 'LEGAL',
+            customize: function (doc) {
+                doc.defaultStyle.fontSize = 8;
+                doc.content[1].table.widths =
+                    Array(doc.content[1].table.body[0].length + 1)
+                        .join('*')
+                        .split('');
+                doc.pageMargins = [10, 10, 10, 10];
+            },
+            exportOptions: {
+                columns: ':visible'
+            }
+        }
+    ],
+    language: {
+        search: "Buscar:",
+        lengthMenu: "Mostrar _MENU_ registros",
+        info: "Mostrando _START_ a _END_ de _TOTAL_ entradas",
+        infoEmpty: "Mostrando 0 a 0 de 0 entradas",
+        infoFiltered: "(filtrado de _MAX_ entradas totales)",
+        zeroRecords: "No se encontraron registros",
+        paginate: {
+            first: "Primero",
+            last: "Último",
+            next: "Siguiente",
+            previous: "Anterior"
+        }
+    }
+});
+
+$("#gestion4").DataTable({
+    dom: "Blfrtip",
+    lengthMenu: [[10, 20, 50, -1], [10, 20, 50, "Todos"]],
+    pageLength: 10,
+    buttons: [
+        {
+            extend: 'copy',
+            text: '<i class="fa-regular fa-clipboard"></i>',
+            titleAttr: 'Copiar',
+            className: 'btn btn-copy'
+        },
+        {
+            extend: 'excel',
+            text: '<i class="fa-solid fa-file-excel"></i>',
+            titleAttr: 'Exportar a Excel',
+            className: 'btn btn-excel'
+        },
+        {
+            extend: 'pdf',
+            text: '<i class="fa-solid fa-file-pdf"></i>',
+            titleAttr: 'Exportar a PDF',
+            className: 'btn btn-pdf',
+            orientation: 'landscape',
+            pageSize: 'LEGAL',
+            customize: function (doc) {
+                doc.defaultStyle.fontSize = 8;
+                doc.content[1].table.widths =
+                    Array(doc.content[1].table.body[0].length + 1)
+                        .join('*')
+                        .split('');
+                doc.pageMargins = [10, 10, 10, 10];
+            },
+            exportOptions: {
+                columns: ':visible'
+            }
+        }
+    ],
+    language: {
+        search: "Buscar:",
+        lengthMenu: "Mostrar _MENU_ registros",
+        info: "Mostrando _START_ a _END_ de _TOTAL_ entradas",
+        infoEmpty: "Mostrando 0 a 0 de 0 entradas",
+        infoFiltered: "(filtrado de _MAX_ entradas totales)",
+        zeroRecords: "No se encontraron registros",
+        paginate: {
+            first: "Primero",
+            last: "Último",
+            next: "Siguiente",
+            previous: "Anterior"
+        }
+    }
+});
 
 $("#file_export5").DataTable({
     dom: "Bfrtip",

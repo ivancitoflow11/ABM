@@ -14,7 +14,7 @@ using System.Threading.Tasks;
 
 namespace ABM.Controllers
 {
-
+    [Authorize]
     public class MantenedoresController : Controller
     {
         private readonly IRepositorioUsuarios _repositorioUsuarios;
