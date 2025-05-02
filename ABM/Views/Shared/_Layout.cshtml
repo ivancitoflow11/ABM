@@ -172,7 +172,55 @@
 								</li>
 							}
 						}
+						<li class="sidebar-item">
+							<a class="sidebar-link has-arrow" href="javascript:void(0)" aria-expanded="false">
+								<i class="fa-solid fa-folder-tree"></i>
+								<span class="hide-menu">Reportes</span>
+							</a>
+							<ul aria-expanded="false" class="collapse first-level">
+								<li class="sidebar-item">
+									<a href="@Url.Action("Finiquitados","Reportes")" class="sidebar-link sublink">
+										<div class="round-16 d-flex align-items-center justify-content-center">
+											<iconify-icon icon="solar:stop-circle-line-duotone"></iconify-icon>
+										</div>
+										<span class="hide-menu">Usuarios Finiquitados</span>
+									</a>
+								</li>
+								<li class="sidebar-item">
+									<a href="@Url.Action("UsuariosNoEncontrados","Reportes")" class="sidebar-link sublink">
+										<div class="round-16 d-flex align-items-center justify-content-center">
+											<iconify-icon icon="solar:stop-circle-line-duotone"></iconify-icon>
+										</div>
+										<span class="hide-menu">Usuarios no Encontrados</span>
+									</a>
+								</li>
+								<li class="sidebar-item">
+									<a href="@Url.Action("BuscarUsuarios","Reportes")" class="sidebar-link sublink">
+										<div class="round-16 d-flex align-items-center justify-content-center">
+											<iconify-icon icon="solar:stop-circle-line-duotone"></iconify-icon>
+										</div>
+										<span class="hide-menu">Búsqueda de Usuarios</span>
+									</a>
+								</li>
 
+								<li class="sidebar-item">
+									<a href="@Url.Action("DifCargoPerfil","Reportes")" class="sidebar-link sublink">
+										<div class="round-16 d-flex align-items-center justify-content-center">
+											<iconify-icon icon="solar:stop-circle-line-duotone"></iconify-icon>
+										</div>
+										<span class="hide-menu">Dif. Cargo Perfil</span>
+									</a>
+								</li>
+								<li class="sidebar-item">
+									<a href="@Url.Action("UsuariosActivos","Reportes")" class="sidebar-link sublink">
+										<div class="round-16 d-flex align-items-center justify-content-center">
+											<iconify-icon icon="solar:stop-circle-line-duotone"></iconify-icon>
+										</div>
+										<span class="hide-menu">Usuarios Activos</span>
+									</a>
+								</li>
+							</ul>
+						</li>
 						
 						<li class="sidebar-item">
 							<a class="sidebar-link" asp-controller="Home" asp-action="Salir">

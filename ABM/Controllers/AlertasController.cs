@@ -35,6 +35,7 @@ namespace ABM.Controllers
 			AlertaSistemaViewModel modelo = new AlertaSistemaViewModel();
 
 			modelo.estadisticas = await repositorioAlertas.ObtenerEstadisticasUsuarios();
+			//En estas querys hay que hacer que no se repitan rutdni
 			modelo.ListaFiltroFiniquitados = await repositorioAlertas.ObtenerDetalleFiniquitados();
 			modelo.ListaUsuariosNoEncontrados = await repositorioAlertas.ObtenerDetalleNoEncontrados();
 			modelo.ListaUsuariosDuplicados = await repositorioAlertas.ObtenerDetalleDuplicados();
