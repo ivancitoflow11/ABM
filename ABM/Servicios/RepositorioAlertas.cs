@@ -36,11 +36,11 @@ namespace ABM.Servicios
                         AL3.sistema AS Sistema,
                         AL5.negocio AS Negocio,
                         AL4.pais AS Pais,
-                        COUNT(DISTINCT CASE WHEN Al1.estado = 'ACTIVO' THEN AL1.rutdni END) AS Activos,
-                        COUNT(DISTINCT CASE WHEN Al1.estado = 'FINIQUITADO' THEN AL1.rutdni END) AS Finiquitados,
-                        COUNT(DISTINCT CASE WHEN Al1.estado = 'NO ENCONTRADO' THEN AL1.rutdni END) AS No_Encontrados,
-                        COUNT(DISTINCT CASE WHEN Al1.cta_duplicada = 'SI' THEN AL1.rutdni END) AS CtaDuplicadas,
-                        COUNT(DISTINCT CASE WHEN Al1.estado IN ('ACTIVO', 'FINIQUITADO', 'NO ENCONTRADO') OR Al1.cta_duplicada = 'SI' THEN AL1.rutdni END) AS total_Usuarios
+                        COUNT(CASE WHEN AL1.estado = 'ACTIVO' THEN 1 END) AS Activos,
+                        COUNT(CASE WHEN AL1.estado = 'FINIQUITADO' THEN 1 END) AS Finiquitados,
+                        COUNT(CASE WHEN AL1.estado = 'NO ENCONTRADO' THEN 1 END) AS No_Encontrados,
+                        COUNT(CASE WHEN AL1.cta_duplicada = 'SI' THEN 1 END) AS CtaDuplicadas,
+                        COUNT(CASE WHEN AL1.estado IN ('ACTIVO', 'FINIQUITADO', 'NO ENCONTRADO') OR AL1.cta_duplicada = 'SI' THEN 1 END) AS total_Usuarios
                     FROM 
                         dbo.ftc_agrupa_activos AL1
                     JOIN dbo.ftc_pais_negocio_sistema AL2 

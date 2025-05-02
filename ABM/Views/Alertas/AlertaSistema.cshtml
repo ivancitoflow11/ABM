@@ -42,7 +42,7 @@
         <div class="row">
             <div class="col-md-12">
                 <div class="d-flex justify-content-center" style="padding:10px; margin-top:20px">
-                    <img src="/images/alert/bannerimperial.png" class="img-fluid responsive-img" alt="Banner" style="border-radius: 10px; opacity: 0.5;" />
+                    <img src="/images/abmbanner.png" class="img-fluid responsive-img" alt="Banner" style="border-radius: 10px; opacity: 0.5;" />
                 </div>
             </div>
         </div>
@@ -84,7 +84,7 @@
             <div class="col-md-12">
                 <div class="card mb-4">
                     <div class="card-header text-white" style="background-color: #acd743;">
-                        Resumen de Incidencias por Sistema
+                        Resumen de Incidencias
                     </div>
                     <div class="card-body text-center bg-light">
                         <div style="margin-bottom:10px">Estados de Usuario:</div>
@@ -99,6 +99,8 @@
                         <table id="file_export4" class="table table-bordered">
                             <thead>
                                 <tr>
+                                    <th scope="col">PAÍS</th>
+                                    <th scope="col">NEGOCIO</th>
                                     <th scope="col">SISTEMA</th>
                                     <th scope="col">ACTIVOS</th>
                                     <th scope="col">FINIQUITADOS</th>
@@ -113,25 +115,33 @@
                                     @foreach (var item in Model.estadisticas)
                                     {
                                         <tr>
+                                            <td>@item.Pais</td>
+                                            <td>@item.Negocio</td>
                                             <td>@item.Sistema</td>
                                             <td>@item.Activos</td>
+
                                             <td class="@(item.Finiquitados > 0 ? "bg-danger text-white" : "")"
-                                                onclick="showFiniquitadosModal('@item.Sistema')">
+                                                onclick="showFiniquitadosModal('@item.Sistema', '@item.Pais', '@item.Negocio')">
                                                 @item.Finiquitados
                                             </td>
+
                                             <td class="@(item.NoEncontrados > 0 ? "bg-warning text-dark" : item.NoEncontrados == 0 ? "" : "")"
-                                                onclick="showNoEncontradosModal('@item.Sistema')">
+                                                onclick="showNoEncontradosModal('@item.Sistema', '@item.Pais', '@item.Negocio')">
                                                 @item.NoEncontrados
                                             </td>
+
                                             <td class="@(item.CtaDuplicadas > 0 ? "bg-info text-white" : item.CtaDuplicadas == 0 ? "" : "")"
-                                                onclick="showCtasDuplicadasModal('@item.Sistema')">
+                                                onclick="showCtasDuplicadasModal('@item.Sistema', '@item.Pais', '@item.Negocio')">
                                                 @item.CtaDuplicadas
                                             </td>
+
                                             <td>
                                                 <button type="button" class="btn btn-success"
                                                         data-bs-toggle="modal"
                                                         data-bs-target="#detailsModal"
                                                         data-sistema="@item.Sistema"
+                                                        data-pais="@item.Pais"
+                                                        data-negocio="@item.Negocio"
                                                         data-total-usuarios="@item.TotalUsuarios"
                                                         data-activos="@item.Activos"
                                                         data-finiquitados="@item.Finiquitados"
@@ -239,7 +249,8 @@
                 var detailsModal = document.getElementById('detailsModal');
                 detailsModal.addEventListener('show.bs.modal', function (event) {
                     var button = event.relatedTarget;
-
+                    var pais = button.getAttribute('data-pais');
+                    var negocio = button.getAttribute('data-negocio');
                     var sistema = button.getAttribute('data-sistema');
                     var totalUsuarios = button.getAttribute('data-total-usuarios');
                     var activos = button.getAttribute('data-activos');
@@ -257,6 +268,8 @@
                                                                             <table id="file_export" class="table">
                                                                                 <thead>
                                                                                     <tr>
+                                                                                        <th>PAÍS</th>
+                                                                                        <th>NEGOCIO</th>
                                                                                         <th>SISTEMA</th>
                                                                                         <th>TOTAL USUARIOS</th>
                                                                                         <th>ACTIVOS</th>
@@ -271,6 +284,8 @@
                                                                                 </thead>
                                                                                 <tbody>
                                                                                     <tr>
+                                                                                        <td>${pais}</td>
+                                                                                        <td>${negocio}</td>
                                                                                         <td>${sistema}</td>
                                                                                         <td>${totalUsuarios}</td>
                                                                                         <td>${activos}</td>
@@ -328,10 +343,13 @@
             });
         </script>
         <script>
-            function showFiniquitadosModal(sistema) {
+            function showFiniquitadosModal(sistema, pais, negocio) {
                 var finiquitadosList = @Html.Raw(Json.Serialize(Model.ListaFiltroFiniquitados));
-
-                var sistemaFiniquitados = finiquitadosList.filter(f => f.sistema === sistema);
+                var sistemaFiniquitados = finiquitadosList.filter(f =>
+                    f.sistema === sistema &&
+                    f.pais === pais &&
+                    f.negocio === negocio
+                );
 
                 var modalBody = document.querySelector('#finiquitadosModal .modal-body');
                 if (sistemaFiniquitados.length > 0) {
@@ -339,6 +357,8 @@
                                                                         <table id="file_export2" class="table">
                                                                             <thead>
                                                                                 <tr>
+                                                                                    <th>País</th>
+                                                                                    <th>Negocio</th>
                                                                                     <th>Sistema</th>
                                                                                     <th>Nombre de Usuario</th>
                                                                                     <th>RUT/DNI</th>
@@ -354,6 +374,8 @@
                                                                             <tbody>
                                                                                 ${sistemaFiniquitados.map(f => `
                                                                                     <tr>
+                                                                                        <td>${f.pais}</td>
+                                                                                        <td>${f.negocio}</td>
                                                                                         <td>${f.sistema}</td>
                                                                                         <td>${f.nombreusuario}</td>
                                                                                         <td>${f.rutdni}</td>
@@ -418,44 +440,52 @@
             }
         </script>
         <script>
-            function showNoEncontradosModal(sistema) {
+            function showNoEncontradosModal(sistema, pais, negocio) {
                 var noEncontradosList = @Html.Raw(Json.Serialize(Model.ListaUsuariosNoEncontrados));
 
-                var sistemaNoEncontrados = noEncontradosList.filter(f => f.sistema === sistema);
+                var sistemaNoEncontrados = noEncontradosList.filter(f =>
+                    f.sistema === sistema &&
+                    f.pais === pais &&
+                    f.negocio === negocio
+                );
 
-                var modalBody = document.querySelector('#NoEncontradosModal .modal-body');
-                if (sistemaNoEncontrados.length > 0) {
-                    var tableHtml = `
-                                                                        <table id="file_export3" class="table">
-                                                                            <thead>
-                                                                                <tr>
-                                                                                    <th>Sistema</th>
-                                                                                    <th>Nombre de Usuario</th>
-                                                                                    <th>RUT/DNI</th>
-                                                                                    <th>ID de Usuario</th>
-                                                                                    <th>Cargo</th>
-                                                                                    <th>Nombre Centro Costo Spr</th>
-                                                                                    <th>Último login</th>
-                                                                                    <th>Fecha de alta</th>
-                                                                                    <th>Fecha de baja</th>
-                                                                                </tr>
-                                                                            </thead>
-                                                                            <tbody>
-                                                                                ${sistemaNoEncontrados.map(f => `
-                                                                                    <tr>
-                                                                                        <td>${f.sistema}</td>
-                                                                                        <td>${f.nombreusuario}</td>
-                                                                                        <td>${f.rutdni}</td>
-                                                                                        <td>${f.userid}</td>
-                                                                                        <td>${f.cargo}</td>
-                                                                                        <td>${f.Nomccostospr}</td>
-                                                                                        <td>${f.fecultlogin}</td>
-                                                                                        <td>${f.fecalta}</td>
-                                                                                        <td>${f.fecbaja}</td>
-                                                                                    </tr>
-                                                                                `).join('')}
-                                                                            </tbody>
-                                                                        </table>
+                    var modalBody = document.querySelector('#NoEncontradosModal .modal-body');
+                    if (sistemaNoEncontrados.length > 0) {
+                        var tableHtml = `
+                            <table id="file_export3" class="table">
+                                <thead>
+                                    <tr>
+                                        <th>País</th>
+                                        <th>Negocio</th>
+                                        <th>Sistema</th>
+                                        <th>Nombre de Usuario</th>
+                                        <th>RUT/DNI</th>
+                                        <th>ID de Usuario</th>
+                                        <th>Cargo</th>
+                                        <th>Nombre Centro Costo Spr</th>
+                                        <th>Último login</th>
+                                        <th>Fecha de alta</th>
+                                        <th>Fecha de baja</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${sistemaNoEncontrados.map(f => `
+                                        <tr>
+                                            <td>${f.pais}</td>
+                                            <td>${f.negocio}</td>
+                                            <td>${f.sistema}</td>
+                                            <td>${f.nombreusuario}</td>
+                                            <td>${f.rutdni}</td>
+                                            <td>${f.userid}</td>
+                                            <td>${f.cargo}</td>
+                                            <td>${f.Nomccostospr}</td>
+                                            <td>${f.fecultlogin}</td>
+                                            <td>${f.fecalta}</td>
+                                            <td>${f.fecbaja}</td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
                                                                     `;
                     modalBody.innerHTML = tableHtml;
                 } else {
@@ -509,46 +539,54 @@
         </script>
 
         <script>
-            function showCtasDuplicadasModal(sistema) {
+            function showCtasDuplicadasModal(sistema, pais, negocio) {
                 var ctasDuplicadasList = @Html.Raw(Json.Serialize(Model.ListaUsuariosDuplicados));
 
-                var sistemaCtasDuplicadas = ctasDuplicadasList.filter(f => f.sistema === sistema);
+                var sistemaCtasDuplicadas = ctasDuplicadasList.filter(f =>
+                    f.sistema === sistema &&
+                    f.pais === pais &&
+                    f.negocio === negocio
+                );
 
                 var modalBody = document.querySelector('#CtasDuplicadasModal .modal-body');
                 if (sistemaCtasDuplicadas.length > 0) {
                     var tableHtml = `
-                                                                            <table id="file_export4" class="table">
-                                                                                <thead>
-                                                                                    <tr>
-                                                                                        <th>Sistema</th>
-                                                                                        <th>Nombre de Usuario</th>
-                                                                                        <th>RUT/DNI</th>
-                                                                                        <th>ID de Usuario</th>
-                                                                                        <th>Cod. Centro Costo</th>
-                                                                                        <th>Cargo</th>
-                                                                                        <th>Nombre Centro Costo Spr</th>
-                                                                                        <th>Último login</th>
-                                                                                        <th>Fecha de alta</th>
-                                                                                        <th>Fecha de baja</th>
-                                                                                    </tr>
-                                                                                </thead>
-                                                                                <tbody>
-                                                                                    ${sistemaCtasDuplicadas.map(f => `
-                                                                                        <tr>
-                                                                                            <td>${f.sistema}</td>
-                                                                                            <td>${f.nombreusuario}</td>
-                                                                                            <td>${f.rutdni}</td>
-                                                                                            <td>${f.userid}</td>
-                                                                                            <td>${f.codccosto}</td>
-                                                                                            <td>${f.cargo}</td>
-                                                                                            <td>${f.Nomccostospr}</td>
-                                                                                            <td>${f.fecultlogin}</td>
-                                                                                            <td>${f.fecalta}</td>
-                                                                                            <td>${f.fecbaja}</td>
-                                                                                        </tr>
-                                                                                    `).join('')}
-                                                                                </tbody>
-                                                                            </table>
+                            <table id="file_export4" class="table">
+                                <thead>
+                                    <tr>
+                                        <th>País</th>
+                                        <th>Negocio</th>
+                                        <th>Sistema</th>
+                                        <th>Nombre de Usuario</th>
+                                        <th>RUT/DNI</th>
+                                        <th>ID de Usuario</th>
+                                        <th>Cod. Centro Costo</th>
+                                        <th>Cargo</th>
+                                        <th>Nombre Centro Costo Spr</th>
+                                        <th>Último login</th>
+                                        <th>Fecha de alta</th>
+                                        <th>Fecha de baja</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${sistemaCtasDuplicadas.map(f => `
+                                        <tr>
+                                            <td>${f.pais}</td>
+                                            <td>${f.negocio}</td>
+                                            <td>${f.sistema}</td>
+                                            <td>${f.nombreusuario}</td>
+                                            <td>${f.rutdni}</td>
+                                            <td>${f.userid}</td>
+                                            <td>${f.codccosto}</td>
+                                            <td>${f.cargo}</td>
+                                            <td>${f.Nomccostospr}</td>
+                                            <td>${f.fecultlogin}</td>
+                                            <td>${f.fecalta}</td>
+                                            <td>${f.fecbaja}</td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
                                                                         `;
                     modalBody.innerHTML = tableHtml;
                 } else {
