@@ -299,7 +299,7 @@ JOIN dbo.ftc_negocio                  AS AL5 ON AL5.idNegocio               = AL
 LEFT JOIN dbo.ftc_Subgerencias        AS S   ON AL1.Nomccostospr            = S.Nom_Subgerencia
 LEFT JOIN dbo.ftc_gerencia            AS G   ON S.COD_Gerencia              = G.ID_gerencia
 WHERE
-    AL1.estado    <> 'NO ENCONTRADO'
+    AL1.estado = 'ACTIVO'
     AND AL2.idPais    = @idpais
     AND AL2.idNegocio = @idnegocio;
 ";
