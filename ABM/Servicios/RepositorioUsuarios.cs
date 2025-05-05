@@ -169,7 +169,8 @@ namespace ABM.Servicios
                     MesesExpiracionClave,
                     estado,
                     estado_password,
-                    idRol
+                    idRol,
+                    primerInicio
                 )
                 VALUES (
                     @nombre, 
@@ -186,7 +187,8 @@ namespace ABM.Servicios
                     @MesesExpiracionClave,
                     @estado,
                     '1',
-                    @idRol
+                    @idRol,
+                    '1'
                 );
                 SELECT CAST(SCOPE_IDENTITY() as int)";
                     return await dbdapper.ExecuteScalarAsync<int>(query, usuario);
