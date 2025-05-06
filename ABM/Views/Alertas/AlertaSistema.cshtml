@@ -14,7 +14,7 @@
         }
 
 
-        .modal-dialog {
+        .custom-modal-dialog {
             display: flex;
             justify-content: center;
             align-items: center;
@@ -98,41 +98,55 @@
                         @* 						<img src="/images/logos/imperialband.png" class="img-fluid" alt="Logo" style="width: 10%; height: auto; opacity: 0.5;"> *@
                     </div>
 
+                    <form method="get" asp-action="AlertaSistema"
+                          class="row g-2 align-items-end mb-4"
+                          style="margin-left:30px; margin-top:10px">
 
-                    <form method="get" asp-action="AlertaSistema" class="row g-2 align-items-end mb-4" style="margin-left:30px; margin-top:10px">
-                        <div class="col-md-3">
-                            <label class="form-label">País</label>
-                            <select name="idPais" id="selectPais" class="form-select">
-                                <option value="">Todos los países</option>
-                                @foreach (var item in ((List<PaisNegocioViewModel>)ViewBag.PaisesNegocios).Select(x => new { x.idPais, x.pais }).Distinct())
-                                {
-                                    <option value="@item.idPais" selected="@(ViewBag.IdPaisSeleccionado == item.idPais)">
-                                        @item.pais
-                                    </option>
-                                }
-                            </select>
-                        </div>
-
+                        <!-- Negocio -->
                         <div class="col-md-3">
                             <label class="form-label">Negocio</label>
                             <select name="idNegocio" id="selectNegocio" class="form-select">
                                 <option value="">Todos los negocios</option>
-                                @foreach (var item in ((List<PaisNegocioViewModel>)ViewBag.PaisesNegocios))
+                                @foreach (var n in (List<ABM.Models.PaisNegocioViewModel>)ViewBag.Negocios)
                                 {
-                                    if (ViewBag.IdPaisSeleccionado == null || item.idPais == ViewBag.IdPaisSeleccionado)
+                                    if (ViewBag.IdNegocioSeleccionado == n.idNegocio)
                                     {
-                                        <option value="@item.idNegocio" selected="@(ViewBag.IdNegocioSeleccionado == item.idNegocio)">
-                                            @item.negocio
-                                        </option>
+                                        <option value="@n.idNegocio" selected>@n.negocio</option>
+                                    }
+                                    else
+                                    {
+                                        <option value="@n.idNegocio">@n.negocio</option>
                                     }
                                 }
                             </select>
                         </div>
 
+                        <!-- Sistema -->
+                        <div class="col-md-3">
+                            <label class="form-label">Sistema</label>
+                            <select name="idSistema" id="selectSistema" class="form-select">
+                                <option value="">Todos los sistemas</option>
+                                @foreach (var s in (IEnumerable<ABM.Models.Sistema>)ViewBag.Sistemas)
+                                {
+                                    if (ViewBag.IdSistemaSeleccionado == s.idSistema)
+                                    {
+                                        <option value="@s.idSistema" selected>@s.sistema</option>
+                                    }
+                                    else
+                                    {
+                                        <option value="@s.idSistema">@s.sistema</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+
+                        <!-- Botón Filtrar -->
                         <div class="col-md-2">
                             <button class="btn btn-success" type="submit">Filtrar</button>
                         </div>
                     </form>
+
+
 
                     <div class="card-body table-responsive">
                         <table id="file_export4" class="table table-bordered">
@@ -207,7 +221,7 @@
 
     <!-- Modal -->
     <div class="modal fade" id="detailsModal" tabindex="-1" aria-labelledby="detailsModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-dialog modal-dialog-centered custom-modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="detailsModalLabel">Detalles del Sistema</h5>
@@ -223,7 +237,7 @@
         </div>
     </div>
     <div class="modal fade" id="finiquitadosModal" tabindex="-1" aria-labelledby="finiquitadosModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-dialog modal-dialog-centered custom-modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="finiquitadosModalLabel">Detalles de Usuarios Finiquitados</h5>
@@ -240,7 +254,7 @@
     </div>
     <!-- Modal Usuarios No Encontrados -->
     <div class="modal fade" id="NoEncontradosModal" tabindex="-1" aria-labelledby="NoEncontradosModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-dialog modal-dialog-centered custom-modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="NoEncontradosModalLabel">Detalles de Usuarios No Encontrados</h5>
@@ -257,7 +271,7 @@
     </div>
     <!-- Modal Cuentas Duplicadas -->
     <div class="modal fade" id="CtasDuplicadasModal" tabindex="-1" aria-labelledby="CtasDuplicadasModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-dialog modal-dialog-centered custom-modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="CtasDuplicadasModalLabel">Detalles de Cuentas Duplicadas</h5>
@@ -678,21 +692,37 @@
             }
         </script>
         <script>
-            document.getElementById('selectPais').addEventListener('change', function () {
-                let idPais = this.value;
-                let negocios = @Html.Raw(Json.Serialize(ViewBag.PaisesNegocios));
+            (function () {
+                // Cuando cambie el negocio
+                document
+                    .getElementById('selectNegocio')
+                    .addEventListener('change', function () {
+                        var idNeg = this.value;
 
-                let negocioSelect = document.getElementById('selectNegocio');
-                negocioSelect.innerHTML = '<option value="">Todos los negocios</option>';
+                        // Llamada AJAX con fetch
+                        fetch('@Url.Action("SistemasPorNegocio", "Alertas")?idNegocio=' + idNeg)
+                            .then(resp => resp.json())
+                            .then(data => {
+                                var selSis = document.getElementById('selectSistema');
+                                // Limpio opciones actuales
+                                selSis.innerHTML = '';
+                                // Opción por defecto
+                                var opt0 = document.createElement('option');
+                                opt0.value = '';
+                                opt0.text = 'Todos los sistemas';
+                                selSis.appendChild(opt0);
 
-                negocios.forEach(function (item) {
-                    if (idPais === "" || item.idPais == idPais) {
-                        let option = new Option(item.negocio, item.idNegocio);
-                        negocioSelect.appendChild(option);
-                    }
-                });
-            });
-
+                                // Repoblo con los sistemas recibidos
+                                data.forEach(function (s) {
+                                    var opt = document.createElement('option');
+                                    opt.value = s.idSistema;
+                                    opt.text = s.sistema;
+                                    selSis.appendChild(opt);
+                                });
+                            })
+                            .catch(err => console.error('Error cargando sistemas:', err));
+                    });
+            })();
         </script>
     }
 

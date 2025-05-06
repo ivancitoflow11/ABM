@@ -31,27 +31,53 @@ namespace ABM.Controllers
 		}
 
         [HttpGet]
-        public async Task<IActionResult> AlertaSistema(int? idPais, int? idNegocio)
+        public async Task<IActionResult> AlertaSistema(int? idNegocio, int? idSistema)
         {
-            AlertaSistemaViewModel modelo = new AlertaSistemaViewModel();
+            var modelo = new AlertaSistemaViewModel();
 
-            modelo.estadisticas = await repositorioAlertas.ObtenerEstadisticasUsuarios(idPais, idNegocio);
-            modelo.ListaFiltroFiniquitados = await repositorioAlertas.ObtenerDetalleFiniquitados(idPais, idNegocio);
-            modelo.ListaUsuariosNoEncontrados = await repositorioAlertas.ObtenerDetalleNoEncontrados(idPais, idNegocio);
-            modelo.ListaUsuariosDuplicados = await repositorioAlertas.ObtenerDetalleDuplicados(idPais, idNegocio);
+            // 1) Tus datos de alerta
+            modelo.estadisticas = await repositorioAlertas.ObtenerEstadisticasUsuarios(idNegocio, idSistema);
+            modelo.ListaFiltroFiniquitados = await repositorioAlertas.ObtenerDetalleFiniquitados(idNegocio, idSistema);
+            modelo.ListaUsuariosNoEncontrados = await repositorioAlertas.ObtenerDetalleNoEncontrados(idNegocio, idSistema);
+            modelo.ListaUsuariosDuplicados = await repositorioAlertas.ObtenerDetalleDuplicados(idNegocio, idSistema);
 
-            // Estas líneas aseguran que tus filtros permanezcan visibles después del filtrado.
+            // 2) Obtengo los PaisesNegocios desde tu repositorio de roles
             var usuario = await repositorioUsuarios.ObtenerDatosUsuarioPerfilLogeado();
             var rolConPNS = (await repositorioRoles.ObtenerRolesConPNS())
                             .FirstOrDefault(r => r.idRol == usuario.idRol);
 
-            ViewBag.PaisesNegocios = rolConPNS?.PaisesNegocios ?? new List<PaisNegocioViewModel>();
+            // 3) Extraigo sólo los Negocios (distinct por idNegocio),
+            //    evitando el uso de '??' entre tipos incompatibles
+            List<PaisNegocioViewModel> listaNegocios = new();
+            if (rolConPNS?.PaisesNegocios != null)
+            {
+                listaNegocios = rolConPNS.PaisesNegocios
+                    .GroupBy(x => x.idNegocio)
+                    .Select(g => g.First())
+                    .ToList();
+            }
+            ViewBag.Negocios = listaNegocios;
 
-            ViewBag.IdPaisSeleccionado = idPais;
+            // 4) Traigo los sistemas según el negocio seleccionado
+            ViewBag.Sistemas = await repositorioAlertas.ObtenerSistemasPorNegocio(idNegocio);
+
+            // 5) Para mantener la opción seleccionada tras el submit
             ViewBag.IdNegocioSeleccionado = idNegocio;
+            ViewBag.IdSistemaSeleccionado = idSistema;
 
             return View(modelo);
         }
+
+        [HttpGet]
+        public async Task<JsonResult> SistemasPorNegocio(int? idNegocio)
+        {
+            // Llama al mismo método que ya tienes en el repositorio
+            var sistemas = await repositorioAlertas.ObtenerSistemasPorNegocio(idNegocio);
+            return Json(sistemas);
+        }
+
+
+
 
 
     }
