@@ -30,16 +30,29 @@ namespace ABM.Controllers
 			repositorioAlertas = RepositorioAlertas;
 		}
 
-		public async Task<IActionResult> AlertaSistema()
-		{
-			AlertaSistemaViewModel modelo = new AlertaSistemaViewModel();
+        [HttpGet]
+        public async Task<IActionResult> AlertaSistema(int? idPais, int? idNegocio)
+        {
+            AlertaSistemaViewModel modelo = new AlertaSistemaViewModel();
 
-			modelo.estadisticas = await repositorioAlertas.ObtenerEstadisticasUsuarios();
-			modelo.ListaFiltroFiniquitados = await repositorioAlertas.ObtenerDetalleFiniquitados();
-			modelo.ListaUsuariosNoEncontrados = await repositorioAlertas.ObtenerDetalleNoEncontrados();
-			modelo.ListaUsuariosDuplicados = await repositorioAlertas.ObtenerDetalleDuplicados();
+            modelo.estadisticas = await repositorioAlertas.ObtenerEstadisticasUsuarios(idPais, idNegocio);
+            modelo.ListaFiltroFiniquitados = await repositorioAlertas.ObtenerDetalleFiniquitados(idPais, idNegocio);
+            modelo.ListaUsuariosNoEncontrados = await repositorioAlertas.ObtenerDetalleNoEncontrados(idPais, idNegocio);
+            modelo.ListaUsuariosDuplicados = await repositorioAlertas.ObtenerDetalleDuplicados(idPais, idNegocio);
 
-			return View(modelo);
-		}
-	}
+            // Estas líneas aseguran que tus filtros permanezcan visibles después del filtrado.
+            var usuario = await repositorioUsuarios.ObtenerDatosUsuarioPerfilLogeado();
+            var rolConPNS = (await repositorioRoles.ObtenerRolesConPNS())
+                            .FirstOrDefault(r => r.idRol == usuario.idRol);
+
+            ViewBag.PaisesNegocios = rolConPNS?.PaisesNegocios ?? new List<PaisNegocioViewModel>();
+
+            ViewBag.IdPaisSeleccionado = idPais;
+            ViewBag.IdNegocioSeleccionado = idNegocio;
+
+            return View(modelo);
+        }
+
+
+    }
 }

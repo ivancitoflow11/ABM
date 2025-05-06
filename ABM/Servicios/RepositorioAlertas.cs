@@ -7,29 +7,29 @@ using System.Security.Claims;
 
 namespace ABM.Servicios
 {
-	public interface IRepositorioAlertas
-	{
-        Task<IEnumerable<EstadisticasUsuarios>> ObtenerEstadisticasUsuarios();
-        Task<IEnumerable<Finiquitados>> ObtenerDetalleFiniquitados();
-        Task<IEnumerable<UsuariosNoEncontrados>> ObtenerDetalleNoEncontrados();
-        Task<IEnumerable<UsuariosDuplicados>> ObtenerDetalleDuplicados();
-	}
-	public class RepositorioAlertas : IRepositorioAlertas
-	{
-		private readonly string connectionString;
-		private readonly HttpContext httpContext;
+    public interface IRepositorioAlertas
+    {
+        Task<IEnumerable<EstadisticasUsuarios>> ObtenerEstadisticasUsuarios(int? idPais, int? idNegocio);
+        Task<IEnumerable<Finiquitados>> ObtenerDetalleFiniquitados(int? idPais, int? idNegocio);
+        Task<IEnumerable<UsuariosNoEncontrados>> ObtenerDetalleNoEncontrados(int? idPais, int? idNegocio);
+        Task<IEnumerable<UsuariosDuplicados>> ObtenerDetalleDuplicados(int? idPais, int? idNegocio);
+    }
+    public class RepositorioAlertas : IRepositorioAlertas
+    {
+        private readonly string connectionString;
+        private readonly HttpContext httpContext;
 
-		public RepositorioAlertas(IConfiguration configuration, IHttpContextAccessor httpContextAccessor)
-		{
-			connectionString = configuration.GetConnectionString("CadenaSQL");
-			httpContext = httpContextAccessor.HttpContext;
-		}
+        public RepositorioAlertas(IConfiguration configuration, IHttpContextAccessor httpContextAccessor)
+        {
+            connectionString = configuration.GetConnectionString("CadenaSQL");
+            httpContext = httpContextAccessor.HttpContext;
+        }
 
-		public async Task<IEnumerable<EstadisticasUsuarios>> ObtenerEstadisticasUsuarios()
-		{
-			using (IDbConnection dbdapper = new SqlConnection(connectionString))
-			{
-				return await dbdapper.QueryAsync<EstadisticasUsuarios>(@"
+        public async Task<IEnumerable<EstadisticasUsuarios>> ObtenerEstadisticasUsuarios(int? idPais, int? idNegocio)
+        {
+            using (IDbConnection dbdapper = new SqlConnection(connectionString))
+            {
+                return await dbdapper.QueryAsync<EstadisticasUsuarios>(@"
                     
                 WITH ActivosData AS (
                     SELECT 
@@ -51,6 +51,9 @@ namespace ABM.Servicios
                         ON AL4.idPais = AL2.idPais
                     JOIN dbo.ftc_negocio AL5
                         ON AL5.idNegocio = AL2.idNegocio
+                    WHERE 
+                        (@idPais IS NULL OR AL4.idPais = @idPais)
+                        AND (@idNegocio IS NULL OR AL5.idNegocio = @idNegocio)
                     GROUP BY AL3.sistema, AL5.negocio, AL4.pais
                 ),
                 GestionDiariaData AS (
@@ -78,6 +81,8 @@ namespace ABM.Servicios
                             FROM ftc_gestion_diaria 
                             ORDER BY SUBSTRING(feccarga,7,4)+SUBSTRING(feccarga,4,2)+SUBSTRING(feccarga,1,2) DESC
                         )
+                        AND (@idPais IS NULL OR ftc_pais.idPais = @idPais)
+                        AND (@idNegocio IS NULL OR ftc_negocio.idNegocio = @idNegocio)
                 )
 
                 SELECT 
@@ -98,16 +103,16 @@ namespace ABM.Servicios
                 LEFT JOIN 
                     GestionDiariaData G 
                     ON A.Sistema = G.Sistema AND A.Negocio = G.Negocio AND A.Pais = G.Pais;
-                ");
-			}
-		}
+                ", new { idPais, idNegocio });
+            }
+        }
 
 
-		public async Task<IEnumerable<Finiquitados>> ObtenerDetalleFiniquitados()
-		{
-			using (IDbConnection dbdapper = new SqlConnection(connectionString))
-			{
-				return await dbdapper.QueryAsync<Finiquitados>(@"
+        public async Task<IEnumerable<Finiquitados>> ObtenerDetalleFiniquitados(int? idPais, int? idNegocio)
+        {
+            using (IDbConnection dbdapper = new SqlConnection(connectionString))
+            {
+                return await dbdapper.QueryAsync<Finiquitados>(@"
                     
                 SELECT 
                     AL4.pais, 
@@ -153,16 +158,18 @@ namespace ABM.Servicios
                 INNER JOIN dbo.ftc_negocio AL5
                     ON AL5.idNegocio = AL2.idNegocio
                 WHERE 
-                    AL1.estado = 'FINIQUITADO';
-                ");
-			}
-		}
+                    AL1.estado = 'FINIQUITADO'
+                    AND (@idPais IS NULL OR AL4.idPais = @idPais)
+                    AND (@idNegocio IS NULL OR AL5.idNegocio = @idNegocio);
+                ", new { idPais, idNegocio });
+            }
+        }
 
-		public async Task<IEnumerable<UsuariosNoEncontrados>> ObtenerDetalleNoEncontrados()
-		{
-			using (IDbConnection dbdapper = new SqlConnection(connectionString))
-			{
-				return await dbdapper.QueryAsync<UsuariosNoEncontrados>(@"
+        public async Task<IEnumerable<UsuariosNoEncontrados>> ObtenerDetalleNoEncontrados(int? idPais, int? idNegocio)
+        {
+            using (IDbConnection dbdapper = new SqlConnection(connectionString))
+            {
+                return await dbdapper.QueryAsync<UsuariosNoEncontrados>(@"
                     
                 SELECT 
                     AL4.pais, 
@@ -208,16 +215,18 @@ namespace ABM.Servicios
                 INNER JOIN dbo.ftc_negocio AL5
                     ON AL5.idNegocio = AL2.idNegocio
                 WHERE 
-                    AL1.estado = 'NO ENCONTRADO';
-                ");
-			}
-		}
+                    AL1.estado = 'NO ENCONTRADO'
+                    AND (@idPais IS NULL OR AL4.idPais = @idPais)
+                    AND (@idNegocio IS NULL OR AL5.idNegocio = @idNegocio);
+                ", new { idPais, idNegocio });
+            }
+        }
 
-		public async Task<IEnumerable<UsuariosDuplicados>> ObtenerDetalleDuplicados()
-		{
-			using (IDbConnection dbdapper = new SqlConnection(connectionString))
-			{
-				return await dbdapper.QueryAsync<UsuariosDuplicados>(@"
+        public async Task<IEnumerable<UsuariosDuplicados>> ObtenerDetalleDuplicados(int? idPais, int? idNegocio)
+        {
+            using (IDbConnection dbdapper = new SqlConnection(connectionString))
+            {
+                return await dbdapper.QueryAsync<UsuariosDuplicados>(@"
                     
                 WITH CTE_Cuentas AS (
                     SELECT 
@@ -264,12 +273,14 @@ namespace ABM.Servicios
                     JOIN dbo.ftc_negocio AL5
                         ON AL5.idNegocio = AL2.idNegocio
                     WHERE AL1.cta_duplicada = 'SI'
+                    AND (@idPais IS NULL OR AL4.idPais = @idPais)
+                    AND (@idNegocio IS NULL OR AL5.idNegocio = @idNegocio)
                 )
                 SELECT *
                 FROM CTE_Cuentas
                 WHERE RowNum = 1;
-                ");
-			}
-		}
-	}
+                ", new { idPais, idNegocio });
+            }
+        }
+    }
 }

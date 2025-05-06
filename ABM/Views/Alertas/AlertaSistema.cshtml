@@ -79,6 +79,8 @@
         </div>
 
 
+
+
         <!-- tabla -->
         <div class="row">
             <div class="col-md-12">
@@ -95,8 +97,46 @@
                         </div>
                         @* 						<img src="/images/logos/imperialband.png" class="img-fluid" alt="Logo" style="width: 10%; height: auto; opacity: 0.5;"> *@
                     </div>
+
+
+                    <form method="get" asp-action="AlertaSistema" class="row g-2 align-items-end mb-4" style="margin-left:30px; margin-top:10px">
+                        <div class="col-md-3">
+                            <label class="form-label">País</label>
+                            <select name="idPais" id="selectPais" class="form-select">
+                                <option value="">Todos los países</option>
+                                @foreach (var item in ((List<PaisNegocioViewModel>)ViewBag.PaisesNegocios).Select(x => new { x.idPais, x.pais }).Distinct())
+                                {
+                                    <option value="@item.idPais" selected="@(ViewBag.IdPaisSeleccionado == item.idPais)">
+                                        @item.pais
+                                    </option>
+                                }
+                            </select>
+                        </div>
+
+                        <div class="col-md-3">
+                            <label class="form-label">Negocio</label>
+                            <select name="idNegocio" id="selectNegocio" class="form-select">
+                                <option value="">Todos los negocios</option>
+                                @foreach (var item in ((List<PaisNegocioViewModel>)ViewBag.PaisesNegocios))
+                                {
+                                    if (ViewBag.IdPaisSeleccionado == null || item.idPais == ViewBag.IdPaisSeleccionado)
+                                    {
+                                        <option value="@item.idNegocio" selected="@(ViewBag.IdNegocioSeleccionado == item.idNegocio)">
+                                            @item.negocio
+                                        </option>
+                                    }
+                                }
+                            </select>
+                        </div>
+
+                        <div class="col-md-2">
+                            <button class="btn btn-success" type="submit">Filtrar</button>
+                        </div>
+                    </form>
+
                     <div class="card-body table-responsive">
                         <table id="file_export4" class="table table-bordered">
+
                             <thead>
                                 <tr>
                                     <th scope="col">PAÍS</th>
@@ -636,6 +676,23 @@
                     ]
                 });
             }
+        </script>
+        <script>
+            document.getElementById('selectPais').addEventListener('change', function () {
+                let idPais = this.value;
+                let negocios = @Html.Raw(Json.Serialize(ViewBag.PaisesNegocios));
+
+                let negocioSelect = document.getElementById('selectNegocio');
+                negocioSelect.innerHTML = '<option value="">Todos los negocios</option>';
+
+                negocios.forEach(function (item) {
+                    if (idPais === "" || item.idPais == idPais) {
+                        let option = new Option(item.negocio, item.idNegocio);
+                        negocioSelect.appendChild(option);
+                    }
+                });
+            });
+
         </script>
     }
 
