@@ -32,66 +32,92 @@ namespace ABM.Controllers
 			repositorioVision = RepositorioVision;
 		}
 
-
         [HttpGet]
         public async Task<IActionResult> VisionCorporativa(int? idPais)
         {
-            // 1) idNegocio en sesión
+            // 1) Leer idNegocio de sesión
             var idNegocioSesion = HttpContext.Session.GetInt32("IdNegocio");
             if (!idNegocioSesion.HasValue)
                 return RedirectToAction("PnsSelectorPartial", "Home");
             int idNegocio = idNegocioSesion.Value;
 
-            // 2) Listar países
-            var paises = (await repositorioVision.ObtenerListaPaisesPorNegocio(idNegocio)).ToList();
+            // 2) Traer países válidos
+            var paises = (await repositorioVision.ObtenerListaPaisesPorNegocio(idNegocio))
+                          ?.ToList()
+                      ?? new List<PaisViewModel>();
             if (!paises.Any())
                 return View("Error", new { message = "No hay países para este negocio." });
 
-            // 3) Si llegó idPais válido, guardar y redirigir (Post‐Redirect‐Get)
+            // 3) Si llegó idPais válido, actúo en Post‐Redirect‐Get
             if (idPais.HasValue && paises.Any(p => p.IdPais == idPais.Value))
             {
                 var nombrePais = paises.First(p => p.IdPais == idPais.Value).NombrePais;
 
                 HttpContext.Session.SetInt32("IdPais", idPais.Value);
                 HttpContext.Session.SetString("Pais", nombrePais);
-                // HttpContext.Session.SetString("Negocio", nombreNegocioSesion);
 
                 return RedirectToAction(nameof(VisionCorporativa));
             }
 
-            // 4) Si no llegó idPais o es inválido, leo el que ya esté en sesión
+            // 4) Si no, leo el idPais ya en sesión (o el primero si no está)
             int paisSeleccionado = HttpContext.Session.GetInt32("IdPais")
                                    ?? paises.First().IdPais;
 
-            // 5) Ahora construyo el ViewModel con ese paisSeleccionado
+            // 5) Llamadas a repositorios, coalesceando a listas vacías si vinieran null
+            var listaEvolucion = (await repositorioVision.ObtenerListaEvolucion(paisSeleccionado, idNegocio))
+                                 ?.ToList()
+                             ?? new List<EvolucionViewModel>();
+
+            var listaRiesgoSistema = (await repositorioVision.ObtenerListaRiesgoSistema(paisSeleccionado, idNegocio))
+                                     ?.ToList()
+                                 ?? new List<RiesgoSistemaViewModel>();
+
+            var listaRiesgoPais = (await repositorioVision.ObtenerListaRiesgoPais(paisSeleccionado, idNegocio))
+                                  ?.ToList()
+                              ?? new List<RiesgoPaisViewModel>();
+
+            var listaSistema = (await repositorioVision.ListaDeSistemas(paisSeleccionado, idNegocio))
+                               ?.ToList()
+                           ?? new List<Abm_Sistema>();
+
+            var listaTendenciaDiaria = (await repositorioGestion.ObtenerListaTendenciaDiaria(paisSeleccionado, idNegocio))
+                                       ?.ToList()
+                                   ?? new List<TendenciaDiariaViewModel>();
+
+            var riesgoPerfil = (await repositorioVision.ObtenerRiesgoPerfil(paisSeleccionado, idNegocio))
+                               ?.ToList()
+                           ?? new List<RiesgoSistemaViewModel>();
+
+            // 6) Armar ViewModel
             var modelo = new VisionViewModel
             {
                 ListaPaises = paises,
                 SelectedPais = paisSeleccionado,
-                ListaEvolucion = await repositorioVision.ObtenerListaEvolucion(paisSeleccionado, idNegocio),
-                ListaRiesgoSistema = await repositorioVision.ObtenerListaRiesgoSistema(paisSeleccionado, idNegocio),
-                ListaRiesgoPais = await repositorioVision.ObtenerListaRiesgoPais(paisSeleccionado, idNegocio),
-                ListaSistema = await repositorioVision.ListaDeSistemas(paisSeleccionado, idNegocio),
-                ListaTendenciaDiaria = await repositorioGestion.ObtenerListaTendenciaDiaria(paisSeleccionado, idNegocio),
-                RiesgoPerfil = await repositorioVision.ObtenerRiesgoPerfil(paisSeleccionado, idNegocio)
+                ListaEvolucion = listaEvolucion,
+                ListaRiesgoSistema = listaRiesgoSistema,
+                ListaRiesgoPais = listaRiesgoPais,
+                ListaSistema = listaSistema,
+                ListaTendenciaDiaria = listaTendenciaDiaria,
+                RiesgoPerfil = riesgoPerfil
             };
 
             return View(modelo);
         }
 
-
         [HttpGet]
-		public async Task<IActionResult> ObtenerGraficoDinamico(int sistema, int idPais)
-		{
-			var idNegocioSesion = HttpContext.Session.GetInt32("IdNegocio");
-			if (!idNegocioSesion.HasValue)
-				return BadRequest("No hay negocio en sesión.");
+        public async Task<IActionResult> ObtenerGraficoDinamico(int sistema, int idPais)
+        {
+            var idNegocioSesion = HttpContext.Session.GetInt32("IdNegocio");
+            if (!idNegocioSesion.HasValue)
+                return BadRequest("No hay negocio en sesión.");
 
-			var datos = await repositorioVision.ObtenerListaEvolucionParametro(
-				sistema, idPais, idNegocioSesion.Value);
+            var datos = (await repositorioVision.ObtenerListaEvolucionParametro(
+                     sistema, idPais, idNegocioSesion.Value))
+                     ?.ToList()
+                 ?? new List<TendenciaDiariaViewModel>();
 
-			return Json(datos);
-		}
+            return Json(datos);
+        }
 
-	}
+    }
 }

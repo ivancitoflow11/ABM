@@ -2,14 +2,15 @@
 {
     public class VisionViewModel
     {
-        public IEnumerable<RiesgoSistemaViewModel> ListaRiesgoSistema { get; set; }
-        public IEnumerable<RiesgoPaisViewModel> ListaRiesgoPais { get; set; }
-        public IEnumerable<EvolucionViewModel> ListaEvolucion { get; set; }
-        public IEnumerable<Abm_Sistema?> ListaSistema { get; set; }
-        public IEnumerable<TendenciaDiariaViewModel> ListaTendenciaDiaria { get; set; }
-        public IEnumerable<TendenciaDiariaViewModel>? ListaTendenciaDiariaSistema { get; set; }
-        public IEnumerable<RiesgoSistemaViewModel> RiesgoPerfil { get; set; }
-		public IEnumerable<PaisViewModel> ListaPaises { get; set; }
-		public int SelectedPais { get; set; }
-	}
+        public IEnumerable<PaisViewModel> ListaPaises { get; set; } = new List<PaisViewModel>();
+        public int SelectedPais { get; set; }
+
+        public IEnumerable<EvolucionViewModel> ListaEvolucion { get; set; } = new List<EvolucionViewModel>();
+        public IEnumerable<RiesgoSistemaViewModel> ListaRiesgoSistema { get; set; } = new List<RiesgoSistemaViewModel>();
+        public IEnumerable<RiesgoPaisViewModel> ListaRiesgoPais { get; set; } = new List<RiesgoPaisViewModel>();
+        public IEnumerable<Abm_Sistema> ListaSistema { get; set; } = new List<Abm_Sistema>();
+        public IEnumerable<TendenciaDiariaViewModel> ListaTendenciaDiaria { get; set; } = new List<TendenciaDiariaViewModel>();
+        public IEnumerable<TendenciaDiariaViewModel> ListaTendenciaDiariaSistema { get; set; } = new List<TendenciaDiariaViewModel>();
+        public IEnumerable<RiesgoSistemaViewModel> RiesgoPerfil { get; set; } = new List<RiesgoSistemaViewModel>();
+    }
 }
