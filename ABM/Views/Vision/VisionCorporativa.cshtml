@@ -248,73 +248,87 @@
         <script src="/js/canvasjs-chart-3.10.9/canvasjs.min.js"></script>
         <script>
             document.addEventListener("DOMContentLoaded", function () {
+                // 1) Creo dataPoints intercambiando X <-> Y
                 var dataPoints = [];
             @foreach (var item in Model.RiesgoPerfil)
             {
-                @:dataPoints.push({ x: @item.nriesgo, y: @item.Riesgo_Alto, type: "Riesgo_Alto", sistema: "@item.Sistema" });
-                @:dataPoints.push({ x: @item.nriesgo, y: @item.Riesgo_Medio, type: "Riesgo_Medio", sistema: "@item.Sistema" });
-                @:dataPoints.push({ x: @item.nriesgo, y: @item.Riesgo_Bajo, type: "Riesgo_Bajo", sistema: "@item.Sistema" });
+                @:dataPoints.push({ x: @item.Riesgo_Alto, y: @item.nriesgo, type: "Riesgo_Alto", sistema: "@item.Sistema" });
+                @:dataPoints.push({ x: @item.Riesgo_Medio, y: @item.nriesgo, type: "Riesgo_Medio", sistema: "@item.Sistema" });
+                @:dataPoints.push({ x: @item.Riesgo_Bajo, y: @item.nriesgo, type: "Riesgo_Bajo", sistema: "@item.Sistema" });
             }
 
-                    var chart = new CanvasJS.Chart("risk", {
+                // 2) Calcular rangos dinámicos para ambos ejes
+                var xs = dataPoints.map(function (dp) { return dp.x; });
+                var ys = dataPoints.map(function (dp) { return dp.y; });
+
+                var minX = Math.min.apply(null, xs) - 1;
+                var maxX = Math.max.apply(null, xs) + 1;
+                var minY = Math.min.apply(null, ys) - 1;
+                var maxY = Math.max.apply(null, ys) + 1;
+
+                // 3) Construir el gráfico con ejes intercambiados
+                var chart = new CanvasJS.Chart("risk", {
                     backgroundColor: "rgba(255, 255, 255, 0.1)",
                     animationEnabled: true,
                     theme: "light2",
+
+                    // Ahora el eje X muestra los conteos (Riesgos Alto/Medio/Bajo)
                     axisX: {
-                        title: "N° Riesgos",
-                        titleFontFamily: "Poppins",
-                        titleFontSize: 16,
-                        titleFontWeight: "normal",
-                        titleFontColor: "#000000",
-                        minimum: 80,
-                        maximum: 100,
-                        interval: 5,
-                        labelAngle: -45,
-                        labelFontSize: 12,
-                        fontFamily: "Poppins",
-                        fontColor: "#000000",
-                        gridThickness: 1,
-                        gridColor: "rgba(0, 0, 0, 0.5)",
-                        lineColor: "#000000",
-                        lineThickness: 2,
-                    },
-                    axisY: {
                         title: "Nivel de Riesgo",
                         titleFontFamily: "Poppins",
                         titleFontSize: 16,
-                        titleFontWeight: "bold",
-                        titleFontColor: "#000000",
-                        minimum: 0,
-                        maximum: 10,
-                        interval: 2,
+                        titleFontWeight: "normal",
+                        titleFontColor: "#000",
+                        minimum: minX,
+                        maximum: maxX,
+                        interval: Math.ceil((maxX - minX) / 5),
+                        labelAngle: -45,
                         labelFontSize: 12,
                         fontFamily: "Poppins",
-                        fontColor: "#000000",
+                        fontColor: "#000",
                         gridThickness: 1,
-                        gridColor: "rgba(0, 0, 0, 0.5)",
-                        lineColor: "#000000",
+                        gridColor: "rgba(0,0,0,0.5)",
+                        lineColor: "#000",
                         lineThickness: 2
                     },
+
+                    // Y el eje Y muestra ahora el nRiesgo (nivel de riesgo)
+                    axisY: {
+                        title: "N° Riesgo",
+                        titleFontFamily: "Poppins",
+                        titleFontSize: 16,
+                        titleFontWeight: "bold",
+                        titleFontColor: "#000",
+                        minimum: minY,
+                        maximum: maxY,
+                        interval: Math.ceil((maxY - minY) / 5),
+                        labelFontSize: 12,
+                        fontFamily: "Poppins",
+                        fontColor: "#000",
+                        gridThickness: 1,
+                        gridColor: "rgba(0,0,0,0.5)",
+                        lineColor: "#000",
+                        lineThickness: 2
+                    },
+
                     data: [{
                         type: "scatter",
                         markerType: "circle",
                         markerSize: 15,
                         dataPoints: dataPoints,
-                        toolTipContent: "<b>Sistema: {sistema}</b><br/>N° Riesgos: {x}<br/>Nivel: {y}<br/>",
-                        markerColor: function (dataPoint) {
-                            if (dataPoint.type === "Riesgo_Alto") {
-                                return "red";
-                            } else if (dataPoint.type === "Riesgo_Medio") {
-                                return "orange";
-                            } else {
-                                return "green";
-                            }
+                        toolTipContent: "<b>Sistema: {sistema}</b><br/>Nivel de Riesgo: {x}<br/>N°: {y}<br/>",
+                        markerColor: function (dp) {
+                            if (dp.type === "Riesgo_Alto") return "red";
+                            if (dp.type === "Riesgo_Medio") return "orange";
+                            return "green";
                         }
                     }]
                 });
+
                 chart.render();
             });
         </script>
+
 
 
         <script type="text/javascript">
