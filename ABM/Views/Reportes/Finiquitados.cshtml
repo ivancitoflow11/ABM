@@ -26,11 +26,10 @@
                                     <th>Perfil</th>
                                     <th>Estado</th>
                                     <th>Fecha Finiquito</th>
-                                    <th>Negocio</th>
-                                    <th>Sistema</th>
                                     <th>Fecha AD</th>
-                                    <th>Gerencia</th>
-                                    <th>Subgerencia</th>
+                                    <th>País</th>
+                                    <th>Negocio</th>
+                                    <th>Sistema</th>                                   
                                 </tr>
                             </thead>
                             <tbody class="table-group-divider">
@@ -38,7 +37,6 @@
                                 {
                                     <tr>
                                         <td class="text-center">Sin registros</td>
-                                        <td></td>
                                         <td></td>
                                         <td></td>
                                         <td></td>
@@ -78,20 +76,17 @@
                                                 @(item.fecfiniq ?? "-")
                                             </td>
                                             <td style="white-space:nowrap;">
+                                                @(item.fechaad ?? "-")
+                                            </td>
+                                            <td style="white-space:nowrap;">
+                                                @(item.pais ?? "-")
+                                            </td>
+                                            <td style="white-space:nowrap;">
                                                 @(item.negocio ?? "-")
                                             </td>
                                             <td style="white-space:nowrap;">
                                                 @(item.sistema ?? "-")
-                                            </td>
-                                            <td style="white-space:nowrap;">
-                                                @(item.fechaad ?? "-")
-                                            </td>
-                                            <td style="white-space:nowrap;">
-                                                @(item.Nom_Gerencia ?? "-")
-                                            </td>
-                                            <td style="white-space:nowrap;">
-                                                @(item.Nom_Subgerencia ?? "-")
-                                            </td>
+                                            </td>                                            
                                         </tr>
                                     }
                                 }
@@ -105,11 +100,10 @@
                                     <th>Perfil</th>
                                     <th>Estado</th>
                                     <th>Fecha Finiquito</th>
-                                    <th>Negocio</th>
-                                    <th>Sistema</th>
                                     <th>Fecha AD</th>
-                                    <th>Gerencia</th>
-                                    <th>Subgerencia</th>
+                                    <th>País</th>
+                                    <th>Negocio</th>
+                                    <th>Sistema</th>                                   
                                 </tr>
                             </tfoot>
                         </table>

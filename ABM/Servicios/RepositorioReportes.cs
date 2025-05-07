@@ -174,6 +174,7 @@ SELECT DISTINCT
     a.dv,
     c.pais,
     d.negocio,
+    st.sistema,
     a.nombreusuario,
     a.cargospr,
     a.perfil,
@@ -198,6 +199,7 @@ FROM dbo.ftc_agrupa_activos           AS a
 JOIN dbo.ftc_pais_negocio_sistema    AS b ON b.idPaisNegocioSistema = a.idPaisNegocioSistema
 JOIN dbo.ftc_pais                     AS c ON c.idPais                 = b.idPais
 JOIN dbo.ftc_negocio                  AS d ON d.idNegocio              = b.idNegocio
+JOIN dbo.ftc_sistema                  AS st ON st.idSistema              = b.idSistema
 LEFT JOIN dbo.ftc_Subgerencias        AS s ON s.Nom_Subgerencia        = a.Nomccostospr
 LEFT JOIN dbo.ftc_gerencia            AS g ON g.ID_gerencia            = s.COD_Gerencia
 WHERE
