@@ -42,16 +42,27 @@ namespace ABM.Controllers
             int idPais = idPaisSesion.Value;
             int idNegocio = idNegocioSesion.Value;
 
-            ResumenGestionViewModel modelo2 = await repositorioGestion.ObtenerDatosGestion(idPais, idNegocio);
-            var modelo = mapper.Map<GestionViewModel>(modelo2);
+            // 1) Aseguramos que el mapeo base nunca sea null
+            var resumenDto = await repositorioGestion.ObtenerDatosGestion(idPais, idNegocio)
+                             ?? new ResumenGestionViewModel();
 
-            modelo.ListaCasosCargo = await repositorioGestion.ObtenerListaCasosCargo(idPais, idNegocio);
-            modelo.ListaEvidenciasFiniquitado = await repositorioGestion.ObtenerListaEvidenciasFiniquitado(idPais, idNegocio);
-            modelo.ListaResumenPais = await repositorioGestion.ObtenerListaResumenPais(idPais, idNegocio);
-            modelo.ListaTendenciaDiaria = await repositorioGestion.ObtenerListaTendenciaDiaria(idPais, idNegocio);
+            // 2) Mapear y garantizar que el ViewModel no quede null
+            var modelo = mapper.Map<GestionViewModel>(resumenDto)
+                         ?? new GestionViewModel();
+
+            // 3) Cada lista coalesceada a lista vacía si el repositorio devolvió null
+            modelo.ListaCasosCargo = await repositorioGestion.ObtenerListaCasosCargo(idPais, idNegocio)
+                                                   ?? Enumerable.Empty<CasosCargoViewModel>();
+            modelo.ListaEvidenciasFiniquitado = await repositorioGestion.ObtenerListaEvidenciasFiniquitado(idPais, idNegocio)
+                                                   ?? Enumerable.Empty<EvidenciasFiniquitadoViewModel>();
+            modelo.ListaResumenPais = await repositorioGestion.ObtenerListaResumenPais(idPais, idNegocio)
+                                                   ?? Enumerable.Empty<ResumenPaisViewModel>();
+            modelo.ListaTendenciaDiaria = await repositorioGestion.ObtenerListaTendenciaDiaria(idPais, idNegocio)
+                                                   ?? Enumerable.Empty<TendenciaDiariaViewModel>();
 
             return View(modelo);
         }
+
 
     }
 }
