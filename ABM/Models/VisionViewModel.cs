@@ -9,5 +9,7 @@
         public IEnumerable<TendenciaDiariaViewModel> ListaTendenciaDiaria { get; set; }
         public IEnumerable<TendenciaDiariaViewModel>? ListaTendenciaDiariaSistema { get; set; }
         public IEnumerable<RiesgoSistemaViewModel> RiesgoPerfil { get; set; }
-    }
+		public IEnumerable<PaisViewModel> ListaPaises { get; set; }
+		public int SelectedPais { get; set; }
+	}
 }

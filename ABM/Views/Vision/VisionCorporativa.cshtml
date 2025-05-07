@@ -1,0 +1,438 @@
+﻿@model VisionViewModel
+@*
+    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+*@
+@{
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vision Corporativa</title>
+    @* <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" /> *@
+    <link href="~/css/leaflet.css" rel="stylesheet" />
+    @* <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script> *@
+
+</head>
+<body>
+    <br />
+    <br />
+    <br />
+    <br />
+    <h4 style="text-align:center">Visión corporativa</h4>
+
+    <form method="get" asp-action="VisionCorporativa" class="mb-4">
+        <div class="row">
+            <div class="col-md-4">
+                <label for="idPais" class="form-label">País:</label>
+                <select id="idPais" name="idPais" class="form-select" onchange="this.form.submit()">
+                    <option value="">--Seleccione País--</option>
+
+                    @foreach (var p in Model.ListaPaises)
+                    {
+                        if (p.IdPais == Model.SelectedPais)
+                        {
+                            <option value="@p.IdPais" selected="selected">
+                                @p.NombrePais
+                            </option>
+                        }
+                        else
+                        {
+                            <option value="@p.IdPais">
+                                @p.NombrePais
+                            </option>
+                        }
+                    }
+                </select>
+            </div>
+        </div>
+    </form>
+
+    <div class="container mt-12" hidden>
+        <div class="row mb-12">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        Filtrar Datos del Negocio por Fecha
+                    </div>
+                    <div class="card-body d-flex flex-column align-items-center">
+                        <div class="input-group mb-3">
+                            <input type="text" class="form-control" id="datepicker-autoclose" placeholder="mm/dd/yyyy" style="text-align:center">
+                            <span class="input-group-text">
+                                <i class="ti ti-calendar fs-5"></i>
+                            </span>
+                        </div>
+                        <button type="submit" class="btn btn-primary" style="width: 100px;">
+                            Filtrar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
+
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header text-white" style="background-color: #acd743;">
+                    Mapa Riesgo ABM
+                </div>
+                <h1 style="text-align:center; margin-top:19px; font-size: 25px; font-family: 'Poppins', sans-serif; font-weight: normal; color: #85929e;">Riesgo Perfil</h1>
+
+
+
+
+                <div class="card-body">
+                    <!-- Aquí eliminé col-md-6 para que el gráfico ocupe el 100% -->
+                    <div id="risk" style="height: 300px; width: 100%;background-image: url('/images/calor.png'); background-size: cover; background-position: center; height: 200px;">
+                    </div>
+                    <!-- Contenido para la gestión histórica -->
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card mb-4" style="max-height: 450px; overflow-y: auto;">
+                <div class="card-header text-white" style="background-color: #acd743;">
+                    Resumen Sistema
+                </div>
+                <div class="card-body">
+                    <ul class="nav nav-tabs" role="tablist">
+                        <li class="nav-item">
+                            <a class="nav-link active" data-bs-toggle="tab" href="#sistema" role="tab">
+                                <span>RIESGO SISTEMA</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" data-bs-toggle="tab" href="#pais" role="tab">
+                                <span>RIESGO NEGOCIO</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" data-bs-toggle="tab" href="#evolucion" role="tab">
+                                <span>EVOLUCIÓN DÍA</span>
+                            </a>
+                        </li>
+                    </ul>
+                    <!-- Tab panes -->
+                    <div class="tab-content">
+                        <div class="tab-pane active p-3" id="sistema" role="tabpanel">
+                            <table class="table table-bordered">
+                                <thead>
+                                    <tr>
+                                        <th scope="col">Sistemas</th>
+                                        <th scope="col">Finiquitados</th>
+                                        <th scope="col">No Encontrados</th>
+                                        <th scope="col">Activos</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @if (Model.ListaRiesgoSistema != null && Model.ListaRiesgoSistema.Any())
+                                    {
+                                        foreach (var item in Model.ListaRiesgoSistema)
+                                        {
+                                            <tr>
+                                                <td>@item.Sistema</td>
+                                                <td>@item.Finiquitados</td>
+                                                <td>@item.NoEncontrados</td>
+                                                <td>@item.Activos</td>
+                                            </tr>
+                                        }
+                                    }
+
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="tab-pane p-3" id="pais" role="tabpanel">
+                            <table class="table table-bordered">
+                                <thead>
+                                    <tr>
+                                        <th scope="col">País</th>
+                                        <th scope="col">Finiquitados</th>
+                                        <th scope="col">No Encontrados</th>
+                                        <th scope="col">Activos</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @if (Model.ListaRiesgoPais != null && Model.ListaRiesgoPais.Any())
+                                    {
+                                        @foreach (var item in Model.ListaRiesgoPais)
+                                        {
+                                            <tr>
+                                                <td>@item.Pais</td>
+                                                <td>@item.cnt_finiquitados</td>
+                                                <td>@item.cnt_no_encontrados</td>
+                                                <td>@item.cnt_activos</td>
+                                            </tr>
+                                        }
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="tab-pane p-3" id="evolucion" role="tabpanel">
+                            <table id="tendenciasTable" class="table table-bordered">
+                                <thead>
+                                    <tr>
+                                        <th scope="col" onclick="sortTable()">Fecha Carga &#x25B2;&#x25BC;</th>
+                                        <th scope="col">Finiquitados</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tendenciasBody">
+                                    @if (Model.ListaTendenciaDiaria != null && Model.ListaTendenciaDiaria.Any())
+                                    {
+                                        foreach (var item in Model.ListaTendenciaDiaria)
+                                        {
+                                            <tr>
+                                                <td>@item.feccarga</td>
+                                                <td>@item.cnt_finiquitados</td>
+                                            </tr>
+                                        }
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+        <br />
+
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card mb-4">
+                    <div class="card-header text-white" style="background-color: #acd743;">
+                        Gestión Historica
+                    </div>
+                    <div class="row mt-2 mx-2">
+                        <div class="col-md-9"></div>
+                        <div class="col-md-3" style="align-items:end">
+                            <select class="form-select" id="sistemaSelect">
+                                <option selected disabled>Seleccione Sistema</option>
+                                @if (Model.ListaSistema != null && Model.ListaSistema.Any())
+                                {
+                                    @foreach (var item in Model.ListaSistema)
+                                    {
+                                        <option value="@item.idSistema">@item.sistema</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+
+                    </div>
+                    <div class="row">
+                        <div class="card-body col-md-6">
+                            <div id="chartContainer" style="height: 300px; width: 100%;">
+                            </div>
+                            <!-- Contenido para la gestión histórica -->
+                        </div>
+                        <div class="card-body col-md-6">
+                            <div id="chartContainer2" style="height: 300px; width: 100%;">
+                            </div>
+                            <!-- Contenido para la gestión histórica -->
+                        </div>
+                    </div>
+
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    @section scripts {
+        <script src="/js/canvasjs-chart-3.10.9/canvasjs.min.js"></script>
+        <script>
+            document.addEventListener("DOMContentLoaded", function () {
+                var dataPoints = [];
+            @foreach (var item in Model.RiesgoPerfil)
+            {
+                @:dataPoints.push({ x: @item.nriesgo, y: @item.Riesgo_Alto, type: "Riesgo_Alto", sistema: "@item.Sistema" });
+                @:dataPoints.push({ x: @item.nriesgo, y: @item.Riesgo_Medio, type: "Riesgo_Medio", sistema: "@item.Sistema" });
+                @:dataPoints.push({ x: @item.nriesgo, y: @item.Riesgo_Bajo, type: "Riesgo_Bajo", sistema: "@item.Sistema" });
+            }
+
+                    var chart = new CanvasJS.Chart("risk", {
+                    backgroundColor: "rgba(255, 255, 255, 0.1)",
+                    animationEnabled: true,
+                    theme: "light2",
+                    axisX: {
+                        title: "N° Riesgos",
+                        titleFontFamily: "Poppins",
+                        titleFontSize: 16,
+                        titleFontWeight: "normal",
+                        titleFontColor: "#000000",
+                        minimum: 80,
+                        maximum: 100,
+                        interval: 5,
+                        labelAngle: -45,
+                        labelFontSize: 12,
+                        fontFamily: "Poppins",
+                        fontColor: "#000000",
+                        gridThickness: 1,
+                        gridColor: "rgba(0, 0, 0, 0.5)",
+                        lineColor: "#000000",
+                        lineThickness: 2,
+                    },
+                    axisY: {
+                        title: "Nivel de Riesgo",
+                        titleFontFamily: "Poppins",
+                        titleFontSize: 16,
+                        titleFontWeight: "bold",
+                        titleFontColor: "#000000",
+                        minimum: 0,
+                        maximum: 10,
+                        interval: 2,
+                        labelFontSize: 12,
+                        fontFamily: "Poppins",
+                        fontColor: "#000000",
+                        gridThickness: 1,
+                        gridColor: "rgba(0, 0, 0, 0.5)",
+                        lineColor: "#000000",
+                        lineThickness: 2
+                    },
+                    data: [{
+                        type: "scatter",
+                        markerType: "circle",
+                        markerSize: 15,
+                        dataPoints: dataPoints,
+                        toolTipContent: "<b>Sistema: {sistema}</b><br/>N° Riesgos: {x}<br/>Nivel: {y}<br/>",
+                        markerColor: function (dataPoint) {
+                            if (dataPoint.type === "Riesgo_Alto") {
+                                return "red";
+                            } else if (dataPoint.type === "Riesgo_Medio") {
+                                return "orange";
+                            } else {
+                                return "green";
+                            }
+                        }
+                    }]
+                });
+                chart.render();
+            });
+        </script>
+
+
+        <script type="text/javascript">
+            function convertToDate(fechaString) {
+                var fechaParts = fechaString.split('-');
+                return new Date(fechaParts[2], fechaParts[1] - 1, fechaParts[0]);
+            }
+            function sortTable() {
+                var tbody = document.getElementById("tendenciasBody");
+                var rows = Array.from(tbody.querySelectorAll("tr"));
+
+                rows.sort(function (rowA, rowB) {
+                    var dateA = convertToDate(rowA.cells[0].innerText);
+                    var dateB = convertToDate(rowB.cells[0].innerText);
+                    return dateB - dateA;
+                });
+
+                tbody.innerHTML = "";
+                rows.forEach(function (row) {
+                    tbody.appendChild(row);
+                });
+            }
+
+            window.onload = function () {
+                sortTable();
+            };
+        </script>
+
+
+        <script type="text/javascript">
+            document.getElementById('sistemaSelect')
+                .addEventListener('change', function () {
+                    var sistema = parseInt(this.value);
+                    var idPais = @Model.SelectedPais;  
+
+                    fetch(`@Url.Action("ObtenerGraficoDinamico", "Vision")?sistema=${sistema}&idPais=${idPais}`)
+                        .then(resp => resp.json())
+                        .then(data => renderizarGrafico(data));
+                });
+
+            function renderizarGrafico(data) {
+                var chart = new CanvasJS.Chart("chartContainer2", {
+                    animationEnabled: true,
+                    title: {
+                        text: "Tendencia Finiquitados por Sistema",
+                        fontFamily: "Poppins",
+                        fontSize: 25,
+                        fontWeight: "normal",
+                        fontColor: "#808080"
+                    },
+                    axisY: {
+                        title: "Cantidad Finiquitados",
+                        valueFormatString: "#,##0",
+                        stripLines: [{
+                            value: 0
+                        }]
+                    },
+                    axisX: {
+                        valueFormatString: "DD-MM-YYYY",
+                        labelAngle: -45
+                    },
+                    data: [{
+                        type: "column",
+                        xValueFormatString: "DD-MM-YYYY",
+                        yValueFormatString: "#,##0",
+                        dataPoints: data.map(item => {
+                            // Asumiendo que feccarga viene en formato 'YYYY-MM-DD'
+                            const [year, month, day] = item.feccarga.split('-');
+                            return {
+                                x: new Date(year, month - 1, day),
+                                y: item.cantidad_finiquitados || 0
+                            };
+                        })
+                    }]
+                });
+                chart.render();
+            }
+
+
+        </script>
+        <script type="text/javascript">
+            window.onload = function () {
+                var chart = new CanvasJS.Chart("chartContainer", {
+                    title: {
+                        text: "Tendencia Finiquitados",
+                        fontFamily: "Poppins",
+                        fontSize: 25,
+                        fontWeight: "normal",
+                        fontColor: "#808080",
+                    },
+                    axisY: {
+                        title: "Cantidad Finiquitados",
+                        valueFormatString: "#,###"
+                    },
+                    axisX: {
+                        labelAngle: -45,
+                        valueFormatString: "DD-MM-YYYY"
+                    },
+                    data: [{
+                        type: "line",
+                        yValueFormatString: "#,##0",
+                        dataPoints: [
+            @if (Model.ListaTendenciaDiaria != null && Model.ListaTendenciaDiaria.Any())
+            {
+                @foreach (var item in Model.ListaTendenciaDiaria)
+                {
+                    @:{ x: new Date("@item.feccarga"), y: @item.cnt_finiquitados },
+                }
+            }
+                        ],
+                    }]
+                });
+
+                chart.render();
+            }
+        </script>
+    }
+
+
+</body>
+</html>
