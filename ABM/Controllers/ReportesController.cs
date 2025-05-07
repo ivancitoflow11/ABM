@@ -32,67 +32,108 @@ namespace ABM.Controllers
 
 
         [HttpGet]
-        public async Task<IActionResult> Finiquitados()
+        public async Task<IActionResult> Finiquitados(string sistema = null)
         {
-            // leer con las mismas claves que usaste al guardar
             var idPaisSesion = HttpContext.Session.GetInt32("IdPais");
             var idNegocioSesion = HttpContext.Session.GetInt32("IdNegocio");
-
             if (!idPaisSesion.HasValue || !idNegocioSesion.HasValue)
                 return RedirectToAction("PnsSelectorPartial", "Home");
 
             int idPais = idPaisSesion.Value;
             int idNegocio = idNegocioSesion.Value;
 
-            var lista = await repositorioReportes
-                 .ObtenerListaFiniquitadosPorSistema(idPais, idNegocio);
+            // 1) traigo todos los finiquitados
+            var lista = (await repositorioReportes
+                .ObtenerListaFiniquitadosPorSistema(idPais, idNegocio))
+                .ToList();
+
+            // 2) extraigo sistemas únicos para el dropdown
+            var sistemas = lista
+                .Select(x => x.sistema)
+                .Where(s => !string.IsNullOrEmpty(s))
+                .Distinct()
+                .OrderBy(s => s)
+                .ToList();
+            ViewBag.Sistemas = sistemas;
+            ViewBag.SistemaSeleccionado = sistema;
+
+            // 3) si viene filter, aplico en memoria
+            if (!string.IsNullOrEmpty(sistema))
+                lista = lista.Where(x => x.sistema == sistema).ToList();
 
             return View(lista);
         }
+
 
         [HttpGet]
-        public async Task<IActionResult> UsuariosNoEncontrados()
+        public async Task<IActionResult> UsuariosNoEncontrados(string sistema = null)
         {
-            // 1) Leer de sesión con las mismas claves
+            // 1) Leer sesión
             var idPaisSesion = HttpContext.Session.GetInt32("IdPais");
             var idNegocioSesion = HttpContext.Session.GetInt32("IdNegocio");
-
             if (!idPaisSesion.HasValue || !idNegocioSesion.HasValue)
-                // Redirigir al selector si no están
                 return RedirectToAction("PnsSelectorPartial", "Home");
 
             int idPais = idPaisSesion.Value;
             int idNegocio = idNegocioSesion.Value;
 
-            var lista = await repositorioReportes
-                .ObtenerListaUsuariosNoEncontrados(idPais, idNegocio);
+            // 2) Traer TODOS los “NoEncontrados”
+            var lista = (await repositorioReportes
+                .ObtenerListaUsuariosNoEncontrados(idPais, idNegocio))
+                .ToList();
+
+            // 3) Extraer sistemas únicos para el dropdown
+            var sistemas = lista
+                .Select(x => x.sistema)
+                .Where(s => !string.IsNullOrEmpty(s))
+                .Distinct()
+                .OrderBy(s => s)
+                .ToList();
+            ViewBag.Sistemas = sistemas;
+            ViewBag.SistemaSeleccionado = sistema;
+
+            // 4) Filtrar en memoria si viene parámetro
+            if (!string.IsNullOrEmpty(sistema))
+                lista = lista.Where(x => x.sistema == sistema).ToList();
 
             return View(lista);
         }
+
 
         [HttpGet]
-        public async Task<IActionResult> UsuariosActivos()
+        public async Task<IActionResult> UsuariosActivos(string sistema = null)
         {
-
             var idPaisSesion = HttpContext.Session.GetInt32("IdPais");
             var idNegocioSesion = HttpContext.Session.GetInt32("IdNegocio");
 
-
             if (!idPaisSesion.HasValue || !idNegocioSesion.HasValue)
-            {
                 return RedirectToAction("PnsSelectorPartial", "Home");
-            }
 
             int idPais = idPaisSesion.Value;
             int idNegocio = idNegocioSesion.Value;
 
-            // 2) Obtener datos desde el repositorio
-            var lista = await repositorioReportes
-                .ObtenerListaUsuariosActivos(idPais, idNegocio);
+            // 1) traer todos los activos
+            var lista = (await repositorioReportes
+                .ObtenerListaUsuariosActivos(idPais, idNegocio))
+                .ToList();
 
-            // 3) Devolver la vista con la lista de UsuariosActivos
+            // 2) sistemas únicos para el dropdown
+            var sistemas = lista
+                .Select(x => x.sistema)
+                .Where(s => !string.IsNullOrEmpty(s))
+                .Distinct()
+                .OrderBy(s => s)
+                .ToList();
+            ViewBag.Sistemas = sistemas;
+            ViewBag.SistemaSeleccionado = sistema;
+
+            // 3) filtrar en memoria si se pidió
+            if (!string.IsNullOrEmpty(sistema))
+                lista = lista.Where(x => x.sistema == sistema).ToList();
+
             return View(lista);
         }
+
 
 
         [HttpGet]
@@ -100,24 +141,33 @@ namespace ABM.Controllers
         {
             var idPaisSesion = HttpContext.Session.GetInt32("IdPais");
             var idNegocioSesion = HttpContext.Session.GetInt32("IdNegocio");
-
             if (!idPaisSesion.HasValue || !idNegocioSesion.HasValue)
                 return RedirectToAction("PnsSelectorPartial", "Home");
 
             int idPais = idPaisSesion.Value;
             int idNegocio = idNegocioSesion.Value;
 
-            // 2) Obtener datos desde el repositorio (pasa filtros opcionales)
-            var lista = await repositorioReportes
-                .ObtenerUsuariosPorRutONombre(idPais, idNegocio, rutDni, nombreUsuario);
-
-            // 3) Mantener los filtros en ViewBag para re-mostrar en el formulario de búsqueda
+            // mantengo los valores para el formulario
             ViewBag.RutDni = rutDni;
             ViewBag.NombreUsuario = nombreUsuario;
 
-            // 4) Devolver la vista con la lista de UsuariosActivos
+            List<UsersBuscar> lista;
+
+            // sólo llamo al repositorio si hay al menos un criterio
+            if (string.IsNullOrWhiteSpace(rutDni) && string.IsNullOrWhiteSpace(nombreUsuario))
+            {
+                lista = new List<UsersBuscar>();
+            }
+            else
+            {
+                lista = (await repositorioReportes
+                    .ObtenerUsuariosPorRutONombre(idPais, idNegocio, rutDni, nombreUsuario))
+                    .ToList();
+            }
+
             return View(lista);
         }
+
 
 
     }

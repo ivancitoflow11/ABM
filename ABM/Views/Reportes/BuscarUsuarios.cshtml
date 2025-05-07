@@ -63,14 +63,16 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                @if (Model == null || !Model.Any())
+                                @* 1) sin nada buscado aún *@
+                                @if (string.IsNullOrWhiteSpace(ViewBag.RutDni as string)
+                                && string.IsNullOrWhiteSpace(ViewBag.NombreUsuario as string))
                                 {
                                     <tr>
                                         <td></td>
                                         <td></td>
                                         <td></td>
                                         <td></td>
-                                        <td>Sin registros</td>
+                                        <td>Ingrese RUT o Nombre y presione “Buscar”</td>
                                         <td></td>
                                         <td></td>
                                         <td></td>
@@ -78,6 +80,23 @@
                                         <td></td>
                                     </tr>
                                 }
+                                @* 2) ya buscaron pero no hay resultados *@
+                                else if (!Model.Any())
+                                {
+                                    <tr>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td>Sin registros para esos criterios</td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                    </tr>
+                                }
+                                @* 3) y si hay datos, los listamos *@
                                 else
                                 {
                                     foreach (var x in Model)
@@ -97,6 +116,8 @@
                                     }
                                 }
                             </tbody>
+
+
                             <tfoot>
                                 <tr>
                                     <th>Rut</th>

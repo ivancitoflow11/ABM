@@ -5,8 +5,11 @@
 @using System.Collections.Generic
 @using System.Linq
 @using ABM.Models
+@using Microsoft.AspNetCore.Http
+@inject IHttpContextAccessor HttpContextAccessor
 @inject ABM.Servicios.IRepositorioUsuarios DataService
 @inject ABM.Servicios.IRepositorioMenus MenuService
+
 
 @{
 	// 1) Obtengo el usuario y su rol (int?)
@@ -28,6 +31,9 @@
 		.Where(m => m.ID_Menu.HasValue)
 		.OrderBy(m => m.ID_Menu.Value)
 		.ToList();
+
+	var pais = HttpContextAccessor.HttpContext.Session.GetString("Pais") ?? "";
+	var negocio = HttpContextAccessor.HttpContext.Session.GetString("Negocio") ?? "";
 }
 
 
@@ -441,9 +447,18 @@
 								</a>
 							</li>
 						</ul>
-						<div class="collapse navbar-collapse justify-content-end" id="navbarNav">
+						<div class="collapse navbar-collapse justify-content-end position-relative" id="navbarNav">
 							<div class="d-flex align-items-center justify-content-between py-2 py-lg-0">
 								<ul class="navbar-nav gap-2 flex-row ms-auto align-items-center justify-content-center">
+									<li class="nav-item position-absolute start-50 translate-middle-x">
+										<span id="pnsDisplay"
+											  class="nav-link d-inline-flex align-items-center flex-nowrap text-nowrap rounded-pill px-3 py-1 fs-6 fw-semibold"
+											  style="cursor:default;">
+											<i class="fas fa-map-marker-alt me-2"></i>
+											@pais - @negocio
+										</span>
+
+									</li>
 										<!-- Icono de edificio -->
 									<li class="nav-item me-5">
 										<a class="nav-link d-flex align-items-center nav-icon-hover-bg rounded-pill px-3 py-1"
