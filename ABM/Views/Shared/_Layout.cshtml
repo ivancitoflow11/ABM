@@ -218,6 +218,30 @@
 								</li>
 							</ul>
 						</li>
+						<li class="sidebar-item">
+							<a class="sidebar-link has-arrow" href="javascript:void(0)" aria-expanded="false">
+								<i class="fa-solid fa-download"></i>
+								<span class="hide-menu">Descargar</span>
+							</a>
+							<ul aria-expanded="false" class="collapse first-level">
+								<li class="sidebar-item">
+									<a id="btnDescargarFiniquitados" href="@Url.Action("DescargarFiniquitadosCSV","Descargas")" class="sidebar-link sublink">
+										<div class="round-16 d-flex align-items-center justify-content-center">
+											<iconify-icon icon="solar:stop-circle-line-duotone"></iconify-icon>
+										</div>
+										<span class="hide-menu">Finiquitados CSV</span>
+									</a>
+								</li>
+								<li class="sidebar-item">
+									<a id="btnDescargarActivosFalanet" href="@Url.Action("DescargarActivosFalanetCSV","Descargas")" class="sidebar-link sublink">
+										<div class="round-16 d-flex align-items-center justify-content-center">
+											<iconify-icon icon="solar:stop-circle-line-duotone"></iconify-icon>
+										</div>
+										<span class="hide-menu">Activos CSV</span>
+									</a>
+								</li>
+							</ul>
+						</li>
 						
 						<li class="sidebar-item">
 							<a class="sidebar-link" asp-controller="Home" asp-action="Salir">
@@ -905,51 +929,97 @@
 			2025 - ABM Falabella
 		</div>
 	</footer>
+
+
+
 	<!-- Import Js Files -->
 	@* <script src="/js/breadcrumb/breadcrumbChart.js"></script> *@
 	@* <script src="/libs/apexcharts/dist/apexcharts.min.js"></script> *@
+	<script src="/lib/jquery/dist/jquery.min.js"></script>
 	<script src="/libs/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
 	<script src="/libs/simplebar/dist/simplebar.min.js"></script>
+	<script src="/js/theme/feather.min.js"></script>
+	<script src="~/js/plugins/all.min.js"></script>
+	<script src="~/js/sweetalert/sweetalert.min.js"></script> @* <script src="/js/breadcrumb/breadcrumbChart.js"></script> *@
+	@* <script src="/libs/apexcharts/dist/apexcharts.min.js"></script> *@
 	<script src="/js/theme/app.init.js"></script>
 	<script src="/js/theme/theme.js"></script>
 	<script src="/js/theme/app.min.js"></script>
 	<script src="/js/theme/sidebarmenu.js"></script>
-	<script src="/js/theme/feather.min.js"></script>
-	<script src="/lib/jquery/dist/jquery.min.js"></script>
+
 	<script src="/libs/bootstrap-datepicker/dist/js/bootstrap-datepicker.min.js"></script>
 	<script src="/js/forms/datepicker-init.js"></script>
+
 	<script>
+		// Script para el modal cambiarPNSModal
 		document.addEventListener('DOMContentLoaded', () => {
 			// 1) “Apunta” al modal por su id
 			const modal = document.getElementById('cambiarPNSModal');
-			if (!modal) return;
+			if (!modal) {
+				// console.warn("Modal 'cambiarPNSModal' no encontrado. El script no se ejecutará.");
+				return; // Si el modal no está en la página actual, no hacer nada.
+			}
 
 			// 2) Cuando se abra, carga el contenido…
 			modal.addEventListener('show.bs.modal', function () {
 				const container = document.getElementById('contenidoCambiarPNS');
+				if (!container) {
+					console.error("Contenedor 'contenidoCambiarPNS' no encontrado dentro del modal.");
+					return;
+				}
 				container.innerHTML = '<div class="text-center py-5">Cargando…</div>';
 
 				fetch('@Url.Action("PnsSelectorPartial", "Home")')
-					.then(r => r.text())
+					.then(response => {
+						if (!response.ok) {
+							throw new Error(`Error de red al cargar PnsSelectorPartial: ${response.statusText}`);
+						}
+						return response.text();
+					})
 					.then(html => {
 						// inyecta partial + JSON + bindings...
 						container.innerHTML = html;
 
-						const data = JSON.parse(
-							document.getElementById('pns-data').textContent
-						);
+						const pnsDataElement = document.getElementById('pns-data');
+						if (!pnsDataElement) {
+							console.error("Elemento con ID 'pns-data' (que debería contener el JSON) no encontrado en el partial.");
+							container.innerHTML = '<div class="text-center py-5 text-danger">Error: Falta la configuración de datos.</div>';
+							return;
+						}
+
+						let data;
+						try {
+							data = JSON.parse(pnsDataElement.textContent);
+						} catch (e) {
+							console.error("Error al parsear JSON de 'pns-data':", e);
+							container.innerHTML = '<div class="text-center py-5 text-danger">Error: Datos de configuración inválidos.</div>';
+							return;
+						}
+
 						const $pais = container.querySelector('#selectPais');
 						const $nego = container.querySelector('#selectNegocio');
 						const $form = container.querySelector('#formCambiarPNS');
 
+						if (!$pais || !$nego || !$form) {
+							console.error("Uno o más elementos del formulario PNS (selectPais, selectNegocio, formCambiarPNS) no fueron encontrados en el partial.");
+							// Podrías mostrar un error en 'container' si estos elementos son cruciales
+							return;
+						}
+
 						$pais.addEventListener('change', () => {
-							const paisId = +$pais.value;
-							const lista = data.filter(x => x.idPais === paisId);
+							const paisId = +$pais.value; // El '+' convierte a número
+							const negociosFiltrados = data.filter(x => x.idPais === paisId);
+
+							// Limpiar opciones anteriores y añadir la opción por defecto
 							$nego.innerHTML = `<option value="">--Selecciona un negocio--</option>`;
-							lista.forEach(x => {
-								$nego.innerHTML += `<option value="${x.idNegocio}">${x.negocio}</option>`;
+
+							negociosFiltrados.forEach(x => {
+								const option = document.createElement('option');
+								option.value = x.idNegocio;
+								option.textContent = x.negocio;
+								$nego.appendChild(option);
 							});
-							$nego.disabled = lista.length === 0;
+							$nego.disabled = negociosFiltrados.length === 0;
 						});
 
 						$form.addEventListener('submit', e => {
@@ -959,52 +1029,217 @@
 							const idNegocio = +$nego.value;
 							const negoTxt = $nego.options[$nego.selectedIndex].text;
 
+							// Para el token antifalsificación. Asegúrate que jQuery esté cargado si usas '$'
+							// o usa document.querySelector('input[name="__RequestVerificationToken"]').value; si no usas jQuery.
+							const antiforgeryTokenInput = document.querySelector('input[name="__RequestVerificationToken"]');
+							const antiforgeryToken = antiforgeryTokenInput ? antiforgeryTokenInput.value : null;
+
+							if (!antiforgeryToken) {
+								console.error("Antiforgery token no encontrado en el DOM.");
+								alert("Error de seguridad. Por favor, recargue la página e inténtelo de nuevo.");
+								return;
+							}
+
 							fetch('@Url.Action("CambiarPns", "Home")', {
 								method: 'POST',
 								headers: {
 									'Content-Type': 'application/json',
-									'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
+									'RequestVerificationToken': antiforgeryToken
 								},
 								body: JSON.stringify({ idPais, pais: paisTxt, idNegocio, negocio: negoTxt })
 							})
-								.then(r => r.json())
+								.then(response => {
+									if (!response.ok) {
+										// Intentar obtener un mensaje de error del cuerpo si es posible
+										return response.json().catch(() => ({})).then(errBody => {
+											throw new Error(`Error de red al cambiar PNS: ${response.statusText}. Detalles: ${errBody.message || 'No disponibles'}`);
+										});
+									}
+									return response.json();
+								})
 								.then(r => {
-									if (r.success) location.reload();
-									else alert("No se pudo cambiar el país/negocio.");
+									if (r.success) {
+										location.reload();
+									} else {
+										alert("No se pudo cambiar el país/negocio. " + (r.message || "Respuesta no exitosa del servidor."));
+									}
+								})
+								.catch(error => {
+									console.error("Error en fetch para CambiarPns:", error);
+									alert(`Ocurrió un error al intentar cambiar el país/negocio: ${error.message}`);
 								});
 						});
+					})
+					.catch(error => {
+						console.error("Error al cargar PnsSelectorPartial:", error);
+						container.innerHTML = `<div class="text-center py-5 text-danger">Error al cargar el contenido: ${error.message}. Intente de nuevo.</div>`;
 					});
 			});
 		});
 	</script>
 
-	<!-- iconos-->
-	<script src="~/js/plugins/all.min.js"></script>
 	<script>
-		document.getElementById('support-button').addEventListener('click', function () {
+		// Script para el support-button
+		document.addEventListener('DOMContentLoaded', function () { // Asegurar que el DOM esté listo
+			const supportButton = document.getElementById('support-button');
 			const card = document.getElementById('support-card');
-			if (card.style.display === "none") {
-				card.style.display = "block"; // Mostrar la card
-				setTimeout(() => {
-					card.style.transform = "translateX(0)"; // Desplazar la card a su posición original
-				}, 10); // Pequeño retraso para permitir que se aplique el display block
+
+			if (supportButton && card) {
+				supportButton.addEventListener('click', function () {
+					if (card.style.display === "none" || card.style.display === "") {
+						card.style.display = "block";
+						setTimeout(() => {
+							card.style.transform = "translateX(0)";
+						}, 10);
+					} else {
+						card.style.transform = "translateX(100%)";
+						setTimeout(() => {
+							card.style.display = "none";
+						}, 500);
+					}
+				});
 			} else {
-				card.style.transform = "translateX(100%)"; // Desplazar la card fuera de la vista
-				setTimeout(() => {
-					card.style.display = "none"; // Ocultar la card después de la animación
-				}, 500); // Esperar a que la animación termine
+				// console.warn("Botón de soporte o tarjeta no encontrados.");
 			}
 		});
 	</script>
-	
 
-	<!-- solar icons -->
+	<script>
+		// Funciones auxiliares para cookies (para la lógica de descarga)
+		function getCookie(name) {
+			const value = `; ${document.cookie}`;
+			const parts = value.split(`; ${name}=`);
+			if (parts.length === 2) return parts.pop().split(';').shift();
+			return null;
+		}
+
+		function deleteCookie(name, path = '/') {
+			document.cookie = name + '=; Path=' + path + '; Expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+		}
+
+		function initializeDownloadButton(buttonId, fileDescription) {
+			const button = document.getElementById(buttonId);
+			if (!button) {
+				// console.warn(`Botón de descarga con ID '${buttonId}' no encontrado.`);
+				return;
+			}
+
+			button.addEventListener('click', function (event) {
+				event.preventDefault();
+
+				const originalHref = this.href;
+				const downloadToken = new Date().getTime().toString();
+				const successCookieName = `download_status_${downloadToken}`;
+				const errorCookieName = `download_error_${downloadToken}`;
+
+				deleteCookie(successCookieName);
+				deleteCookie(errorCookieName);
+
+				const downloadUrlWithToken = originalHref + (originalHref.includes('?') ? '&' : '?') + `downloadToken=${downloadToken}`;
+
+				Swal.fire({
+					title: 'Procesando descarga...',
+					html: `Preparando tu archivo de ${fileDescription}.<br/>Por favor, espera.`,
+					allowOutsideClick: false,
+					allowEscapeKey: false,
+					didOpen: () => {
+						Swal.showLoading();
+					}
+				});
+
+				const iframe = document.createElement('iframe');
+				iframe.style.display = 'none';
+				iframe.src = downloadUrlWithToken;
+				document.body.appendChild(iframe);
+
+				let checkCookieInterval = setInterval(function () {
+					const successStatus = getCookie(successCookieName);
+					const errorStatus = getCookie(errorCookieName);
+
+					if (successStatus === 'completed') {
+						clearInterval(checkCookieInterval);
+						deleteCookie(successCookieName);
+						if (document.body.contains(iframe)) document.body.removeChild(iframe);
+
+						Swal.fire({
+							icon: 'success',
+							title: '¡Descarga Completada!',
+							text: `Tu archivo de ${fileDescription} se ha descargado!.`,
+							timer: 3500,
+							timerProgressBar: true
+						});
+					} else if (errorStatus) {
+						clearInterval(checkCookieInterval);
+						deleteCookie(errorCookieName);
+						if (document.body.contains(iframe)) document.body.removeChild(iframe);
+
+						let errorMessageText = `No se pudo preparar el archivo de ${fileDescription}.`;
+						if (errorStatus === 'nodata') {
+							errorMessageText = `No hay datos disponibles para la descarga de ${fileDescription}.`;
+						} else if (errorStatus === 'processing') {
+							errorMessageText = `Hubo un error al procesar los datos para ${fileDescription}.`;
+						}
+
+						Swal.fire({
+							icon: 'error',
+							title: 'Error en la Descarga',
+							text: errorMessageText
+						});
+					}
+				}, 1000);
+
+				setTimeout(() => {
+					if (getCookie(successCookieName) === null && getCookie(errorCookieName) === null) {
+						clearInterval(checkCookieInterval);
+						if (document.body.contains(iframe)) document.body.removeChild(iframe);
+						if (Swal.isLoading()) { // Solo si el Swal de carga sigue activo
+							Swal.fire({
+								icon: 'warning',
+								title: 'Tiempo de Espera Agotado',
+								text: 'No se recibió confirmación del servidor para la descarga. Por favor, intenta de nuevo.'
+							});
+						}
+					}
+				}, 60000);
+			});
+		}
+
+		// Inicialización de los botones de descarga y manejo de TempData
+		document.addEventListener('DOMContentLoaded', function () {
+			initializeDownloadButton('btnDescargarFiniquitados', 'Finiquitados General');
+			initializeDownloadButton('btnDescargarActivosFalanet', 'Activos Falanet');
+
+		@if (TempData["SuccessMessage"] != null)
+		{
+			<text>
+						Swal.fire({
+							icon: 'success',
+						title: '@Html.Raw(TempData["SuccessMessage"])',
+						showConfirmButton: false,
+						timer: 2000
+							});
+			</text>
+		}
+		@if (TempData["ErrorMessage"] != null)
+		{
+			<text>
+						Swal.fire({
+							icon: 'error',
+						title: 'Atención',
+						text: '@Html.Raw(TempData["ErrorMessage"])',
+						showConfirmButton: true
+							});
+			</text>
+		}
+			});
+	</script>
+
 	@* <script src="/js/dashboards/dashboard1.js"></script> *@
+
 	@await RenderSectionAsync("Scripts", required: false)
+
 </body>
-
 </html>
-
 
 
 

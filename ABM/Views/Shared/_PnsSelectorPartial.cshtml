@@ -1,29 +1,72 @@
 ﻿@model List<ABM.Models.PaisNegocioViewModel>
 
-<!-- metemos el JSON en un elemento oculto -->
-<script id="pns-data" type="application/json">
-    @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(Model))
-</script>
+<div class="pns-selector-container">
 
-<form id="formCambiarPNS">
-    <div class="mb-3">
-        <label for="selectPais" class="form-label">País</label>
-        <select id="selectPais" class="form-select">
-            <option value="">--Selecciona un país--</option>
-            @foreach (var item in Model.Select(x => new { x.idPais, x.pais }).Distinct())
-            {
-                <option value="@item.idPais">@item.pais</option>
-            }
-        </select>
-    </div>
+    <script id="pns-data" type="application/json">
+        @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(Model))
+    </script>
 
-    <div class="mb-3">
-        <label for="selectNegocio" class="form-label">Negocio</label>
-        <select id="selectNegocio" class="form-select" disabled>
-            <option value="">--Selecciona un negocio--</option>
-        </select>
-    </div>
+    <form id="formCambiarPNS" class="p-md-3">
+        @Html.AntiForgeryToken() <div class="mb-4"> <label for="selectPais" class="form-label d-flex align-items-center">
+                <i class="fas fa-globe-americas me-2 text-primary"></i> País
+            </label>
+            <select id="selectPais" class="form-select form-select-lg"> <option value="" selected disabled>-- Selecciona un país --</option>
+                @foreach (var item in Model.Select(x => new { x.idPais, x.pais }).Distinct())
+                {
+                    <option value="@item.idPais">@item.pais</option>
+                }
+            </select>
+        </div>
 
-    <button type="submit" class="btn btn-success d-block mx-auto">Cambiar</button>
+        <div class="mb-4"> <label for="selectNegocio" class="form-label d-flex align-items-center">
+                <i class="fas fa-briefcase me-2 text-success"></i> Negocio
+            </label>
+            <select id="selectNegocio" class="form-select form-select-lg" disabled> <option value="" selected disabled>-- Selecciona un negocio --</option>
+            </select>
+        </div>
 
-</form>
+        <div class="mt-4 pt-2 text-center"> <button type="submit" class="btn btn-success btn-lg px-4 shadow-sm">
+                <i class="fas fa-exchange-alt me-2"></i> Aplicar Selección
+            </button>
+        </div>
+    </form>
+</div>
+
+<style>
+    .pns-selector-container {
+        padding: 1rem; 
+    }
+
+    .form-select-lg {
+        padding-top: 0.7rem;
+        padding-bottom: 0.7rem;
+        font-size: 1.1rem; 
+    }
+
+    .form-label {
+        font-weight: 500; 
+        margin-bottom: 0.75rem; 
+    }
+
+    .btn-lg {
+        padding: 0.75rem 1.5rem; 
+        font-size: 1.1rem;
+    }
+
+
+    .form-label i {
+        font-size: 1.1em; 
+    }
+
+    .btn i {
+        font-size: 1em; 
+    }
+
+ 
+    .form-select:hover {
+        border-color: #86b7fe; 
+        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25); 
+    }
+</style>
+
+

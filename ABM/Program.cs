@@ -49,6 +49,7 @@ builder.Services.AddTransient<IRepositorioAlertas, RepositorioAlertas>();
 builder.Services.AddTransient<IRepositorioGestion, RepositorioGestion>();
 builder.Services.AddTransient<IRepositorioVision, RepositorioVision>();
 builder.Services.AddTransient<ABM.Servicios.IEmailSender, ABM.Servicios.EmailSender>();
+builder.Services.AddScoped<IRepositorioDescargas, RepositorioDescargas>();
 
 builder.Services.AddAutoMapper(typeof(Program));
 
