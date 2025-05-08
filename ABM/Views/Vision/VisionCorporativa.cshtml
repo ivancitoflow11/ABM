@@ -1,9 +1,5 @@
-﻿@model VisionViewModel
-@*
-    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
-*@
-@{
-}
+﻿@using Newtonsoft.Json
+@model VisionViewModel
 
 <!DOCTYPE html>
 <html lang="en">
@@ -11,44 +7,145 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Vision Corporativa</title>
-    @* <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" /> *@
     <link href="~/css/leaflet.css" rel="stylesheet" />
-    @* <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script> *@
 
+    <style>
+        .map-container {
+            width: 100%;
+            margin: 0 auto;
+        }
+
+        #map {
+            width: 100%;
+            height: 400px;
+            border-radius: 8px;
+            border: 1px solid #e0e0e0;
+            background: #fafafa;
+        }
+
+        .country {
+            stroke: #fff;
+            stroke-width: 1;
+            cursor: pointer;
+            transition: fill .3s, filter .3s;
+        }
+
+            .country:hover {
+                filter: brightness(1.1);
+            }
+
+            .country.disabled {
+                fill: rgba(200, 200, 200, 0.15) !important;
+                cursor: default;
+                pointer-events: none;
+            }
+
+            /* semitransparencias para cada país */
+            .country[data-name="ARGENTINA"] {
+                fill: rgba(26,188,156,0.5);
+            }
+
+            .country[data-name="CHILE"] {
+                fill: rgba(52,152,219,0.5);
+            }
+
+            .country[data-name="PERU"] {
+                fill: rgba(230,126,34,0.5);
+            }
+
+            .country[data-name="COLOMBIA"] {
+                fill: rgba(155,89,182,0.5);
+            }
+
+            .country[data-name="BRASIL"] {
+                fill: rgba(241,196,15,0.5);
+            }
+
+            .country[data-name="MEXICO"] {
+                fill: rgba(192,57,43,0.5);
+            }
+
+            .country[data-name="URUGUAY"] {
+                fill: rgba(22,160,133,0.5);
+            }
+
+            .country[data-name="CHINA"] {
+                fill: rgba(127,140,141,0.5);
+            }
+
+            /* halo suave al país seleccionado */
+            .country.selected {
+                filter: drop-shadow(0 0 8px rgba(0,0,0,0.3)) brightness(1.1);
+                fill-opacity: 1 !important;
+            }
+
+        /* etiquetas claras y nítidas */
+        #labels text {
+            font-family: 'Segoe UI', sans-serif;
+            font-size: 12px;
+            font-weight: 600;
+            fill: #2c3e50;
+            pointer-events: none;
+            text-shadow: 0 0 2px rgba(255,255,255,0.8);
+        }
+
+        .selected-country {
+            text-align: center;
+            font-weight: bold;
+            color: #5090c0;
+            margin-top: 10px;
+        }
+    </style>
 </head>
 <body>
     <br />
     <br />
     <br />
     <br />
-    <h4 style="text-align:center">Visión corporativa</h4>
+    <h3 style="text-align:center">Visión corporativa</h3>
 
-    <form method="get" asp-action="VisionCorporativa" class="mb-4">
-        <div class="row">
-            <div class="col-md-4">
-                <label for="idPais" class="form-label">País:</label>
-                <select id="idPais" name="idPais" class="form-select" onchange="this.form.submit()">
-                    <option value="">--Seleccione País--</option>
+    <div class="map-container">
+        <h5 style="text-align:center; font-family:'Segoe UI',sans-serif">Seleccione un País</h5>
 
-                    @foreach (var p in Model.ListaPaises)
-                    {
-                        if (p.IdPais == Model.SelectedPais)
-                        {
-                            <option value="@p.IdPais" selected="selected">
-                                @p.NombrePais
-                            </option>
-                        }
-                        else
-                        {
-                            <option value="@p.IdPais">
-                                @p.NombrePais
-                            </option>
-                        }
-                    }
-                </select>
-            </div>
+        <svg viewBox="50 150 500 600" id="map">
+            <!-- 1) Formas -->
+            <g id="shapes">
+                <path class="country" data-id="3" data-name="ARGENTINA" d="M300,500 L320,600 L280,700 L350,650 L370,550 L320,480 Z" />
+                <path class="country" data-id="1" data-name="CHILE" d="M270,500 L300,500 L320,600 L280,700 L260,650 Z" />
+                <path class="country" data-id="6" data-name="PERU" d="M220,380 L270,400 L300,450 L270,500 L240,470 L220,430 Z" />
+                <path class="country" data-id="2" data-name="COLOMBIA" d="M220,330 L280,310 L310,350 L270,400 L220,380 Z" />
+                <path class="country" data-id="11" data-name="BRASIL" d="M310,350 L400,350 L450,450 L370,550 L320,480 L300,450 L270,400 Z" />
+                <path class="country" data-id="8" data-name="MEXICO" d="M100,200 L180,220 L160,280 L100,300 L80,250 Z" />
+                <path class="country" data-id="10" data-name="URUGUAY" d="M350,580 L370,550 L390,570 L370,590 Z" />
+                <path class="country" data-id="7" data-name="CHINA" d="M480,180 L520,180 L520,220 L480,220 Z" />
+            </g>
+
+            <!-- 2) Etiquetas encima -->
+            <g id="labels">
+                <text data-id="3" x="320" y="590">Argentina</text>
+                <text data-id="1" x="265" y="620">Chile</text>
+                <text data-id="6" x="245" y="430">Perú</text>
+                <text data-id="2" x="250" y="340">Colombia</text>
+                <text data-id="11" x="370" y="420">Brasil</text>
+                <text data-id="8" x="130" y="240">México</text>
+                <text data-id="10" x="370" y="580">Uruguay</text>
+                <text data-id="7" x="500" y="205">China</text>
+            </g>
+        </svg>
+
+        <div class="selected-country" id="selectedCountry">
+            País seleccionado:
+            @{
+                var selPais = Model.ListaPaises.FirstOrDefault(x => x.IdPais == Model.SelectedPais);
+                @((selPais?.NombrePais) ?? "Ninguno")
+                ;
+            }
         </div>
-    </form>
+
+        <form asp-action="VisionCorporativa" method="get" id="countryForm">
+            <input type="hidden" id="idPais" name="idPais" value="@Model.SelectedPais" />
+        </form>
+    </div>
 
     <div class="container mt-12" hidden>
         <div class="row mb-12">
@@ -104,12 +201,12 @@
                     <ul class="nav nav-tabs" role="tablist">
                         <li class="nav-item">
                             <a class="nav-link active" data-bs-toggle="tab" href="#sistema" role="tab">
-                                <span>RIESGO SISTEMA</span>
+                                <span>RIESGO SISTEMAS</span>
                             </a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link" data-bs-toggle="tab" href="#pais" role="tab">
-                                <span>RIESGO NEGOCIO</span>
+                                <span>RIESGO PAÍS</span>
                             </a>
                         </li>
                         <li class="nav-item">
@@ -246,6 +343,54 @@
 
     @section scripts {
         <script src="/js/canvasjs-chart-3.10.9/canvasjs.min.js"></script>
+        <script>
+            document.addEventListener('DOMContentLoaded', () => {
+                // 1) IDs válidos del modelo
+                const validIds = @Html.Raw(
+                JsonConvert.SerializeObject(
+                Model.ListaPaises.Select(p => p.IdPais)
+                )
+                );
+
+                const countries = document.querySelectorAll('#map .country');
+                // 2) Inicial: resaltar el que ya trae la sesión
+                const sel = Number(document.getElementById('idPais').value);
+                if (sel) {
+                    const init = document.querySelector(`.country[data-id="${sel}"]`);
+                    if (init) init.classList.add('selected');
+                }
+
+                // 3) Recorremos todos y ocultamos etiquetas de los deshabilitados
+                countries.forEach(country => {
+                    const id = Number(country.dataset.id);
+                    const label = document.querySelector(
+                        `#map #labels text[data-id="${id}"]`
+                    );
+
+                    if (!validIds.includes(id)) {
+                        country.classList.add('disabled');
+                        if (label) label.remove();
+                        return;
+                    }
+
+                    // 4) País válido → hacemos click para filtrar
+                    country.addEventListener('click', () => {
+                        // limpiamos previos
+                        countries.forEach(c => c.classList.remove('selected'));
+                        country.classList.add('selected');
+
+                        // actualizamos texto y recargamos
+                        const name = country.dataset.name;
+                        document.getElementById('selectedCountry').textContent =
+                            `País seleccionado: ${name}`;
+
+                        // GET limpio
+                        window.location.href =
+                            '@Url.Action("VisionCorporativa", "Vision")?idPais=' + id;
+                    });
+                });
+            });
+        </script>
         <script>
             document.addEventListener("DOMContentLoaded", function () {
                 // 1) Creo dataPoints intercambiando X <-> Y
