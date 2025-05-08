@@ -273,11 +273,12 @@
                             </table>
                         </div>
                         <div class="tab-pane p-3" id="evolucion" role="tabpanel">
+                            <p class="fw-semibold mb-3">Resultados últimos 60 días:</p>
                             <table id="tendenciasTable" class="table table-bordered">
                                 <thead>
                                     <tr>
                                         <th scope="col" onclick="sortTable()">Fecha Carga &#x25B2;&#x25BC;</th>
-                                        <th scope="col">Finiquitados Últ. 60 días</th>
+                                        <th scope="col">Finiquitados</th>
                                     </tr>
                                 </thead>
                                 <tbody id="tendenciasBody">
@@ -526,6 +527,14 @@
                         fontWeight: "normal",
                         fontColor: "#808080"
                     },
+                    subtitles: [
+                        {
+                            text: "Últimos 30 días",
+                            fontFamily: "Poppins",
+                            fontSize: 18,
+                            fontColor: "#808080"
+                        }
+                    ],
                     axisY: {
                         title: "Cantidad Finiquitados",
                         valueFormatString: "#,##0",
@@ -566,6 +575,14 @@
                         fontWeight: "normal",
                         fontColor: "#808080",
                     },
+                    subtitles: [
+                        {
+                            text: "Últimos 60 días",
+                            fontFamily: "Poppins",
+                            fontSize: 18,
+                            fontColor: "#808080"
+                        }
+                    ],
                     axisY: {
                         title: "Cantidad Finiquitados",
                         valueFormatString: "#,###"
