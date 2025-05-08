@@ -33,52 +33,49 @@ namespace ABM.Servicios
                 var parametros = new { idpais, idnegocio };
 
                 var modelo = await dbdapper.QueryFirstOrDefaultAsync<ResumenGestionViewModel>(@"
-            SELECT DISTINCT
-                SUM(subquery.cnt_activos) AS Activos,
-                SUM(subquery.cnt_finiquitados) AS Finiquitados,
-                SUM(subquery.cnt_no_encontrados) AS NoEncontrados,
-                ROUND((CAST(SUM(subquery.cnt_finiquitados) AS FLOAT) * 100) / NULLIF(SUM(subquery.cnt_usuarios), 0), 2) AS Riesgo
+            SELECT
+                sub.feccarga                         AS FechaCarga,
+                sub.pais,
+                SUM(sub.cnt_activos)       AS Activos,
+                SUM(sub.cnt_finiquitados)  AS Finiquitados,
+                SUM(sub.cnt_no_encontrados)AS NoEncontrados,
+                ROUND(
+                  CAST(SUM(sub.cnt_finiquitados) AS FLOAT) * 100
+                  / NULLIF(SUM(sub.cnt_usuarios), 0),
+                2)                          AS Riesgo
             FROM (
                 SELECT
-                    COUNT(DISTINCT CASE WHEN dbo.ftc_agrupa_activos.estado = 'ACTIVO' THEN dbo.ftc_agrupa_activos.rutdni END) AS cnt_activos,
-                    COUNT(DISTINCT CASE WHEN dbo.ftc_agrupa_activos.estado = 'FINIQUITADO' THEN dbo.ftc_agrupa_activos.rutdni END) AS cnt_finiquitados,
-                    COUNT(DISTINCT CASE WHEN dbo.ftc_agrupa_activos.estado = 'NO ENCONTRADO' THEN dbo.ftc_agrupa_activos.rutdni END) AS cnt_no_encontrados,
-                    COUNT(DISTINCT dbo.ftc_agrupa_activos.rutdni) AS cnt_usuarios,
-                    dbo.ftc_pais_negocio_sistema.idPaisNegocioSistema, 
-                    dbo.ftc_pais.pais,
-                    dbo.ftc_sistema.sistema
-                FROM 
-                    dbo.ftc_agrupa_activos
-                INNER JOIN
-                    dbo.ftc_pais_negocio_sistema ON dbo.ftc_agrupa_activos.idPaisNegocioSistema = dbo.ftc_pais_negocio_sistema.idPaisNegocioSistema 
-                INNER JOIN 
-                    dbo.ftc_pais ON dbo.ftc_pais_negocio_sistema.idPais = dbo.ftc_pais.idPais 
-                INNER JOIN 
-                    dbo.ftc_negocio ON dbo.ftc_pais_negocio_sistema.idNegocio = dbo.ftc_negocio.idNegocio 
-                INNER JOIN 
-                    dbo.ftc_sistema ON dbo.ftc_pais_negocio_sistema.idSistema = dbo.ftc_sistema.idSistema 
-                INNER JOIN 
-                    dbo.ftc_gestion_diaria ON dbo.ftc_pais_negocio_sistema.idPaisNegocioSistema = dbo.ftc_gestion_diaria.idPaisNegocioSistema
+                    gd.feccarga,
+                    gd.cnt_activos,
+                    gd.cnt_finiquitados,
+                    gd.cnt_no_encontrados,
+                    gd.cnt_usuarios,
+                    p.pais
+                FROM dbo.ftc_gestion_diaria AS gd
+                INNER JOIN dbo.ftc_pais_negocio_sistema AS pns
+                    ON gd.idPaisNegocioSistema = pns.idPaisNegocioSistema  
+                INNER JOIN dbo.ftc_pais AS p
+                    ON pns.idPais = p.idPais  
                 WHERE
-                    ftc_gestion_diaria.feccarga = (
+                    gd.feccarga = (
                         SELECT TOP 1 feccarga 
-                        FROM ftc_gestion_diaria 
-                        ORDER BY SUBSTRING(feccarga, 7, 4) + SUBSTRING(feccarga, 4, 2) + SUBSTRING(feccarga, 1, 2) DESC
+                        FROM dbo.ftc_gestion_diaria 
+                        ORDER BY TRY_CONVERT(date, feccarga, 23) DESC
                     )
-                    AND dbo.ftc_pais_negocio_sistema.idPais = @idpais
-                    AND dbo.ftc_pais_negocio_sistema.idNegocio = @idnegocio
-                GROUP BY 
-                    dbo.ftc_pais_negocio_sistema.idPaisNegocioSistema, 
-                    dbo.ftc_pais.pais,
-                    dbo.ftc_sistema.sistema
-            ) AS subquery
-            GROUP BY 
-                subquery.pais;", parametros);
+                    AND pns.idPais    = @idpais
+                    AND pns.idNegocio = @idnegocio
+            ) AS sub
+            GROUP BY
+                sub.feccarga,
+                sub.pais
+            ORDER BY
+                sub.pais;", parametros);
 
                 return modelo;
             }
         }
 
+        //NO VA POR AHORA
         public async Task<IEnumerable<CasosCargoViewModel>> ObtenerListaCasosCargo(int idpais, int idnegocio)
         {
             using (IDbConnection dbdapper = new SqlConnection(connectionString))
@@ -166,48 +163,50 @@ namespace ABM.Servicios
             ;WITH ActivosData AS (
                 SELECT 
                     AL3.sistema,
-                    COUNT(DISTINCT CASE WHEN AL1.estado = 'ACTIVO' THEN AL1.rutdni END) AS ACTIVOS,
-                    COUNT(DISTINCT CASE WHEN AL1.estado = 'FINIQUITADO' THEN AL1.rutdni END) AS FINIQUITADOS,
-                    COUNT(DISTINCT CASE WHEN AL1.estado = 'NO ENCONTRADO' THEN AL1.rutdni END) AS NO_ENCONTRADOS
-                FROM 
-                    dbo.ftc_agrupa_activos AL1
-                JOIN dbo.ftc_pais_negocio_sistema AL2 
-                    ON AL2.idPaisNegocioSistema = AL1.idPaisNegocioSistema
-                JOIN dbo.ftc_sistema AL3 
-                    ON AL3.idSistema = AL2.idSistema
+                    AL1.feccarga                          AS feccarga,
+                    COUNT(DISTINCT CASE WHEN AL1.estado = 'ACTIVO'         THEN AL1.rutdni END) AS ACTIVOS,
+                    COUNT(DISTINCT CASE WHEN AL1.estado = 'FINIQUITADO'    THEN AL1.rutdni END) AS FINIQUITADOS,
+                    COUNT(DISTINCT CASE WHEN AL1.estado = 'NO ENCONTRADO'  THEN AL1.rutdni END) AS NO_ENCONTRADOS
+                FROM dbo.ftc_agrupa_activos AS AL1
+                INNER JOIN dbo.ftc_pais_negocio_sistema AS AL2 
+                    ON AL1.idPaisNegocioSistema = AL2.idPaisNegocioSistema
+                INNER JOIN dbo.ftc_sistema AS AL3 
+                    ON AL2.idSistema = AL3.idSistema
                 WHERE 
-                    AL2.idPais = @idpais
+                    AL2.idPais     = @idpais
                     AND AL2.idNegocio = @idnegocio
-                GROUP BY AL3.sistema
+                GROUP BY 
+                    AL3.sistema,
+                    AL1.feccarga
             ),
             GestionDiariaData AS (
                 SELECT DISTINCT 
-                    AL3.sistema AS Sistema
-                FROM
-                    dbo.ftc_pais_negocio_sistema AS pns
-                INNER JOIN dbo.ftc_gestion_diaria AS gd 
-                    ON pns.idPaisNegocioSistema = gd.idPaisNegocioSistema 
+                    AL3.sistema   AS Sistema,
+                    AL1.feccarga  AS feccarga
+                FROM dbo.ftc_agrupa_activos AS AL1
+                INNER JOIN dbo.ftc_pais_negocio_sistema AS pns 
+                    ON AL1.idPaisNegocioSistema = pns.idPaisNegocioSistema  
                 INNER JOIN dbo.ftc_sistema AS AL3 
-                    ON pns.idSistema = AL3.idSistema 
+                    ON pns.idSistema = AL3.idSistema
                 WHERE 
-                    gd.feccarga = (
+                    AL1.feccarga = (
                         SELECT TOP 1 feccarga 
-                        FROM ftc_gestion_diaria 
-                        ORDER BY SUBSTRING(feccarga, 7, 4) + SUBSTRING(feccarga, 4, 2) + SUBSTRING(feccarga, 1, 2) DESC
+                        FROM dbo.ftc_agrupa_activos
+                        ORDER BY TRY_CONVERT(date, feccarga, 23) DESC
                     )
-                    AND pns.idPais = @idpais
-                    AND pns.idNegocio = @idnegocio
+                    AND pns.idPais     = @idpais
+                    AND pns.idNegocio  = @idnegocio
             )
-
             SELECT 
                 G.sistema,
+                G.feccarga,
                 A.ACTIVOS,
                 A.FINIQUITADOS,
                 A.NO_ENCONTRADOS
-            FROM 
-                ActivosData A
-            LEFT JOIN 
-                GestionDiariaData G ON A.sistema = G.Sistema;
+            FROM ActivosData AS A
+            LEFT JOIN GestionDiariaData AS G 
+                ON A.sistema = G.Sistema
+            ORDER BY G.sistema;
         ", parametros);
 
                 return modelo;
