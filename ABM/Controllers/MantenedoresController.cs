@@ -211,104 +211,177 @@ namespace ABM.Controllers
             return View(rolesConPNS);
         }
 
+        // --- Crear Rol ---
         [HttpGet]
         public async Task<IActionResult> CrearRolWizard()
         {
             var model = new RolWizardViewModel();
-
-            // 1) lista de modelos
-            var pnsModelList = await _repositorioRoles.ObtenerPaisNegocioSistemasActivos();
-
-            // 2) guardar sin transformar para el paso 4
-            ViewBag.PNSModelList = pnsModelList;
-
-            // 3) para SelectList, seguir creando otra:
-            ViewBag.PaisNegocioList = pnsModelList
-                .Select(p => new SelectListItem
-                {
-                    Value = p.IdPaisNegocioSistema.ToString(),
-                    Text = $"{p.Pais} - {p.Negocio} - {p.Sistema}"
-                })
-                .ToList();
-
+            // Asegurar que las listas para los pasos se cargan
+            ViewBag.PNSModelList = await _repositorioRoles.ObtenerPaisNegocioSistemasActivos();
             ViewBag.MenusDisponibles = await _repositorioRoles.ObtenerMenus();
+            // No es necesario ViewBag.IsEditMode aquí
             return View("CrearRolUnicaVista", model);
         }
 
-        [HttpGet]
-        public async Task<IActionResult> VerificarNombreRol(string nombre)
-        {
-            if (string.IsNullOrEmpty(nombre))
-                return Json(new { existe = false });
-
-            bool existe = await _repositorioRoles.ExisteRolConNombre(nombre);
-            return Json(new { existe });
-        }
-
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> CrearRolWizard(RolWizardViewModel model)
         {
-            // validaciones estándar
-            if (!ModelState.IsValid)
-            {
-                // recargar las dos listas
-                ViewBag.MenusDisponibles = await _repositorioRoles.ObtenerMenus();
-                var pnsList = await _repositorioRoles.ObtenerPaisNegocioSistemasActivos();
-                ViewBag.PaisNegocioList = pnsList
-                    .Select(p => new SelectListItem
-                    {
-                        Value = p.IdPaisNegocioSistema.ToString(),
-                        Text = $"{p.Pais} - {p.Negocio} - {p.Sistema}"
-                    })
-                    .ToList();
-                return View("CrearRolUnicaVista", model);
-            }
-
-            // Validar que el nombre del rol no existe
             bool existeRol = await _repositorioRoles.ExisteRolConNombre(model.NombreRol);
             if (existeRol)
             {
                 ModelState.AddModelError("NombreRol", "El nombre del rol ya existe");
-                // recargar las dos listas
+            }
+
+            if (!model.MenuInicioSeleccionadoId.HasValue || model.MenuInicioSeleccionadoId.Value == 0)
+            {
+                ModelState.AddModelError("MenuInicioSeleccionadoId", "Debes elegir un Menú de inicio.");
+            }
+            if (model.ListaPNSSeleccionados == null || !model.ListaPNSSeleccionados.Any())
+            {
+                ModelState.AddModelError("ListaPNSSeleccionados", "Debe seleccionar al menos un País/Negocio/Sistema.");
+            }
+            if (model.ListaMenusSeleccionados == null || !model.ListaMenusSeleccionados.Any())
+            {
+                // Aunque el wizard lo valida en cliente, una validación de servidor es buena.
+                ModelState.AddModelError("ListaMenusSeleccionados", "Debe seleccionar al menos un menú.");
+            }
+
+
+            if (!ModelState.IsValid)
+            {
                 ViewBag.MenusDisponibles = await _repositorioRoles.ObtenerMenus();
-                var pnsList = await _repositorioRoles.ObtenerPaisNegocioSistemasActivos();
-                ViewBag.PaisNegocioList = pnsList
-                    .Select(p => new SelectListItem
-                    {
-                        Value = p.IdPaisNegocioSistema.ToString(),
-                        Text = $"{p.Pais} - {p.Negocio} - {p.Sistema}"
-                    })
-                    .ToList();
+                ViewBag.PNSModelList = await _repositorioRoles.ObtenerPaisNegocioSistemasActivos();
                 return View("CrearRolUnicaVista", model);
             }
 
-            // 1) Crear el Rol
             var nuevoRol = new RolModel
             {
                 Nombre = model.NombreRol,
                 IdVistaInicio = model.MenuInicioSeleccionadoId.Value,
-                // estos valores ahora no se usan para detalle_rol
                 IdPais = 0,
                 IdNegocio = 0
             };
             int idRol = await _repositorioRoles.CrearRol(nuevoRol);
 
-            // 2) Insertar detalle_rol por cada PNS seleccionado
-            foreach (var pnsId in model.ListaPNSSeleccionados)
+            if (model.ListaPNSSeleccionados != null) // Verificar nulidad
             {
-                await _repositorioRoles.CrearDetalleRol(new DetalleRolModel
+                foreach (var pnsId in model.ListaPNSSeleccionados)
                 {
-                    IdRol = idRol,
-                    IdPaisNegocioSistema = pnsId
-                });
+                    await _repositorioRoles.CrearDetalleRol(new DetalleRolModel
+                    {
+                        IdRol = idRol,
+                        IdPaisNegocioSistema = pnsId
+                    });
+                }
             }
 
-            // 3) Permisos de menú
             if (model.ListaMenusSeleccionados?.Any() == true)
+            {
                 await _repositorioRoles.InsertarPermisosMenu(idRol, model.ListaMenusSeleccionados);
+            }
 
             TempData["SuccessMessage"] = "Rol creado exitosamente";
-            return RedirectToAction("Index", "Home");
+            return RedirectToAction("ListarRoles");
+        }
+
+        // --- Editar Rol ---
+        [HttpGet]
+        public async Task<IActionResult> EditarRolWizard(int id) // id del rol
+        {
+            var rolDb = await _repositorioRoles.ObtenerRolPorId(id);
+            if (rolDb == null)
+            {
+                TempData["ErrorMessage"] = "Rol no encontrado.";
+                return RedirectToAction("ListarRoles");
+            }
+
+            var model = new RolWizardViewModel
+            {
+                IdRol = rolDb.IdRol,
+                NombreRol = rolDb.Nombre,
+                MenuInicioSeleccionadoId = rolDb.IdVistaInicio,
+                ListaMenusSeleccionados = await _repositorioRoles.ObtenerMenusSeleccionadosPorRol(id),
+                ListaPNSSeleccionados = await _repositorioRoles.ObtenerPNSSeleccionadosPorRol(id)
+            };
+
+            ViewBag.PNSModelList = await _repositorioRoles.ObtenerPaisNegocioSistemasActivos();
+            ViewBag.MenusDisponibles = await _repositorioRoles.ObtenerMenus();
+            // No es necesario ViewBag.IsEditMode aquí, ya que es una vista dedicada
+            return View("EditarRolWizard", model); // Nueva vista para editar
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> EditarRolWizard(RolWizardViewModel model) // El model ya incluye IdRol
+        {
+            if (!model.IdRol.HasValue) // Seguridad básica
+            {
+                TempData["ErrorMessage"] = "Error al identificar el rol a editar.";
+                return RedirectToAction("ListarRoles");
+            }
+
+            bool existeRolConMismoNombre = await _repositorioRoles.ExisteRolConNombre(model.NombreRol, model.IdRol.Value);
+            if (existeRolConMismoNombre)
+            {
+                ModelState.AddModelError("NombreRol", "El nombre del rol ya existe para otro rol.");
+            }
+
+            if (!model.MenuInicioSeleccionadoId.HasValue || model.MenuInicioSeleccionadoId.Value == 0)
+            {
+                ModelState.AddModelError("MenuInicioSeleccionadoId", "Debes elegir un Menú de inicio.");
+            }
+            if (model.ListaPNSSeleccionados == null || !model.ListaPNSSeleccionados.Any())
+            {
+                ModelState.AddModelError("ListaPNSSeleccionados", "Debe seleccionar al menos un País/Negocio/Sistema.");
+            }
+            if (model.ListaMenusSeleccionados == null || !model.ListaMenusSeleccionados.Any())
+            {
+                ModelState.AddModelError("ListaMenusSeleccionados", "Debe seleccionar al menos un menú.");
+            }
+
+
+            if (!ModelState.IsValid)
+            {
+                ViewBag.MenusDisponibles = await _repositorioRoles.ObtenerMenus();
+                ViewBag.PNSModelList = await _repositorioRoles.ObtenerPaisNegocioSistemasActivos();
+                return View("EditarRolWizard", model); // Apuntar a la vista de edición en caso de error
+            }
+
+            try
+            {
+                var rolActualizar = new RolModel
+                {
+                    IdRol = model.IdRol.Value,
+                    Nombre = model.NombreRol,
+                    IdVistaInicio = model.MenuInicioSeleccionadoId.Value,
+                    IdPais = 0,
+                    IdNegocio = 0
+                };
+                await _repositorioRoles.ActualizarRol(rolActualizar);
+                await _repositorioRoles.ActualizarDetallesRol(model.IdRol.Value, model.ListaPNSSeleccionados ?? new List<int>());
+                await _repositorioRoles.ActualizarPermisosMenu(model.IdRol.Value, model.ListaMenusSeleccionados ?? new List<int>());
+
+                TempData["SuccessMessage"] = "Rol actualizado exitosamente";
+                return RedirectToAction("ListarRoles");
+            }
+            catch (Exception ex)
+            {
+                TempData["ErrorMessage"] = $"Error al actualizar el rol: {ex.Message}";
+                ViewBag.MenusDisponibles = await _repositorioRoles.ObtenerMenus();
+                ViewBag.PNSModelList = await _repositorioRoles.ObtenerPaisNegocioSistemasActivos();
+                return View("EditarRolWizard", model); // Apuntar a la vista de edición en caso de error
+            }
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> VerificarNombreRol(string nombre, int? idRol)
+        {
+            if (string.IsNullOrEmpty(nombre))
+                return Json(new { existe = false });
+
+            bool existe = await _repositorioRoles.ExisteRolConNombre(nombre, idRol);
+            return Json(new { existe });
         }
 
 

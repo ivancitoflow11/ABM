@@ -5,6 +5,7 @@ using System.ComponentModel.DataAnnotations;
 
     public class RolWizardViewModel
     {
+        public int? IdRol { get; set; }
         [Required(ErrorMessage = "El nombre del rol es obligatorio.")]
         [Display(Name = "Nombre del Rol")]
         public string NombreRol { get; set; }
@@ -19,7 +20,7 @@ using System.ComponentModel.DataAnnotations;
 
         [Required(ErrorMessage = "Debe seleccionar al menos un País/Negocio/Sistema.")]
         [Display(Name = "Países, Negocios y Sistemas")]
-        public List<int> ListaPNSSeleccionados { get; set; }
+        public List<int> ListaPNSSeleccionados { get; set; } = new List<int>();
         public List<int> ListaMenusSeleccionados { get; set; } = new List<int>();
 
 

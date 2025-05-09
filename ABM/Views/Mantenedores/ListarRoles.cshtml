@@ -1,7 +1,12 @@
 ﻿@model IEnumerable<ABM.Models.RolConPNSViewModel>
 
 @{
-    ViewBag.Title = "Listar Roles";
+    ViewBag.Title = "Gestión de Roles";
+    var rolesUnicosParaEditar = Model
+        .Select(r => new { r.idRol, r.nombreRol })
+        .Distinct()
+        .OrderBy(r => r.nombreRol) // Opcional: ordenar la lista de edición
+        .ToList();
 }
 
 <style>
@@ -23,19 +28,20 @@
             color: white !important;
         }
 
-    .tabla-usuarios {
+    .tabla-usuarios, .tabla-simple-roles { /* Estilo compartido */
         background-color: #f8fdfa;
         border-radius: 8px;
         overflow: hidden;
         box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
     }
 
-        .tabla-usuarios thead {
+        .tabla-usuarios thead, .tabla-simple-roles thead { /* Estilo compartido */
             background-color: #d3f2c7;
             color: #2d572c;
         }
 
-        .tabla-usuarios th, .tabla-usuarios td {
+        .tabla-usuarios th, .tabla-usuarios td,
+        .tabla-simple-roles th, .tabla-simple-roles td { /* Estilo compartido */
             vertical-align: middle;
             text-align: left;
             padding: 12px 16px;
@@ -48,8 +54,13 @@
 
         .tabla-usuarios tbody tr:hover {
             background-color: #d3f2c7;
-            cursor: pointer;
+            /* cursor: pointer; */ /* Quitar si no hay acción de click en fila */
         }
+
+    .tabla-simple-roles {
+        margin-bottom: 30px; /* Espacio antes de la tabla detallada */
+    }
+
 </style>
 
 <div class="row" style="margin-top:50px;">
@@ -61,59 +72,112 @@
                 </a>
             </div>
             <div class="card-body">
-                <h4 class="mt-3 text-center">Listado de Roles</h4>
-                <div class="col-lg-12 table-responsive">
-                    <table id="tableLista" class="table table-bordered table-hover tabla-usuarios" style="width:100%; table-layout: auto;">
-                        <thead>
-                            <tr>
-                                <th># Rol</th>
-                                <th>Nombre Rol</th>
-                                <th>País</th>
-                                <th>Negocio</th>
-                                <th>Sistemas</th>
-                                <th>Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach (var rol in Model)
-                            {
-                                foreach (var pn in rol.PaisesNegocios)
+
+                <h4 class="mt-3 text-center">Administrar Roles</h4>
+                @if (rolesUnicosParaEditar.Any())
+                {
+                    <div class="col-lg-12 table-responsive mt-3">
+                        <table id="tableRolesParaEditar" class="table table-bordered table-hover tabla-simple-roles" style="width:100%;">
+                            <thead>
+                                <tr>
+                                    <th># Rol</th>
+                                    <th>Nombre Rol</th>
+                                    <th style="width: 100px;">Editar</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var rol in rolesUnicosParaEditar)
                                 {
                                     <tr>
-                                        <td style="white-space: nowrap;">@rol.idRol</td>
-                                        <td style="white-space: nowrap;">@rol.nombreRol</td>
-                                        <td style="white-space: nowrap;">@pn.pais</td>
-                                        <td style="white-space: nowrap;">@pn.negocio</td>
-                                        <td>
-                                            @if (pn.sistemas.Count > 1)
-                                            {
-                                                var idCollapse = $"collapse_{rol.idRol}_{pn.negocio.Replace(" ", "")}";
-                                                <div>
-                                                    <span>@pn.sistemas.First()</span>
-                                                    <button class="btn btn-link p-0 ms-2" type="button" data-bs-toggle="collapse" data-bs-target="#@idCollapse" aria-expanded="false" aria-controls="@idCollapse" style="font-size: 13px;">
-                                                        Ver más
-                                                    </button>
-                                                </div>
-                                                <div class="collapse mt-1" id="@idCollapse">
-                                                    @foreach (var sistema in pn.sistemas.Skip(1))
-                                                    {
-                                                        <div>- @sistema</div>
-                                                    }
-                                                </div>
-                                            }
-                                            else
-                                            {
-                                                <span>@pn.sistemas.FirstOrDefault()</span>
-                                            }
-                                        </td>
-                                        <td>
+                                        <td>@rol.idRol</td>
+                                        <td>@rol.nombreRol</td>
+                                        <td class="text-center">
+                                            <a asp-controller="Mantenedores" asp-action="EditarRolWizard" asp-route-id="@rol.idRol" class="btn btn-sm btn-primary">
+                                                <i class="fas fa-edit"></i> Editar
+                                            </a>
                                         </td>
                                     </tr>
                                 }
-                            }
-                        </tbody>
-                    </table>
-                </div>
+                            </tbody>
+                        </table>
+                    </div>
+                }
+                else
+                {
+                    <p class="text-center mt-3">No hay roles definidos para administrar.</p>
+                }
+
+                <hr class="my-4" />
+
+                <h4 class="mt-3 text-center">Listado Detallado de Permisos por Rol</h4>
+                @if (Model.Any())
+                {
+                    <div class="col-lg-12 table-responsive mt-3">
+                        <table id="tableListaDetalle" class="table table-bordered table-hover tabla-usuarios" style="width:100%; table-layout: auto;">
+                            <thead>
+                                <tr>
+                                    <th># Rol</th>
+                                    <th>Nombre Rol</th>
+                                    <th>País</th>
+                                    <th>Negocio</th>
+                                    <th>Sistemas</th>
+                                    @* Columna Acciones eliminada *@
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var rol in Model.OrderBy(r => r.nombreRol).ThenBy(r => r.idRol))
+                                {
+                                    if (rol.PaisesNegocios != null && rol.PaisesNegocios.Any())
+                                    {
+                                        foreach (var pn in rol.PaisesNegocios.OrderBy(p => p.pais).ThenBy(p => p.negocio))
+                                        {
+                                            <tr>
+                                                <td style="white-space: nowrap;">@rol.idRol</td>
+                                                <td style="white-space: nowrap;">@rol.nombreRol</td>
+                                                <td style="white-space: nowrap;">@pn.pais</td>
+                                                <td style="white-space: nowrap;">@pn.negocio</td>
+                                                <td>
+                                                    @if (pn.sistemas != null && pn.sistemas.Count > 1)
+                                                    {
+                                                        var idCollapse = $"collapse_{rol.idRol}_{pn.idPais}_{pn.idNegocio}_{Guid.NewGuid().ToString("N").Substring(0, 6)}";
+                                                        <div>
+                                                            <span>@pn.sistemas.First()</span>
+                                                            <button class="btn btn-link p-0 ms-2" type="button" data-bs-toggle="collapse" data-bs-target="#@idCollapse" aria-expanded="false" aria-controls="@idCollapse" style="font-size: 13px;">
+                                                                Ver más (@(pn.sistemas.Count - 1))...
+                                                            </button>
+                                                        </div>
+                                                        <div class="collapse mt-1" id="@idCollapse">
+                                                            @foreach (var sistema in pn.sistemas.Skip(1).OrderBy(s => s))
+                                                            {
+                                                                <div>- @sistema</div>
+                                                            }
+                                                        </div>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span>@pn.sistemas?.FirstOrDefault()</span>
+                                                    }
+                                                </td>
+                                            </tr>
+                                        }
+                                    }
+                                    else // Caso donde un rol podría no tener PNS asociados (aunque la query actual los requiere)
+                                    {
+                                        <tr>
+                                            <td style="white-space: nowrap;">@rol.idRol</td>
+                                            <td style="white-space: nowrap;">@rol.nombreRol</td>
+                                            <td colspan="3"><em>Este rol no tiene asignaciones de País/Negocio/Sistema.</em></td>
+                                        </tr>
+                                    }
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+                else
+                {
+                    <p class="text-center mt-3">No hay detalles de permisos para mostrar.</p>
+                }
             </div>
         </div>
     </div>
@@ -124,25 +188,38 @@
     <script src="/js/datatable/datatable-advanced.init.js" asp-append-version="true"></script>
     <script>
         $(document).ready(function () {
-            $('#tableLista').DataTable({
+            var commonLanguageSettings = {
+                search: "Buscar:",
+                lengthMenu: "Mostrar _MENU_ registros",
+                info: "Mostrando _START_ a _END_ de _TOTAL_ entradas",
+                infoEmpty: "Mostrando 0 a 0 de 0 entradas",
+                infoFiltered: "(filtrado de _MAX_ entradas totales)",
+                zeroRecords: "No se encontraron registros",
+                paginate: {
+                    first: "Primero",
+                    last: "Último",
+                    next: "Siguiente",
+                    previous: "Anterior"
+                }
+            };
+
+            $('#tableRolesParaEditar').DataTable({
                 responsive: false,
-                dom: "Bfrtip",
+                dom: "tip", // Solo tabla, info y paginación. Sin búsqueda global ni botones.
+                lengthMenu: [[5, 10, 20, -1], [5, 10, 20, "Todos"]],
+                pageLength: 10,
+                language: commonLanguageSettings,
+                columnDefs: [
+                    { "orderable": false, "targets": 2 } // No ordenar por columna de editar
+                ]
+            });
+
+            $('#tableListaDetalle').DataTable({
+                responsive: false,
+                dom: "Bfrtip", // Con botones y búsqueda global
                 lengthMenu: [[10, 20, 50, -1], [10, 20, 50, "Todos"]],
                 pageLength: 20,
-                language: {
-                    search: "Buscar:",
-                    lengthMenu: "Mostrar _MENU_ registros",
-                    info: "Mostrando _START_ a _END_ de _TOTAL_ entradas",
-                    infoEmpty: "Mostrando 0 a 0 de 0 entradas",
-                    infoFiltered: "(filtrado de _MAX_ entradas totales)",
-                    zeroRecords: "No se encontraron registros",
-                    paginate: {
-                        first: "Primero",
-                        last: "Último",
-                        next: "Siguiente",
-                        previous: "Anterior"
-                    }
-                }
+                language: commonLanguageSettings
             });
         });
     </script>

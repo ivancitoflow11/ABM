@@ -3,7 +3,7 @@
 @model ABM.Models.RolWizardViewModel
 
 @{
-    ViewData["Title"] = "Crear Rol"; // Título específico para crear
+    ViewData["Title"] = "Editar Rol";
 }
 
 <link rel="stylesheet" href="~/css/site.css" />
@@ -15,16 +15,19 @@
     <div class="card shadow" style="max-width:600px; width:90%;">
         <div class="card-body p-4 p-md-5">
             <h3 class="card-title text-center mb-4 fw-bold">
-                <i class="fas fa-plus-circle me-2"></i> Crear Rol
+                <i class="fas fa-edit me-2"></i> Editar Rol
             </h3>
 
             <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
             <div id="validationSummaryOverall" class="text-danger mb-3" style="display:none;"><ul></ul></div>
 
 
-            <form asp-action="CrearRolWizard" method="post" id="wizardForm">
+            <form asp-action="EditarRolWizard" method="post" id="wizardForm">
                 @Html.AntiForgeryToken()
-                @* No hay IdRol oculto aquí porque es para Crear *@
+                @if (Model.IdRol.HasValue)
+                {
+                    <input type="hidden" asp-for="IdRol" />
+                }
 
                 <div id="paso1" class="wizard-step" style="display:block;">
                     <div class="mb-4">
@@ -40,28 +43,30 @@
                 <div id="paso2" class="wizard-step" style="display:none;">
                     <div class="mb-4">
                         <label class="form-label fw-semibold">Seleccione Menús para el Rol</label>
-                         <div style="max-height: 300px; overflow-y: auto; border: 1px solid #ddd; padding: 10px; border-radius: 5px;">
-                        @if (ViewBag.MenusDisponibles != null)
-                        {
-                            foreach (var menu in (IEnumerable<MenuModel>)ViewBag.MenusDisponibles)
+                        <div style="max-height: 300px; overflow-y: auto; border: 1px solid #ddd; padding: 10px; border-radius: 5px;">
+                            @if (ViewBag.MenusDisponibles != null)
                             {
-                                <div class="form-check mb-2">
-                                    <input type="checkbox"
-                                           class="form-check-input"
-                                           name="ListaMenusSeleccionados"
-                                           value="@menu.IdMenu"
-                                           id="menu_@menu.IdMenu"
-                                           data-nombre="@menu.NombreMenu" />
-                                    <label class="form-check-label" for="menu_@menu.IdMenu">
-                                        @menu.NombreMenu
-                                    </label>
-                                </div>
+                                foreach (var menu in (IEnumerable<MenuModel>)ViewBag.MenusDisponibles)
+                                {
+                                    bool isChecked = Model.ListaMenusSeleccionados != null && Model.ListaMenusSeleccionados.Contains(menu.IdMenu);
+                                    <div class="form-check mb-2">
+                                        <input type="checkbox"
+                                               class="form-check-input"
+                                               name="ListaMenusSeleccionados"
+                                               value="@menu.IdMenu"
+                                               id="menu_@menu.IdMenu"
+                                               data-nombre="@menu.NombreMenu"
+                                        @(isChecked ? "checked" : "") />
+                                        <label class="form-check-label" for="menu_@menu.IdMenu">
+                                            @menu.NombreMenu
+                                        </label>
+                                    </div>
+                                }
                             }
-                        }
-                        else
-                        {
-                            <p>No hay menús disponibles.</p>
-                        }
+                            else
+                            {
+                                <p>No hay menús disponibles.</p>
+                            }
                         </div>
                         <span asp-validation-for="ListaMenusSeleccionados" class="text-danger d-block mt-2"></span>
                     </div>
@@ -84,17 +89,18 @@
                         <button type="button" class="btn btn-success btn-lg" onclick="Next(3)">Siguiente <i class="fas fa-arrow-right ms-1"></i></button>
                     </div>
                 </div>
-                
+
                 <div id="paso4" class="wizard-step" style="display:none;">
-                     <div class="mb-4">
+                    <div class="mb-4">
                         <div class="card border mb-3">
                             <div class="card-body text-center py-3">
                                 <h6 class="mb-3">Seleccione el País</h6>
                                 <div class="d-flex justify-content-center flex-wrap">
-                                     @if (ViewBag.PNSModelList != null) {
+                                    @if (ViewBag.PNSModelList != null)
+                                    {
                                         @foreach (var pais in ((IEnumerable<PaisNegocioSistemaModel>)ViewBag.PNSModelList)
-                                            .Select(x => new { x.CodPais, x.Pais })
-                                            .Distinct().OrderBy(p => p.Pais))
+                                       .Select(x => new { x.CodPais, x.Pais })
+                                       .Distinct().OrderBy(p => p.Pais))
                                         {
                                             <div class="country-flag-selector mx-2 my-1 text-center">
                                                 <img src="~/img/flags/@(pais.CodPais.ToLower()).png" alt="@pais.Pais"
@@ -103,7 +109,7 @@
                                                 <div class="text-center mt-1 small">@pais.Pais</div>
                                             </div>
                                         }
-                                     }
+                                    }
                                 </div>
                             </div>
                         </div>
@@ -113,16 +119,17 @@
                                 <h6 class="mb-0">Seleccione los sistemas y negocios:</h6>
                                 <button type="button" id="selectAllBtn" class="btn btn-sm btn-outline-primary">Seleccionar todos (del país activo)</button>
                             </div>
-                             @if (ViewBag.PNSModelList != null) {
+                            @if (ViewBag.PNSModelList != null)
+                            {
                                 @foreach (var grupoPais in ((IEnumerable<PaisNegocioSistemaModel>)ViewBag.PNSModelList)
-                                    .GroupBy(x => x.CodPais.ToLower())
-                                    .OrderBy(g => g.First().Pais) 
-                                    )
+                               .GroupBy(x => x.CodPais.ToLower())
+                               .OrderBy(g => g.First().Pais)
+                               )
                                 {
                                     <div class="pais-container mb-4" id="pais-@grupoPais.Key" style="display:none;">
                                         <div class="card">
                                             <div class="card-header bg-success text-white d-flex align-items-center">
-                                                 <span class="flag-icon flag-icon-@grupoPais.Key me-2"></span>
+                                                <span class="flag-icon flag-icon-@grupoPais.Key me-2"></span>
                                                 <h6 class="mb-0">Listado @grupoPais.First().Pais</h6>
                                             </div>
                                             <div class="card-body p-0">
@@ -138,6 +145,7 @@
                                                         <tbody>
                                                             @foreach (var item in grupoPais.OrderBy(i => i.Negocio).ThenBy(i => i.Sistema))
                                                             {
+                                                                bool isPNSChecked = Model.ListaPNSSeleccionados != null && Model.ListaPNSSeleccionados.Contains(item.IdPaisNegocioSistema);
                                                                 <tr>
                                                                     <td class="text-center">
                                                                         <input class="form-check-input pns-checkbox"
@@ -145,7 +153,8 @@
                                                                                name="ListaPNSSeleccionados"
                                                                                id="pns_@item.IdPaisNegocioSistema"
                                                                                value="@item.IdPaisNegocioSistema"
-                                                                               data-pais="@item.CodPais.ToLower()" />
+                                                                               data-pais="@item.CodPais.ToLower()"
+                                                                        @(isPNSChecked ? "checked" : "") />
                                                                     </td>
                                                                     <td>@item.Negocio</td>
                                                                     <td>@item.Sistema</td>
@@ -158,12 +167,12 @@
                                         </div>
                                     </div>
                                 }
-                             }
+                            }
                         </div>
                         <span asp-validation-for="ListaPNSSeleccionados" class="text-danger d-block mt-2"></span>
                     </div>
                     <div class="d-flex justify-content-between">
-                         <button type="button" class="btn btn-secondary btn-lg" onclick="Prev(4)"><i class="fas fa-arrow-left me-1"></i> Anterior</button>
+                        <button type="button" class="btn btn-secondary btn-lg" onclick="Prev(4)"><i class="fas fa-arrow-left me-1"></i> Anterior</button>
                         <button type="button" class="btn btn-success btn-lg" onclick="Next(4)">Siguiente <i class="fas fa-arrow-right ms-1"></i></button>
                     </div>
                 </div>
@@ -180,7 +189,7 @@
                     </div>
                     <div class="d-flex justify-content-between">
                         <button type="button" class="btn btn-secondary btn-lg" onclick="Prev(5)"><i class="fas fa-arrow-left me-1"></i> Anterior</button>
-                        <button type="submit" class="btn btn-success btn-lg"><i class="fas fa-save me-1"></i> Guardar Rol</button>
+                        <button type="submit" class="btn btn-success btn-lg"><i class="fas fa-save me-1"></i> Actualizar Rol</button>
                     </div>
                 </div>
             </form>
@@ -192,14 +201,11 @@
     <partial name="_ValidationScriptsPartial" />
     <script src="~/js/sweetalert/sweetalert.min.js"></script>
     <script>
-        // El script para CrearRolUnicaVista.cshtml será muy similar al de EditarRolWizard.cshtml
-        // pero sin la lógica específica de 'isEditMode' o 'idRolActual' para la validación del nombre.
-
-        const isEditMode = false; // Para la vista de Crear, esto siempre es false
-        const idRolActual = null; // No hay rol actual al crear
+        const isEditMode = true;
+        const idRolActual = @(Model.IdRol.HasValue ? Model.IdRol.Value.ToString() : "null");
         let currentStep = 1;
         const form = document.getElementById('wizardForm');
-        
+
         form.addEventListener('keydown', e => {
             if (e.key === 'Enter' && (e.target.tagName.toLowerCase() !== 'textarea')) {
                 e.preventDefault();
@@ -221,75 +227,97 @@
 
         function populateMenuInicio() {
             const selIni = document.getElementById('MenuInicioSeleccionadoId');
-            selIni.innerHTML = '<option value="">Seleccione...</option>'; 
+            selIni.innerHTML = '<option value="">Seleccione...</option>';
             const menusSeleccionadosChecks = document.querySelectorAll('input[name="ListaMenusSeleccionados"]:checked');
-            // No hay menuInicioEnModelo para la vista de Crear, se seleccionará la primera opción si existe
-            menusSeleccionadosChecks.forEach(item => {
-                const opt = document.createElement('option');
-                opt.value = item.value;
-                opt.text = item.getAttribute('data-nombre') || item.parentElement.querySelector('label').innerText.trim();
-                selIni.appendChild(opt);
-            });
+
+            let menuInicioEnModelo = null;
+        @if (Model.MenuInicioSeleccionadoId.HasValue)
+        {
+            <text>menuInicioEnModelo = @Model.MenuInicioSeleccionadoId.Value;</text>
+        }
+
+                menusSeleccionadosChecks.forEach(item => {
+                    const opt = document.createElement('option');
+                    opt.value = item.value;
+                    opt.text = item.getAttribute('data-nombre') || item.parentElement.querySelector('label').innerText.trim();
+                    if (menuInicioEnModelo && parseInt(item.value) === menuInicioEnModelo) {
+                        opt.selected = true;
+                    }
+                    selIni.appendChild(opt);
+                });
+
+            if (menuInicioEnModelo && selIni.value !== menuInicioEnModelo.toString()) {
+                const opcionAunValida = Array.from(menusSeleccionadosChecks).some(chk => chk.value == menuInicioEnModelo.toString());
+                if (opcionAunValida) {
+                    selIni.value = menuInicioEnModelo.toString();
+                }
+            }
         }
 
         function Next(step) {
             clearError();
             document.querySelectorAll('.text-danger[data-valmsg-for]').forEach(span => span.textContent = '');
-            let isValidForNextStep = true; 
+            let isValidForNextStep = true;
 
             if (step === 1) {
                 const nombreRolInput = document.getElementById('NombreRol');
                 const nombreRol = nombreRolInput.value.trim();
                 const nombreRolErrorSpan = document.querySelector('span[data-valmsg-for="NombreRol"]');
                 if (!nombreRol) {
-                    if(nombreRolErrorSpan) nombreRolErrorSpan.textContent = 'El nombre del rol es obligatorio.';
+                    if (nombreRolErrorSpan) nombreRolErrorSpan.textContent = 'El nombre del rol es obligatorio.';
                     else showError('El nombre del rol es obligatorio.');
-                    isValidForNextStep = false; 
-                    return; 
+                    isValidForNextStep = false;
+                    return;
                 }
-                
-                // Para Crear, idRolActual es siempre null.
-                fetch(`/Mantenedores/VerificarNombreRol?nombre=${encodeURIComponent(nombreRol)}`)
+
+                let urlVerificar = `/Mantenedores/VerificarNombreRol?nombre=${encodeURIComponent(nombreRol)}`;
+                if (idRolActual !== null) {
+                    urlVerificar += `&idRol=${idRolActual}`;
+                }
+
+                fetch(urlVerificar)
                     .then(response => {
-                         if (!response.ok) { throw new Error(`Error de red: ${response.statusText}`); }
+                        if (!response.ok) {
+                            throw new Error(`Error de red: ${response.statusText}`);
+                        }
                         return response.json();
                     })
                     .then(data => {
                         if (data.existe) {
-                            if(nombreRolErrorSpan) nombreRolErrorSpan.textContent = 'El nombre del rol ya existe. Por favor, elija otro nombre.';
+                            if (nombreRolErrorSpan) nombreRolErrorSpan.textContent = 'El nombre del rol ya existe. Por favor, elija otro nombre.';
                             else showError('El nombre del rol ya existe. Por favor, elija otro nombre.');
                         } else {
                             document.getElementById('paso' + step).style.display = 'none';
                             currentStep = step + 1;
                             document.getElementById('paso' + currentStep).style.display = 'block';
                             if (currentStep === 2) {
-                                populateMenuInicio(); 
+                                populateMenuInicio();
                             }
                         }
                     })
                     .catch(error => {
-                        console.error("Error en fetch VerificarNombreRol (Crear):", error);
+                        console.error("Error en fetch VerificarNombreRol:", error);
                         showError('Error al verificar el nombre del rol. Intente nuevamente o revise la consola.');
                     });
-                return; 
+                return;
             }
 
             if (step === 2) {
                 const marc = document.querySelectorAll('input[name="ListaMenusSeleccionados"]:checked');
                 const menusErrorSpan = document.querySelector('span[data-valmsg-for="ListaMenusSeleccionados"]');
                 if (!marc.length) {
-                    if(menusErrorSpan) menusErrorSpan.textContent = 'Debe seleccionar al menos un Menú para el Rol.';
+                    if (menusErrorSpan) menusErrorSpan.textContent = 'Debe seleccionar al menos un Menú para el Rol.';
                     else showError('Debe seleccionar al menos un Menú para el Rol.');
                     isValidForNextStep = false;
                 } else {
-                    populateMenuInicio(); 
+                    populateMenuInicio();
                 }
             }
             if (step === 3) {
                 const menuInicioSelect = document.getElementById('MenuInicioSeleccionadoId');
                 const menuInicioErrorSpan = document.querySelector('span[data-valmsg-for="MenuInicioSeleccionadoId"]');
-                if (!menuInicioSelect.value) { 
-                    if(menuInicioErrorSpan) menuInicioErrorSpan.textContent = 'Debes elegir un Menú de inicio.';
+                if (!menuInicioSelect.value) {
+                    if (menuInicioErrorSpan) menuInicioErrorSpan.textContent = 'Debes elegir un Menú de inicio.';
                     else showError('Debes elegir un Menú de inicio.');
                     isValidForNextStep = false;
                 }
@@ -297,7 +325,7 @@
             if (step === 4) {
                 const pnsErrorSpan = document.querySelector('span[data-valmsg-for="ListaPNSSeleccionados"]');
                 if (!document.querySelectorAll('input[name="ListaPNSSeleccionados"]:checked').length) {
-                    if(pnsErrorSpan) pnsErrorSpan.textContent = 'Debe seleccionar al menos un País/Negocio/Sistema.';
+                    if (pnsErrorSpan) pnsErrorSpan.textContent = 'Debe seleccionar al menos un País/Negocio/Sistema.';
                     else showError('Debe seleccionar al menos un País/Negocio/Sistema.');
                     isValidForNextStep = false;
                 }
@@ -307,11 +335,11 @@
                 document.getElementById('paso' + step).style.display = 'none';
                 currentStep = step + 1;
                 document.getElementById('paso' + currentStep).style.display = 'block';
-                
-                if (currentStep === 5) { // Poblar resumen
+
+                if (currentStep === 5) {
                     document.getElementById('lblNombreRol').innerText = document.getElementById('NombreRol').value.trim();
                     const ulMenus = document.getElementById('listMenus');
-                    ulMenus.innerHTML = ''; 
+                    ulMenus.innerHTML = '';
                     Array.from(document.querySelectorAll('input[name="ListaMenusSeleccionados"]:checked'))
                         .map(i => i.getAttribute('data-nombre') || i.parentElement.querySelector('label').innerText.trim())
                         .forEach(menuText => {
@@ -319,29 +347,29 @@
                             li.textContent = `- ${menuText}`;
                             ulMenus.appendChild(li);
                         });
-                    if(ulMenus.children.length === 0) ulMenus.innerHTML = '<li>Ninguno seleccionado</li>';
+                    if (ulMenus.children.length === 0) ulMenus.innerHTML = '<li>Ninguno seleccionado</li>';
 
                     const menuInicioSelect = document.getElementById('MenuInicioSeleccionadoId');
                     document.getElementById('lblVista').innerText = menuInicioSelect.selectedOptions[0] && menuInicioSelect.value ? menuInicioSelect.selectedOptions[0].text : 'Ninguno seleccionado';
-                    
+
                     const ulPNS = document.getElementById('listPNS');
-                    ulPNS.innerHTML = ''; 
+                    ulPNS.innerHTML = '';
                     document.querySelectorAll('input[name="ListaPNSSeleccionados"]:checked').forEach(chk => {
                         const row = chk.closest('tr');
-                        if(row && row.cells.length >= 3){ 
+                        if (row && row.cells.length >= 3) {
                             const paisContainer = chk.closest('.pais-container');
                             let paisNombre = 'País Desconocido';
-                            if(paisContainer){
+                            if (paisContainer) {
                                 const headerH6 = paisContainer.querySelector('.card-header h6');
-                                if(headerH6) {
+                                if (headerH6) {
                                     const headerText = headerH6.textContent;
                                     const match = headerText.match(/Listado\s*(.+)/);
                                     if (match && match[1]) {
                                         paisNombre = match[1].trim();
                                     } else {
-                                         const dataPaisAttr = chk.getAttribute('data-pais');
-                                         const flagElement = document.querySelector(`.flag-selector[data-pais="${dataPaisAttr}"]`);
-                                         if(flagElement && flagElement.alt) paisNombre = flagElement.alt;
+                                        const dataPaisAttr = chk.getAttribute('data-pais');
+                                        const flagElement = document.querySelector(`.flag-selector[data-pais="${dataPaisAttr}"]`);
+                                        if (flagElement && flagElement.alt) paisNombre = flagElement.alt;
                                     }
                                 }
                             }
@@ -352,7 +380,7 @@
                             ulPNS.appendChild(li);
                         }
                     });
-                     if(ulPNS.children.length === 0) ulPNS.innerHTML = '<li>Ninguno seleccionado</li>';
+                    if (ulPNS.children.length === 0) ulPNS.innerHTML = '<li>Ninguno seleccionado</li>';
                 }
             }
         }
@@ -362,15 +390,23 @@
             document.getElementById('paso' + step).style.display = 'none';
             currentStep = step - 1;
             document.getElementById('paso' + currentStep).style.display = 'block';
-            if (currentStep === 2) { 
+            if (currentStep === 2) {
                 populateMenuInicio();
+            }
+            if (currentStep === 3) {
+                const selIni = document.getElementById('MenuInicioSeleccionadoId');
+                const menuInicioEnModelo = @(Model.MenuInicioSeleccionadoId.HasValue ? Model.MenuInicioSeleccionadoId.Value.ToString() : "null");
+                if (menuInicioEnModelo && Array.from(selIni.options).some(opt => opt.value === menuInicioEnModelo)) {
+                    selIni.value = menuInicioEnModelo;
+                }
             }
         }
 
         function activateFlag(flagElement) {
             if (!flagElement) return;
-            deactivateAllFlags(); 
-            flagElement.classList.add('active-flag-create'); // Usar una clase diferente para evitar conflictos si ambas vistas usan el mismo css
+            deactivateAllFlags();
+            flagElement.classList.add('active-flag');
+            // Aplicar estilos directamente sigue siendo una opción o usar solo CSS
             flagElement.style.borderColor = '#007bff';
             flagElement.style.boxShadow = '0 0 8px rgba(0,123,255,.6)';
             flagElement.style.opacity = '1';
@@ -378,7 +414,7 @@
 
         function deactivateAllFlags() {
             document.querySelectorAll('.flag-selector').forEach(f => {
-                f.classList.remove('active-flag-create');
+                f.classList.remove('active-flag');
                 f.style.borderColor = 'transparent';
                 f.style.boxShadow = 'none';
                 f.style.opacity = '0.65';
@@ -396,28 +432,28 @@
         }
 
         function getCurrentSelectedPais() {
-            const activeFlag = document.querySelector('.flag-selector.active-flag-create');
+            const activeFlag = document.querySelector('.flag-selector.active-flag'); // Buscar por la clase
             return activeFlag ? activeFlag.getAttribute('data-pais') : null;
         }
 
         function updateSelectAllButtonStatus() {
             const currentPaisCode = getCurrentSelectedPais();
             const selectAllBtn = document.getElementById('selectAllBtn');
-            if (!selectAllBtn) return; 
+            if (!selectAllBtn) return;
 
             if (!currentPaisCode) {
-                selectAllBtn.style.display = 'none'; 
+                selectAllBtn.style.display = 'none';
                 return;
             }
-            selectAllBtn.style.display = 'inline-block'; 
+            selectAllBtn.style.display = 'inline-block';
 
             const currentCheckboxes = document.querySelectorAll(`.pns-checkbox[data-pais="${currentPaisCode}"]`);
-            if(currentCheckboxes.length === 0) {
-                 selectAllBtn.textContent = 'No hay sistemas para este país';
-                 selectAllBtn.disabled = true;
-                 selectAllBtn.classList.remove('btn-outline-primary', 'btn-outline-danger', 'btn-outline-warning');
-                 selectAllBtn.classList.add('btn-outline-secondary'); 
-                 return;
+            if (currentCheckboxes.length === 0) {
+                selectAllBtn.textContent = 'No hay sistemas para este país';
+                selectAllBtn.disabled = true;
+                selectAllBtn.classList.remove('btn-outline-primary', 'btn-outline-danger', 'btn-outline-warning');
+                selectAllBtn.classList.add('btn-outline-secondary');
+                return;
             }
             selectAllBtn.disabled = false;
             selectAllBtn.classList.remove('btn-outline-secondary');
@@ -433,38 +469,46 @@
                 selectAllBtn.classList.remove('btn-outline-primary', 'btn-warning');
                 selectAllBtn.classList.add('btn-outline-danger');
             } else {
-                 selectAllBtn.textContent = `Seleccionados ${checkedCount} de ${currentCheckboxes.length}`;
+                selectAllBtn.textContent = `Seleccionados ${checkedCount} de ${currentCheckboxes.length}`;
                 selectAllBtn.classList.remove('btn-outline-primary', 'btn-outline-danger');
                 selectAllBtn.classList.add('btn-outline-warning');
             }
         }
-        
+
         document.addEventListener('DOMContentLoaded', function () {
             for (let i = 1; i <= 5; i++) {
                 document.getElementById('paso' + i).style.display = (i === currentStep ? 'block' : 'none');
             }
-            
-            // Para Crear, no hay menús pre-seleccionados al inicio, así que populateMenuInicio se llama en Next(1)
-            
+
+            const modelListaMenusSeleccionadosIsNotEmpty = @((Model.ListaMenusSeleccionados != null && Model.ListaMenusSeleccionados.Any()).ToString().ToLower());
+            if (modelListaMenusSeleccionadosIsNotEmpty) {
+                populateMenuInicio();
+            }
+
             const flags = document.querySelectorAll('.flag-selector');
             let initialPaisToSelect = null;
-            if (flags.length > 0) {
-                initialPaisToSelect = flags[0].getAttribute('data-pais'); 
+
+            const firstCheckedPNS = document.querySelector('.pns-checkbox:checked');
+            if (firstCheckedPNS) {
+                initialPaisToSelect = firstCheckedPNS.getAttribute('data-pais');
+            } else if (flags.length > 0) {
+                initialPaisToSelect = flags[0].getAttribute('data-pais');
             }
-            
-            deactivateAllFlags();
+
+            deactivateAllFlags(); // Limpiar cualquier bandera activa por defecto
             if (initialPaisToSelect) {
                 selectPais(initialPaisToSelect);
                 const activeFlagElement = document.querySelector(`.flag-selector[data-pais="${initialPaisToSelect}"]`);
-                activateFlag(activeFlagElement);
+                activateFlag(activeFlagElement); // Activa la bandera correcta
             }
-            
+
             flags.forEach(flag => {
                 flag.addEventListener('click', function () {
+                    // deactivateAllFlags(); // activateFlag ahora lo hace primero
                     activateFlag(this);
                     const paisCode = this.getAttribute('data-pais');
                     selectPais(paisCode);
-                    updateSelectAllButtonStatus(); 
+                    updateSelectAllButtonStatus(); // Actualizar estado del botón al cambiar de país
                 });
             });
 
@@ -478,15 +522,15 @@
                         const allChecked = Array.from(currentCheckboxes).every(cb => cb.checked);
                         currentCheckboxes.forEach(cb => cb.checked = !allChecked);
                     }
-                    updateSelectAllButtonStatus(); 
+                    updateSelectAllButtonStatus(); // Actualizar estado del botón después de la acción
                 });
             }
 
             document.querySelectorAll('.pns-checkbox').forEach(checkbox => {
-                checkbox.addEventListener('change', updateSelectAllButtonStatus); 
+                checkbox.addEventListener('change', updateSelectAllButtonStatus); // Actualizar al cambiar un checkbox individual
             });
-            
-            updateSelectAllButtonStatus(); 
+
+            updateSelectAllButtonStatus();
         });
     </script>
 }

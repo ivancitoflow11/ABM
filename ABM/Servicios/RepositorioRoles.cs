@@ -21,12 +21,20 @@ namespace ABM.Servicios
 
         Task<int> CrearDetalleRol(DetalleRolModel detalle);
         Task<IEnumerable<PaisNegocioSistemaModel>> ObtenerPaisNegocioSistemasActivos();
-        Task<bool> ExisteRolConNombre(string nombreRol);
+        Task<bool> ExisteRolConNombre(string nombreRol, int? idRolExcluir = null); 
 
         //Menus
         Task<IEnumerable<MenuModel>> ObtenerMenus();
         Task InsertarPermisosMenu(int idRol, List<int> listaMenusSeleccionados);
 		Task<IEnumerable<string>> ObtenerVistasPorMenusAsync(List<int> idsMenus);
+
+        // Nuevos métodos para editar
+        Task<RolModel> ObtenerRolPorId(int idRol);
+        Task<List<int>> ObtenerMenusSeleccionadosPorRol(int idRol);
+        Task<List<int>> ObtenerPNSSeleccionadosPorRol(int idRol);
+        Task ActualizarRol(RolModel rol);
+        Task ActualizarDetallesRol(int idRol, List<int> listaPNSSeleccionados);
+        Task ActualizarPermisosMenu(int idRol, List<int> listaMenusSeleccionados);
 
     }
 
@@ -219,17 +227,103 @@ ORDER BY r.idRol, pa.pais, pns.idNegocio, si.sistema";
 			}
 		}
 
-        public async Task<bool> ExisteRolConNombre(string nombreRol)
+        public async Task<bool> ExisteRolConNombre(string nombreRol, int? idRolExcluir = null)
+        {
+            using (IDbConnection db = new SqlConnection(connectionString))
+            {
+                var sqlBuilder = new System.Text.StringBuilder("SELECT COUNT(1) FROM ftc_rol WHERE nombre = @Nombre");
+                var parameters = new DynamicParameters();
+                parameters.Add("Nombre", nombreRol);
+
+                if (idRolExcluir.HasValue)
+                {
+                    sqlBuilder.Append(" AND idRol != @IdRolExcluir");
+                    parameters.Add("IdRolExcluir", idRolExcluir.Value);
+                }
+
+                int count = await db.ExecuteScalarAsync<int>(sqlBuilder.ToString(), parameters);
+                return count > 0;
+            }
+        }
+
+        // Implementación de nuevos métodos
+        public async Task<RolModel> ObtenerRolPorId(int idRol)
+        {
+            using (IDbConnection db = new SqlConnection(connectionString))
+            {
+                return await db.QuerySingleOrDefaultAsync<RolModel>(
+                    "SELECT idRol, nombre, idVistaInicio, idPais, idNegocio FROM ftc_rol WHERE idRol = @idRol", new { idRol });
+            }
+        }
+
+        public async Task<List<int>> ObtenerMenusSeleccionadosPorRol(int idRol)
+        {
+            using (IDbConnection db = new SqlConnection(connectionString))
+            {
+                return (await db.QueryAsync<int>(
+                    "SELECT COD_Menu FROM ftc_PermisosMenu WHERE idRol = @idRol AND PERMITIDO = 1", new { idRol })).ToList();
+            }
+        }
+
+        public async Task<List<int>> ObtenerPNSSeleccionadosPorRol(int idRol)
+        {
+            using (IDbConnection db = new SqlConnection(connectionString))
+            {
+                return (await db.QueryAsync<int>(
+                    "SELECT idPaisNegocioSistema FROM ftc_detalle_rol WHERE idRol = @idRol", new { idRol })).ToList();
+            }
+        }
+
+        public async Task ActualizarRol(RolModel rol)
         {
             using (IDbConnection db = new SqlConnection(connectionString))
             {
                 var query = @"
-            SELECT COUNT(1) 
-            FROM ftc_rol 
-            WHERE nombre = @Nombre";
+                UPDATE ftc_rol
+                SET nombre = @Nombre,
+                    idVistaInicio = @IdVistaInicio,
+                    idPais = @IdPais, 
+                    idNegocio = @IdNegocio 
+                WHERE idRol = @IdRol;";
+                await db.ExecuteAsync(query, rol);
+            }
+        }
 
-                int count = await db.ExecuteScalarAsync<int>(query, new { Nombre = nombreRol });
-                return count > 0;
+        public async Task ActualizarDetallesRol(int idRol, List<int> listaPNSSeleccionados)
+        {
+            using (IDbConnection db = new SqlConnection(connectionString))
+            {
+                await db.ExecuteAsync("DELETE FROM ftc_detalle_rol WHERE idRol = @idRol", new { idRol });
+
+                if (listaPNSSeleccionados != null && listaPNSSeleccionados.Any())
+                {
+                    var sqlDetalle = @"
+                    INSERT INTO ftc_detalle_rol (idRol, idPaisNegocioSistema)
+                    VALUES (@IdRol, @IdPaisNegocioSistema);";
+                    foreach (var pnsId in listaPNSSeleccionados)
+                    {
+                        await db.ExecuteAsync(sqlDetalle, new { IdRol = idRol, IdPaisNegocioSistema = pnsId });
+                    }
+                }
+            }
+        }
+
+        public async Task ActualizarPermisosMenu(int idRol, List<int> listaMenusSeleccionados)
+        {
+            using (IDbConnection db = new SqlConnection(connectionString))
+            {
+                await db.ExecuteAsync("DELETE FROM ftc_PermisosMenu WHERE idRol = @idRol", new { idRol });
+
+                if (listaMenusSeleccionados != null && listaMenusSeleccionados.Any())
+                {
+                    var sqlPermiso = @"
+                    INSERT INTO [ftc_PermisosMenu] (idRol, COD_Menu, PERMITIDO, FECHA_CREACION)
+                    VALUES (@IdRol, @CodMenu, 1, GETDATE());";
+                    foreach (var menuId in listaMenusSeleccionados)
+                    {
+                        await db.ExecuteAsync(sqlPermiso, new { IdRol = idRol, CodMenu = menuId });
+                    }
+                }
             }
         }
 
