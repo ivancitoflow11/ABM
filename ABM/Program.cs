@@ -39,6 +39,9 @@ builder.Services.AddSession(options =>
 //     );
 // });
 
+builder.Services.AddScoped<IRepositorioMonitoreoLogs, RepositorioMonitoreoLogs>();
+builder.Services.AddScoped<IServicioMonitoreo, ServicioMonitoreo>();
+
 builder.Services.AddTransient<IRepositorioUsuarios, RepositorioUsuarios>();
 builder.Services.AddTransient<IRepositorioRoles, RepositorioRoles>();
 builder.Services.AddTransient<IRepositorioReportes, RepositorioReportes>();
