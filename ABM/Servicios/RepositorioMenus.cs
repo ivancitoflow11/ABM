@@ -39,6 +39,7 @@ INNER JOIN ftc_PermisosMenu AS pm
     ON pm.COD_Menu    = m.ID_Menu
    AND pm.idRol       = @Rol
    AND pm.PERMITIDO   = 1
+WHERE m.Estado = 1
 ORDER BY m.ID_Menu;";
 
 			var menus = (await db.QueryAsync<MenuViewModel>(

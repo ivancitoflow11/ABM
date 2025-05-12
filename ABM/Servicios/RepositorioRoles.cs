@@ -176,6 +176,7 @@ ORDER BY r.idRol, pa.pais, pns.idNegocio, si.sistema";
                     [VISTA]         AS Vista,
                     [CONTROLADOR]   AS Controlador
                 FROM [ftc_MENU]
+                WHERE Estado = 1
                 ORDER BY [ID_Menu];
             ";
                 return await db.QueryAsync<MenuModel>(sql);
@@ -217,7 +218,8 @@ ORDER BY r.idRol, pa.pais, pns.idNegocio, si.sistema";
 				var sql = @"
             SELECT DISTINCT VISTA
             FROM [ftc_MENU]
-            WHERE ID_Menu IN @Ids
+            WHERE Estado = 1
+            AND ID_Menu IN @Ids
               AND VISTA IS NOT NULL
               AND VISTA <> ''
             ORDER BY VISTA;
