@@ -1,7 +1,7 @@
 ﻿using ABM.Models;
 using Microsoft.AspNetCore.Mvc;
 using System.Diagnostics;
-
+using ABM.Filters;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
@@ -33,6 +33,7 @@ namespace ABM.Controllers
 		}
 
         [HttpGet]
+        [Monitoreo("VisionCorporativa", "SELECT", "verVisionCorporativa")]
         public async Task<IActionResult> VisionCorporativa(int? idPais)
         {
             // 1) Leer idNegocio de sesión
@@ -105,6 +106,7 @@ namespace ABM.Controllers
         }
 
         [HttpGet]
+        [Monitoreo("ObtenerGraficoDinamico", "SELECT", "obtenerGraficoDinamico")]
         public async Task<IActionResult> ObtenerGraficoDinamico(int sistema, int idPais)
         {
             var idNegocioSesion = HttpContext.Session.GetInt32("IdNegocio");

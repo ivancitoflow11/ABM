@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using ABM.Models;
 using ABM.Servicios;
+using ABM.Filters;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication;
@@ -29,6 +30,7 @@ namespace ABM.Controllers
         }
 
         [HttpGet]
+        [Monitoreo("Registrarse", "SELECT", "verFormRegistrarse")]
         public async Task<IActionResult> Registrarse()
         {
             var model = new RegistroUsuarioVM
@@ -42,6 +44,7 @@ namespace ABM.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Monitoreo("Registrarse", "INSERT", "registrarUsuario")]
         public async Task<IActionResult> Registrarse(RegistroUsuarioVM model)
         {
             if (!ModelState.IsValid)
@@ -110,6 +113,7 @@ namespace ABM.Controllers
         }
 
         [HttpGet]
+        [Monitoreo("ListaUsuarios", "SELECT", "verListaUsuarios")]
         public async Task<IActionResult> ListaUsuarios()
         {
             var usuarios = await _repositorioUsuarios.ObtenerTodosLosUsuariosYRoles();
@@ -117,6 +121,7 @@ namespace ABM.Controllers
         }
 
         [HttpGet]
+        [Monitoreo("EditarUsuario", "SELECT", "verEditarUsuario")]
         public async Task<IActionResult> EditarUsuario(int id)
         {
             var usuario = await _repositorioUsuarios.ObtenerPorId(id);
@@ -147,6 +152,7 @@ namespace ABM.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Monitoreo("EditarUsuario", "UPDATE", "editarUsuario")]
         public async Task<IActionResult> EditarUsuario(EditarUsuarioVM model)
         {
             if (!ModelState.IsValid)
@@ -205,6 +211,7 @@ namespace ABM.Controllers
         }
 
         [HttpGet]
+        [Monitoreo("ListarRoles", "SELECT", "verListarRoles")]
         public async Task<IActionResult> ListarRoles()
         {
             var rolesConPNS = await _repositorioRoles.ObtenerRolesConPNS();
@@ -213,6 +220,7 @@ namespace ABM.Controllers
 
         // --- Crear Rol ---
         [HttpGet]
+        [Monitoreo("CrearRolWizard", "SELECT", "verCrearRolWizard")]
         public async Task<IActionResult> CrearRolWizard()
         {
             var model = new RolWizardViewModel();
@@ -225,6 +233,7 @@ namespace ABM.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Monitoreo("CrearRolWizard", "INSERT", "crearRolWizard")]
         public async Task<IActionResult> CrearRolWizard(RolWizardViewModel model)
         {
             bool existeRol = await _repositorioRoles.ExisteRolConNombre(model.NombreRol);
@@ -287,6 +296,7 @@ namespace ABM.Controllers
 
         // --- Editar Rol ---
         [HttpGet]
+        [Monitoreo("EditarRolWizard", "SELECT", "verEditarRolWizard")]
         public async Task<IActionResult> EditarRolWizard(int id) // id del rol
         {
             var rolDb = await _repositorioRoles.ObtenerRolPorId(id);
@@ -313,6 +323,7 @@ namespace ABM.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Monitoreo("EditarRolWizard", "UPDATE", "editarRolWizard")]
         public async Task<IActionResult> EditarRolWizard(RolWizardViewModel model) // El model ya incluye IdRol
         {
             if (!model.IdRol.HasValue) // Seguridad básica
@@ -375,6 +386,7 @@ namespace ABM.Controllers
         }
 
         [HttpGet]
+        [Monitoreo("VerificarNombreRol", "SELECT", "verificarNombreRol")]
         public async Task<IActionResult> VerificarNombreRol(string nombre, int? idRol)
         {
             if (string.IsNullOrEmpty(nombre))

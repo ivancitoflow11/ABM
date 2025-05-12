@@ -1,7 +1,7 @@
 ﻿using ABM.Models;
 using Microsoft.AspNetCore.Mvc;
 using System.Diagnostics;
-
+using ABM.Filters;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
@@ -32,6 +32,7 @@ namespace ABM.Controllers
 
 
         [HttpGet]
+        [Monitoreo("Finiquitados", "SELECT", "verFiniquitadosPorSistema")]
         public async Task<IActionResult> Finiquitados(string sistema = null)
         {
             var idPaisSesion = HttpContext.Session.GetInt32("IdPais");
@@ -66,6 +67,7 @@ namespace ABM.Controllers
 
 
         [HttpGet]
+        [Monitoreo("UsuariosNoEncontrados", "SELECT", "verUsuariosNoEncontrados")]
         public async Task<IActionResult> UsuariosNoEncontrados(string sistema = null)
         {
             // 1) Leer sesión
@@ -101,6 +103,7 @@ namespace ABM.Controllers
 
 
         [HttpGet]
+        [Monitoreo("UsuariosActivos", "SELECT", "verUsuariosActivos")]
         public async Task<IActionResult> UsuariosActivos(string sistema = null)
         {
             var idPaisSesion = HttpContext.Session.GetInt32("IdPais");
@@ -137,6 +140,7 @@ namespace ABM.Controllers
 
 
         [HttpGet]
+        [Monitoreo("BuscarUsuarios", "SELECT", "buscarUsuariosPorNombreORut")]
         public async Task<IActionResult> BuscarUsuarios(string rutDni = null, string nombreUsuario = null)
         {
             var idPaisSesion = HttpContext.Session.GetInt32("IdPais");
