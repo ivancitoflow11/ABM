@@ -1,4 +1,5 @@
 ﻿using ABM.Models;
+using ABM.Filters;
 using ABM.Servicios;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -16,6 +17,7 @@ namespace ABM.Controllers
 
         // GET: /Configuracion/Paises
         [HttpGet]
+        [Monitoreo("Paises", "SELECT", "verListadoPaises")]
         public async Task<IActionResult> Paises()
         {
             var lista = await _repo.ObtenerPaises();
@@ -24,6 +26,7 @@ namespace ABM.Controllers
 
         // POST: /Configuracion/CrearPais
         [HttpPost]
+        [Monitoreo("Paises", "INSERT", "crearPais")]
         public async Task<IActionResult> CrearPais(Pais modelo, IFormFile? BanderaFile)
         {
             // 1) Validaciones de duplicados
@@ -53,6 +56,7 @@ namespace ABM.Controllers
 
         // GET: /Configuracion/EditarPais?id=#
         [HttpGet]
+        [Monitoreo("EditarPais", "SELECT", "obtenerPaisPorId")]
         public async Task<IActionResult> EditarPais(int id)
         {
             var pais = await _repo.ObtenerPaisPorId(id);
@@ -62,6 +66,7 @@ namespace ABM.Controllers
 
         // POST: /Configuracion/EditarPais
         [HttpPost]
+        [Monitoreo("EditarPais", "UPDATE", "editarPais")]
         public async Task<IActionResult> EditarPais(Pais modelo, IFormFile? BanderaFile)
         {
             // 1) Validaciones de duplicados
@@ -102,6 +107,7 @@ namespace ABM.Controllers
 
         // GET: /Configuracion/Sistemas
         [HttpGet]
+        [Monitoreo("Sistemas", "SELECT", "verListadoSistemas")]
         public async Task<IActionResult> Sistemas()
         {
             var lista = await _repo.ObtenerSistemas();
@@ -110,6 +116,7 @@ namespace ABM.Controllers
 
         // POST: /Configuracion/CrearSistema
         [HttpPost]
+        [Monitoreo("Sistemas", "INSERT", "crearSistema")]
         public async Task<IActionResult> CrearSistema(Sistema modelo)
         {
             if (await _repo.ExisteSistemaCodigo(modelo.codSistema))
@@ -126,6 +133,7 @@ namespace ABM.Controllers
 
         // GET: /Configuracion/EditarSistema?id=#
         [HttpGet]
+        [Monitoreo("EditarSistema", "SELECT", "obtenerSistemaPorId")]
         public async Task<IActionResult> EditarSistema(int id)
         {
             var sis = await _repo.ObtenerSistemaPorId(id);
@@ -135,6 +143,7 @@ namespace ABM.Controllers
 
         // POST: /Configuracion/EditarSistema
         [HttpPost]
+        [Monitoreo("EditarSistema", "UPDATE", "editarSistema")]
         public async Task<IActionResult> EditarSistema(Sistema modelo)
         {
             if (await _repo.ExisteSistemaCodigo(modelo.codSistema, modelo.idSistema))

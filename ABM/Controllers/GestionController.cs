@@ -1,7 +1,7 @@
 ﻿using ABM.Models;
 using Microsoft.AspNetCore.Mvc;
 using System.Diagnostics;
-
+using ABM.Filters;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
@@ -30,6 +30,8 @@ namespace ABM.Controllers
             repositorioGestion = RepositorioGestion;
         }
 
+        [HttpGet]
+        [Monitoreo("Gestion", "SELECT", "verGestion")]
         public async Task<IActionResult> Gestion()
         {
             // Leer valores de sesión

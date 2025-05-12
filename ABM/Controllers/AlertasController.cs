@@ -1,7 +1,7 @@
 ﻿using ABM.Models;
 using Microsoft.AspNetCore.Mvc;
 using System.Diagnostics;
-
+using ABM.Filters;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
@@ -31,6 +31,7 @@ namespace ABM.Controllers
 		}
 
         [HttpGet]
+        [Monitoreo("AlertaSistema", "SELECT", "verAlertaSistema")]
         public async Task<IActionResult> AlertaSistema(int? idNegocio, int? idSistema)
         {
             var modelo = new AlertaSistemaViewModel();
@@ -69,6 +70,7 @@ namespace ABM.Controllers
         }
 
         [HttpGet]
+        [Monitoreo("SistemasPorNegocio", "SELECT", "obtenerSistemasPorNegocio")]
         public async Task<JsonResult> SistemasPorNegocio(int? idNegocio)
         {
             // Llama al mismo método que ya tienes en el repositorio

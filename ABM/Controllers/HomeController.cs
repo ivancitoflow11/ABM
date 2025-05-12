@@ -1,7 +1,7 @@
 using ABM.Models;
 using Microsoft.AspNetCore.Mvc;
 using System.Diagnostics;
-
+using ABM.Filters;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
@@ -28,6 +28,8 @@ namespace ABM.Controllers
             repositorioRoles = RepositorioRoles;
         }
 
+        [HttpGet]
+        [Monitoreo("Index", "SELECT", "verIndex")]
         public IActionResult Index()
         {
             return View();
@@ -35,8 +37,8 @@ namespace ABM.Controllers
 
 
         // 1. Acción GET que devuelve la lista para el modal
-        [Authorize]
         [HttpGet]
+        [Monitoreo("PnsSelectorPartial", "SELECT", "verPnsSelectorPartial")]
         public async Task<IActionResult> PnsSelectorPartial()
         {
             // 1) Datos del usuario logueado
@@ -59,7 +61,8 @@ namespace ABM.Controllers
 		// 2. Acción POST que recibe la selección y actualiza la sesión
 		[Authorize]
 		[HttpPost]
-		public IActionResult CambiarPns([FromBody] CambiarPnsRequest req)
+        [Monitoreo("CambiarPns", "SELECT", "cambiarPns")]
+        public IActionResult CambiarPns([FromBody] CambiarPnsRequest req)
 		{
 			// req.Pais ya no es null
 			HttpContext.Session.SetInt32("IdPais", req.IdPais);
@@ -71,8 +74,9 @@ namespace ABM.Controllers
 		}
 
 
-
-		public IActionResult Privacy()
+        [HttpGet]
+        [Monitoreo("Privacy", "SELECT", "verPrivacy")]
+        public IActionResult Privacy()
         {
             return View();
         }
@@ -83,6 +87,7 @@ namespace ABM.Controllers
             return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
         }
 
+        [Monitoreo("Salir", "SELECT", "salirSistema")]
         public async Task<IActionResult> Salir()
         {
             await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);

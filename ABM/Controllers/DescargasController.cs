@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using ABM.Filters;
 using ABM.Servicios;
 using System.Threading.Tasks;
 using System.Text;
@@ -90,7 +91,8 @@ namespace ABM.Controllers
 
 		// Acción para Finiquitados
 		[HttpGet]
-		public async Task<IActionResult> DescargarFiniquitadosCSV(string downloadToken) // Aceptar token
+        [Monitoreo("DescargarFiniquitadosCSV", "SELECT", "descargarFiniquitadosCSV")]
+        public async Task<IActionResult> DescargarFiniquitadosCSV(string downloadToken) // Aceptar token
 		{
 			var datos = await _repositorioDescargas.ObtenerDatosFiniquitados();
 			return GenerarRespuestaCsv(datos, "FiniquitadosGeneral", downloadToken); // Pasar token
@@ -98,7 +100,8 @@ namespace ABM.Controllers
 
 		// Acción para Activos Falanet
 		[HttpGet]
-		public async Task<IActionResult> DescargarActivosFalanetCSV(string downloadToken) // Aceptar token
+        [Monitoreo("DescargarActivosFalanetCSV", "SELECT", "descargarActivosFalanetCSV")]
+        public async Task<IActionResult> DescargarActivosFalanetCSV(string downloadToken) // Aceptar token
 		{
 			var datos = await _repositorioDescargas.ObtenerDatosActivosFalanet();
 			return GenerarRespuestaCsv(datos, "ActivosFalanet", downloadToken); // Pasar token
