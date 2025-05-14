@@ -1,12 +1,10 @@
 ﻿using Dapper;
 using ABM.Models;
-using Microsoft.AspNetCore.Http;
-using Microsoft.Data.SqlClient;
+using Microsoft.Data.SqlClient; // O System.Data.SqlClient
 using System.Data;
-using System.Security.Claims;
-using System.Net.Mail;
-using System.Net;
-using System.Net.Http;
+using System.Threading.Tasks;
+using System;
+using Microsoft.Extensions.Configuration;
 
 namespace ABM.Servicios
 {
@@ -14,60 +12,56 @@ namespace ABM.Servicios
     {
         Task Actualizarcl_matriz_diariaPorExcepcion(Cl_matriz_diaria cl_matriz_diaria, DateTime FechaHasta, string NombreMotivo, string Observaciones);
         Task<Cl_matriz_diaria> Obtenercl_matriz_diariaPorIdCarga(int IdCarga);
-
-
     }
+
     public class RepositorioMatrizDiaria : IRepositorioMatrizDiaria
     {
         private readonly string connectionString;
-        private readonly HttpContext httpContext;
-        public RepositorioMatrizDiaria(IConfiguration configuration, IHttpContextAccessor httpContextAccessor)
+
+        public RepositorioMatrizDiaria(IConfiguration configuration)
         {
             connectionString = configuration.GetConnectionString("CadenaSQL");
-            httpContext = httpContextAccessor.HttpContext;
         }
-
-
 
         public async Task<Cl_matriz_diaria> Obtenercl_matriz_diariaPorIdCarga(int IdCarga)
         {
             using (IDbConnection dbdapper = new SqlConnection(connectionString))
             {
                 return await dbdapper.QueryFirstOrDefaultAsync<Cl_matriz_diaria>(@"SELECT * FROM ftc_matriz_diaria
-                where idCarga = @IdCarga", new { IdCarga });
-
+                                                                            WHERE idCarga = @IdCarga", new { IdCarga });
             }
         }
 
-
-        public async Task Actualizarcl_matriz_diariaPorExcepcion(Cl_matriz_diaria cl_matriz_diaria,
-            DateTime FechaHasta, string NombreMotivo, string Observaciones)
+        public async Task Actualizarcl_matriz_diariaPorExcepcion(Cl_matriz_diaria cl_matriz_diaria_param,
+            DateTime FechaHastaParam, string NombreMotivo, string Observaciones)
         {
             using (IDbConnection dbdapper = new SqlConnection(connectionString))
             {
-                string Tabla = "ftc_matriz_diaria";
+                var parametros = new DynamicParameters();
 
+                parametros.Add("@idCarga", cl_matriz_diaria_param.idCarga);
+                parametros.Add("@estado_ex", "CERRADO");
+                parametros.Add("@fechaEsperaba_ex", FechaHastaParam.Date, DbType.Date);
+                parametros.Add("@fechaActual_ex", DateTime.Now.Date, DbType.Date);
+                parametros.Add("@motivo_ex", NombreMotivo);
+                parametros.Add("@fechaModAdmin_ex", DateTime.Now.Date, DbType.Date);
+                parametros.Add("@comentario_ex", Observaciones);
 
-                cl_matriz_diaria.estado_ex = "CERRADO";
-                cl_matriz_diaria.fechaEsperaba_ex = FechaHasta;
-                cl_matriz_diaria.fechaActual_ex = DateTime.Now;
-                cl_matriz_diaria.motivo_ex = NombreMotivo;
-                cl_matriz_diaria.fechaModAdmin_ex = DateTime.Now.ToString("yyyy-MM-dd");
-                cl_matriz_diaria.comentario_ex = Observaciones;
+                Console.WriteLine("Parámetros para Actualizarcl_matriz_diariaPorExcepcion:");
+                foreach (var name in parametros.ParameterNames)
+                {
+                    Console.WriteLine($" - {name}: {parametros.Get<object>(name)}");
+                }
 
-                await dbdapper.ExecuteAsync(@"UPDATE " + Tabla + @" SET
-                                estado_ex = @estado_ex,
-                                fechaEsperaba_ex = @fechaEsperaba_ex,
-                                fechaActual_ex = @fechaActual_ex,
-                                motivo_ex = @motivo_ex,
-                                fechaModAdmin_ex = @fechaModAdmin_ex,
-                                comentario_ex = @comentario_ex
-                                WHERE idCarga = @idCarga", cl_matriz_diaria);
+                await dbdapper.ExecuteAsync(@"UPDATE ftc_matriz_diaria SET
+                                                estado_ex = @estado_ex,
+                                                fechaEsperaba_ex = @fechaEsperaba_ex,
+                                                fechaActual_ex = @fechaActual_ex,
+                                                motivo_ex = @motivo_ex,
+                                                fechaModAdmin_ex = @fechaModAdmin_ex,
+                                                comentario_ex = @comentario_ex
+                                              WHERE idCarga = @idCarga", parametros);
             }
-
-
         }
-
-
     }
 }

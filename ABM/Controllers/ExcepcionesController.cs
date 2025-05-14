@@ -9,6 +9,9 @@ using System.Threading.Tasks;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
+using System.Data.SqlTypes;
+using System.Text.Json;
 
 namespace ABM.Controllers
 {
@@ -64,13 +67,20 @@ namespace ABM.Controllers
             int idNegocio = idNegocioSesion.Value;
 
             ViewBag.TIPOS_EXEPCION = await _repositorioExcepciones.ObtenerTiposExcepciones();
-            ViewBag.FilterIdPais = idPais; // Para la vista, si es necesario
-            ViewBag.FilterIdNegocio = idNegocio; // Para la vista, si es necesario
+            ViewBag.FilterIdPais = idPais;
+            ViewBag.FilterIdNegocio = idNegocio;
 
             var modelo = await _repositorioExcepciones.ObtenerListaDetalleExcepcionPorIdSistema(idPais, idNegocio);
             return View(modelo);
         }
 
+        private string SanitizeFileName(string name)
+        {
+            if (string.IsNullOrEmpty(name)) return string.Empty;
+            string invalidChars = new string(Path.GetInvalidFileNameChars()) + new string(Path.GetInvalidPathChars());
+            Regex r = new Regex(string.Format("[{0}]", Regex.Escape(invalidChars)));
+            return r.Replace(name, "_");
+        }
 
         [HttpPost]
         public async Task<IActionResult> GuardarListaExcepciones(string IdsCarga,
@@ -96,6 +106,27 @@ namespace ABM.Controllers
 
                 string[] IDS = IdsCarga.Split(',');
                 List<string> erroresProcesamiento = new List<string>();
+
+                DateTime? fechaAutorizacionParaComentario = null;
+                if (FechaHasta != DateTime.MinValue && FechaHasta >= (DateTime)SqlDateTime.MinValue.Value && FechaHasta <= (DateTime)SqlDateTime.MaxValue.Value)
+                {
+                    fechaAutorizacionParaComentario = FechaHasta.Date;
+                }
+
+                DateTime fechaHastaParaMatriz;
+                if (FechaHasta != DateTime.MinValue && FechaHasta >= new DateTime(1900, 1, 1) && FechaHasta <= (DateTime)SqlDateTime.MaxValue.Value)
+                {
+                    fechaHastaParaMatriz = FechaHasta.Date;
+                }
+                else
+                {
+                    fechaHastaParaMatriz = new DateTime(1900, 1, 1); // Mínimo para SMALLDATETIME
+                                                                     // fechaHastaParaMatriz = ((DateTime)SqlDateTime.MinValue.Value).Date;
+                }
+
+                Console.WriteLine($"GuardarListaExcepciones - FechaHasta recibida del form: {FechaHasta:o}");
+                Console.WriteLine($"GuardarListaExcepciones - fechaAutorizacionParaComentario (para ftc_comentarios): {(fechaAutorizacionParaComentario.HasValue ? fechaAutorizacionParaComentario.Value.ToString("o") : "NULL")}");
+                Console.WriteLine($"GuardarListaExcepciones - fechaHastaParaMatriz (para Actualizarcl_matriz_diaria): {fechaHastaParaMatriz:o}");
 
                 foreach (string IdCargaStr in IDS)
                 {
@@ -127,7 +158,8 @@ namespace ABM.Controllers
                             var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "ExcepcionesEvidencias");
                             Directory.CreateDirectory(uploadsFolder);
 
-                            string uniqueFileName = $"{Matriz.idCarga}_{Matriz.llave_ex}_{DateTime.Now:yyyyMMddHHmmss}{extension}";
+                            string sanitizedLlaveEx = SanitizeFileName(Matriz.llave_ex ?? "sin_llave");
+                            string uniqueFileName = $"{Matriz.idCarga}_{sanitizedLlaveEx}_{DateTime.Now:yyyyMMddHHmmss}{extension}";
                             string filePath = Path.Combine(uploadsFolder, uniqueFileName);
 
                             using (var fileStream = new FileStream(filePath, FileMode.Create))
@@ -145,23 +177,37 @@ namespace ABM.Controllers
                             idMotivo = IdTipoMotivo,
                             estado = Estado,
                             evidencia = NombreArchivo,
-                            fecha_autorizacion = FechaHasta,
-                            fecha_creacion = DateTime.Now,
+                            fecha_autorizacion = fechaAutorizacionParaComentario,
+                            fecha_creacion = DateTime.Now.Date,
                             llave_ex = Matriz.llave_ex,
                             comentario = Comentario ?? string.Empty
                         };
 
+                        Console.WriteLine($"GuardarListaExcepciones - Intentando guardar Comentario para IdCarga {idCargaActual}: {JsonSerializer.Serialize(nuevaExcepcion)}");
                         await _repositorioExcepciones.GuardarComentariosExcepcion(nuevaExcepcion);
+                        Console.WriteLine($"GuardarListaExcepciones - Comentario para IdCarga {idCargaActual} guardado exitosamente.");
+
+
+                        Console.WriteLine($"GuardarListaExcepciones - Intentando actualizar Matriz Diaria para IdCarga {idCargaActual} con FechaHasta: {fechaHastaParaMatriz:o}");
                         await _repositorioMatrizDiaria.Actualizarcl_matriz_diariaPorExcepcion(
                             Matriz,
-                            FechaHasta,
+                            fechaHastaParaMatriz,
                             Motivo.nombreMotivo,
                             Comentario
                         );
+                        Console.WriteLine($"GuardarListaExcepciones - Matriz Diaria para IdCarga {idCargaActual} actualizada exitosamente.");
+
                     }
                     catch (Exception ex)
                     {
-                        erroresProcesamiento.Add($"Error procesando la carga {IdCargaStr}: {ex.Message}");
+                        // Loguear el error completo, incluyendo InnerException y StackTrace
+                        string errorMessage = $"Error procesando la carga {IdCargaStr}: {ex.Message}";
+                        if (ex.InnerException != null)
+                        {
+                            errorMessage += $" (Inner Exception: {ex.InnerException.Message})";
+                        }
+                        Console.WriteLine($"{errorMessage}\nStackTrace: {ex.StackTrace}");
+                        erroresProcesamiento.Add(errorMessage);
                     }
                 }
 
@@ -175,6 +221,7 @@ namespace ABM.Controllers
             }
             catch (Exception ex)
             {
+                Console.WriteLine($"GuardarListaExcepciones - Error General: {ex.Message}\nStackTrace: {ex.StackTrace}");
                 return Json(new { RESPUESTA = false, TIPO = 5, ERROR = ex.Message, DETALLES = ex.InnerException?.Message });
             }
         }
