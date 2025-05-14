@@ -52,7 +52,7 @@
                                     <td style="white-space:nowrap;">@(item.ActivoFalanet ? "Sí" : "No")</td>
                                     <td style="white-space:nowrap;">@(item.FiniquitadosFalanet ? "Sí" : "No")</td>
                                     <td style="white-space:nowrap;">
-                                        <a asp-action="EditarEntradaListaBlanca" asp-route-id="@item.RutNumDocumento" class="btn btn-sm btn-info" title="Editar"><i class="fas fa-edit"></i></a>
+                                        @* <a asp-action="EditarEntradaListaBlanca" asp-route-id="@item.RutNumDocumento" class="btn btn-sm btn-info" title="Editar"><i class="fas fa-edit"></i></a> *@
                                         <button type="button" class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal_@item.RutNumDocumento.Replace("/", "_").Replace(" ", "_").Replace(".", "")" title="Eliminar">
                                             <i class="fas fa-trash-alt"></i>
                                         </button>
