@@ -1,0 +1,124 @@
+﻿@model IEnumerable<ABM.Models.ListaBlanca>
+@using System.Linq
+
+@{
+    ViewData["Title"] = "Lista Blanca de Empleados";
+    string dataTableId = "file_export_lista_blanca";
+}
+
+<link rel="stylesheet" href="~/css/botones.css" asp-append-version="true" />
+
+<div class="col-12" style="margin-top: 90px;">
+    <h4 style="margin-top:5px;">@ViewData["Title"]</h4>
+
+
+    <div class="card w-100 border position-relative overflow-hidden mb-0 mt-4">
+        <div class="card-header text-white" style="background-color: #acd743;">
+            Listado de Entradas en Lista Blanca
+            <a asp-action="CrearEntradaListaBlanca" class="btn btn-sm btn-light float-end" style="margin-top:-5px;"><i class="fas fa-plus"></i> Crear Nueva</a>
+        </div>
+        <div class="card-body p-4">
+            <div class="table-responsive">
+                <table id="file_export4" class="table table-striped table-bordered nowrap" style="width:100%; text-align:center; table-layout:auto;">
+                    <thead>
+                        <tr>
+                            <th>@Html.DisplayNameFor(model => model.FirstOrDefault().RutNumDocumento)</th>
+                            <th>@Html.DisplayNameFor(model => model.FirstOrDefault().Nombres)</th>
+                            <th>@Html.DisplayNameFor(model => model.FirstOrDefault().Apellidos)</th>
+                            <th>@Html.DisplayNameFor(model => model.FirstOrDefault().Pais)</th>
+                            <th>@Html.DisplayNameFor(model => model.FirstOrDefault().Negocio)</th>
+                            <th>@Html.DisplayNameFor(model => model.FirstOrDefault().Cargo)</th>
+                            <th>@Html.DisplayNameFor(model => model.FirstOrDefault().TipoEmpleado)</th>
+                            <th>@Html.DisplayNameFor(model => model.FirstOrDefault().ActivoAd)</th>
+                            <th>@Html.DisplayNameFor(model => model.FirstOrDefault().ActivoFalanet)</th>
+                            <th>@Html.DisplayNameFor(model => model.FirstOrDefault().FiniquitadosFalanet)</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model != null && Model.Any())
+                        {
+                            foreach (var item in Model)
+                            {
+                                <tr>
+                                    <td style="white-space:nowrap;">@Html.DisplayFor(modelItem => item.RutNumDocumento)</td>
+                                    <td style="white-space:nowrap;">@Html.DisplayFor(modelItem => item.Nombres)</td>
+                                    <td style="white-space:nowrap;">@Html.DisplayFor(modelItem => item.Apellidos)</td>
+                                    <td style="white-space:nowrap;">@(item.Pais ?? "-")</td>
+                                    <td style="white-space:nowrap;">@(item.Negocio ?? "-")</td>
+                                    <td style="white-space:nowrap;">@(item.Cargo ?? "-")</td>
+                                    <td style="white-space:nowrap;">@(item.TipoEmpleado ?? "-")</td>
+                                    <td style="white-space:nowrap;">@(item.ActivoAd ? "Sí" : "No")</td>
+                                    <td style="white-space:nowrap;">@(item.ActivoFalanet ? "Sí" : "No")</td>
+                                    <td style="white-space:nowrap;">@(item.FiniquitadosFalanet ? "Sí" : "No")</td>
+                                    <td style="white-space:nowrap;">
+                                        <a asp-action="EditarEntradaListaBlanca" asp-route-id="@item.RutNumDocumento" class="btn btn-sm btn-info" title="Editar"><i class="fas fa-edit"></i></a>
+                                        <button type="button" class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal_@item.RutNumDocumento.Replace("/", "_").Replace(" ", "_").Replace(".", "")" title="Eliminar">
+                                            <i class="fas fa-trash-alt"></i>
+                                        </button>
+
+                                        <div class="modal fade" id="deleteModal_@item.RutNumDocumento.Replace("/", "_").Replace(" ", "_").Replace(".","")" tabindex="-1" aria-labelledby="deleteModalLabel_@item.RutNumDocumento.Replace("/", "_").Replace(" ", "_").Replace(".","")" aria-hidden="true">
+                                            <div class="modal-dialog">
+                                                <div class="modal-content">
+                                                    <div class="modal-header">
+                                                        <h5 class="modal-title" id="deleteModalLabel_@item.RutNumDocumento.Replace("/", "_").Replace(" ", "_").Replace(".","")">Confirmar Eliminación</h5>
+                                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                    </div>
+                                                    <div class="modal-body">
+                                                        ¿Está seguro de que desea eliminar la entrada para "@item.Nombres @item.Apellidos" (@item.RutNumDocumento)? Esta acción no se puede deshacer.
+                                                    </div>
+                                                    <div class="modal-footer">
+                                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                                                        <form asp-action="EliminarEntradaListaBlancaConfirmado" asp-route-id="@item.RutNumDocumento" method="post" style="display:inline;">
+                                                            @Html.AntiForgeryToken()
+                                                            <button type="submit" class="btn btn-danger">Eliminar</button>
+                                                        </form>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="9" class="text-center">No hay entradas en la lista blanca para mostrar.</td>
+                            </tr>
+                        }
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <th>@Html.DisplayNameFor(model => model.FirstOrDefault().RutNumDocumento)</th>
+                            <th>@Html.DisplayNameFor(model => model.FirstOrDefault().Nombres)</th>
+                            <th>@Html.DisplayNameFor(model => model.FirstOrDefault().Apellidos)</th>
+                            <th>@Html.DisplayNameFor(model => model.FirstOrDefault().Pais)</th>
+                            <th>@Html.DisplayNameFor(model => model.FirstOrDefault().Negocio)</th>
+                            <th>@Html.DisplayNameFor(model => model.FirstOrDefault().Cargo)</th>
+                            <th>@Html.DisplayNameFor(model => model.FirstOrDefault().TipoEmpleado)</th>
+                            <th>@Html.DisplayNameFor(model => model.FirstOrDefault().ActivoAd)</th>
+                            <th>@Html.DisplayNameFor(model => model.FirstOrDefault().ActivoFalanet)</th>
+                            <th>@Html.DisplayNameFor(model => model.FirstOrDefault().FiniquitadosFalanet)</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+
+    <script src="~/js/vendor.min.js" asp-append-version="true"></script>
+    <script src="~/libs/datatables.net/js/jquery.dataTables.min.js" asp-append-version="true"></script>
+    <script src="~/js/dataTables.buttons.min.js" asp-append-version="true"></script>
+    <script src="~/js/jszip.min.js" asp-append-version="true"></script>
+    <script src="~/js/pdfmake.min.js" asp-append-version="true"></script>
+    <script src="~/js/vfs_fonts.js" asp-append-version="true"></script>
+    <script src="~/js/buttons.html5.min.js" asp-append-version="true"></script>
+    <script src="~/js/buttons.print.min.js" asp-append-version="true"></script>
+    <script src="~/js/datatable/datatable-advanced.init.js" asp-append-version="true"></script>
+}

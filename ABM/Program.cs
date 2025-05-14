@@ -55,7 +55,7 @@ builder.Services.AddTransient<IRepositorioGestion, RepositorioGestion>();
 builder.Services.AddTransient<IRepositorioVision, RepositorioVision>();
 builder.Services.AddTransient<ABM.Servicios.IEmailSender, ABM.Servicios.EmailSender>();
 builder.Services.AddScoped<IRepositorioDescargas, RepositorioDescargas>();
-
+builder.Services.AddTransient<IRepositorioListaBlanca, RepositorioListaBlanca>();
 builder.Services.AddAutoMapper(typeof(Program));
 
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)

@@ -20,12 +20,14 @@ namespace ABM.Controllers
     {
         private readonly IRepositorioUsuarios _repositorioUsuarios;
         private readonly IRepositorioRoles _repositorioRoles;
+        private readonly IRepositorioListaBlanca _repositorioListaBlanca;
         private readonly IConfiguration _configuration;
 
-        public MantenedoresController(IRepositorioUsuarios repositorioUsuarios, IRepositorioRoles repositorioRoles, IConfiguration configuration)
+        public MantenedoresController(IRepositorioUsuarios repositorioUsuarios, IRepositorioRoles repositorioRoles, IRepositorioListaBlanca repositorioListaBlanca, IConfiguration configuration)
         {
             _repositorioUsuarios = repositorioUsuarios;
             _repositorioRoles = repositorioRoles;
+            _repositorioListaBlanca = repositorioListaBlanca;
             _configuration = configuration;
         }
 
@@ -397,5 +399,193 @@ namespace ABM.Controllers
         }
 
 
+        // --- MANTENEDOR LISTA BLANCA ---
+
+        [HttpGet]
+        [Monitoreo("ListarEntradasListaBlanca", "SELECT", "verListaBlanca")]
+        public async Task<IActionResult> ListarEntradasListaBlanca()
+        {
+            var modelo = await _repositorioListaBlanca.ObtenerTodos();
+            return View(modelo);
+        }
+
+        [HttpGet]
+        [Monitoreo("CrearEntradaListaBlanca", "SELECT", "verFormCrearListaBlanca")]
+        public IActionResult CrearEntradaListaBlanca()
+        {
+            return View(new ListaBlancaViewModel());
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [Monitoreo("CrearEntradaListaBlanca", "INSERT", "crearEntradaListaBlanca")]
+        public async Task<IActionResult> CrearEntradaListaBlanca(ListaBlancaViewModel model)
+        {
+            if (!ModelState.IsValid)
+            {
+                return View(model);
+            }
+
+            if (await _repositorioListaBlanca.Existe(model.RutNumDocumento))
+            {
+                ModelState.AddModelError("RutNumDocumento", "El RUT/Núm. Documento ya existe en la lista blanca.");
+                return View(model);
+            }
+
+            // Generar APELLIDO_NOMBRE si no viene del formulario o es calculado
+            model.ApellidoNombre = $"{model.Apellidos} {model.Nombres}".Trim();
+
+            var listaBlanca = new ListaBlanca
+            {
+                RutNumDocumento = model.RutNumDocumento,
+                RUT = model.RUT,
+                DV = model.DV,
+                NumeroEmpleado = model.NumeroEmpleado,
+                Nombres = model.Nombres,
+                Apellidos = model.Apellidos,
+                ApellidoNombre = model.ApellidoNombre, // Asignar el campo generado
+                Negocio = model.Negocio,
+                Pais = model.Pais,
+                Cargo = model.Cargo,
+                Departamento = model.Departamento,
+                TipoEmpleado = model.TipoEmpleado,
+                ActivoFalanet = model.ActivoFalanet,
+                FiniquitadosFalanet = model.FiniquitadosFalanet,
+                ActivoAd = model.ActivoAd
+            };
+
+            bool creado = await _repositorioListaBlanca.Crear(listaBlanca);
+
+            if (creado)
+            {
+                TempData["SuccessMessage"] = "Entrada de lista blanca creada correctamente.";
+                return RedirectToAction("ListarEntradasListaBlanca");
+            }
+            else
+            {
+                TempData["ErrorMessage"] = "Error al crear la entrada en la lista blanca.";
+                return View(model);
+            }
+        }
+
+        [HttpGet]
+        [Monitoreo("EditarEntradaListaBlanca", "SELECT", "verFormEditarListaBlanca")]
+        public async Task<IActionResult> EditarEntradaListaBlanca(string id) // id es RutNumDocumento
+        {
+            if (string.IsNullOrEmpty(id))
+            {
+                return BadRequest();
+            }
+            var entrada = await _repositorioListaBlanca.ObtenerPorRutNumDocumento(id);
+            if (entrada == null)
+            {
+                TempData["ErrorMessage"] = "Entrada no encontrada en la lista blanca.";
+                return RedirectToAction("ListarEntradasListaBlanca");
+            }
+
+            var viewModel = new ListaBlancaViewModel
+            {
+                RutNumDocumento = entrada.RutNumDocumento,
+                RUT = entrada.RUT,
+                DV = entrada.DV,
+                NumeroEmpleado = entrada.NumeroEmpleado,
+                Nombres = entrada.Nombres,
+                Apellidos = entrada.Apellidos,
+                ApellidoNombre = entrada.ApellidoNombre,
+                Negocio = entrada.Negocio,
+                Pais = entrada.Pais,
+                Cargo = entrada.Cargo,
+                Departamento = entrada.Departamento,
+                TipoEmpleado = entrada.TipoEmpleado,
+                ActivoFalanet = entrada.ActivoFalanet,
+                FiniquitadosFalanet = entrada.FiniquitadosFalanet,
+                ActivoAd = entrada.ActivoAd
+            };
+            return View(viewModel);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [Monitoreo("EditarEntradaListaBlanca", "UPDATE", "editarEntradaListaBlanca")]
+        public async Task<IActionResult> EditarEntradaListaBlanca(string id, ListaBlancaViewModel model)
+        {
+            if (id != model.RutNumDocumento)
+            {
+                TempData["ErrorMessage"] = "Error de concordancia de ID.";
+                return RedirectToAction("ListarEntradasListaBlanca");
+            }
+
+            if (!ModelState.IsValid)
+            {
+                return View(model);
+            }
+
+            // Generar APELLIDO_NOMBRE si es necesario
+            model.ApellidoNombre = $"{model.Apellidos} {model.Nombres}".Trim();
+
+            var entrada = new ListaBlanca
+            {
+                RutNumDocumento = model.RutNumDocumento,
+                RUT = model.RUT,
+                DV = model.DV,
+                NumeroEmpleado = model.NumeroEmpleado,
+                Nombres = model.Nombres,
+                Apellidos = model.Apellidos,
+                ApellidoNombre = model.ApellidoNombre,
+                Negocio = model.Negocio,
+                Pais = model.Pais,
+                Cargo = model.Cargo,
+                Departamento = model.Departamento,
+                TipoEmpleado = model.TipoEmpleado,
+                ActivoFalanet = model.ActivoFalanet,
+                FiniquitadosFalanet = model.FiniquitadosFalanet,
+                ActivoAd = model.ActivoAd
+            };
+
+            bool actualizado = await _repositorioListaBlanca.Actualizar(entrada);
+
+            if (actualizado)
+            {
+                TempData["SuccessMessage"] = "Entrada de lista blanca actualizada correctamente.";
+                return RedirectToAction("ListarEntradasListaBlanca");
+            }
+            else
+            {
+                TempData["ErrorMessage"] = "Error al actualizar la entrada en la lista blanca.";
+                return View(model);
+            }
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [Monitoreo("EliminarEntradaListaBlanca", "DELETE", "eliminarEntradaListaBlanca")]
+        public async Task<IActionResult> EliminarEntradaListaBlancaConfirmado(string id) // id es RutNumDocumento
+        {
+            if (string.IsNullOrEmpty(id))
+            {
+                TempData["ErrorMessage"] = "ID no proporcionado para eliminar.";
+                return RedirectToAction("ListarEntradasListaBlanca");
+            }
+
+            var existe = await _repositorioListaBlanca.Existe(id);
+            if (!existe)
+            {
+                TempData["ErrorMessage"] = "Entrada no encontrada para eliminar.";
+                return RedirectToAction("ListarEntradasListaBlanca");
+            }
+
+            bool eliminado = await _repositorioListaBlanca.Eliminar(id);
+
+            if (eliminado)
+            {
+                TempData["SuccessMessage"] = "Entrada eliminada correctamente de la lista blanca.";
+            }
+            else
+            {
+                TempData["ErrorMessage"] = "Error al eliminar la entrada de la lista blanca.";
+            }
+            return RedirectToAction("ListarEntradasListaBlanca");
+        }
     }
+
 }
