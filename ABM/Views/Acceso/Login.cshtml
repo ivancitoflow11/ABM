@@ -526,4 +526,218 @@
             });
         }
     </script>
+    @if (ViewBag.PedirOTC != null && (bool)ViewBag.PedirOTC)
+    {
+        <script src="~/js/sweetalert/sweetalert.min.js"></script>
+        <style>
+            .swal2-popup {
+                font-family: 'Segoe UI', 'Helvetica Neue', sans-serif !important;
+            }
+        </style>
+
+        <script>
+            var paisNegocioData = @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject((List<ABM.Models.PaisNegocioViewModel>)ViewBag.PaisesNegocios));
+            var uniqueCountries = [...new Set(paisNegocioData.map(x => x.pais))];
+
+            var selectedPais, selectedIdPais, selectedNegocio, selectedIdNegocio;
+
+            document.addEventListener("DOMContentLoaded", function () {
+                seleccionarPaisNegocio();
+            });
+
+            function seleccionarPaisNegocio() {
+                Swal.fire({
+                    title: '<strong style="color:#3a3a3a;">Seleccione País y Negocio</strong>',
+                    html: `
+                            <div style="display: flex; flex-direction: column; gap: 15px; text-align: left; font-family: 'Segoe UI', sans-serif; font-size: 15px; color: #4a4a4a;">
+                                <div style="display: flex; flex-direction: column; gap: 5px;">
+                                    <label for="selectPais" style="font-weight:600;"> <i class="fas fa-flag" style="margin-right: 5px; color:#3498db;"></i> País</label>
+                                    <select id="selectPais" class="swal2-input" style="height: 42px; padding: 5px 10px; font-size: 16px; color: #333; border-radius: 5px; border: 1px solid #ccc;">
+                                        <option value="">-- Seleccione un país --</option>
+                                    </select>
+                                </div>
+                                <div style="display: flex; flex-direction: column; gap: 5px;">
+                                    <label for="selectNegocio" style="font-weight:600;"> <i class="fas fa-building-user" style="margin-right: 5px; color:#e74c3c;"></i> Negocio</label>
+                                    <select id="selectNegocio" class="swal2-input" style="height: 42px; padding: 5px 10px; font-size: 16px; color: #333; border-radius: 5px; border: 1px solid #ccc;" disabled>
+                                        <option value="">Debe seleccionar primero un país</option>
+                                    </select>
+                                </div>
+                            </div>
+                            `,
+                    focusConfirm: false,
+                    confirmButtonText: 'Continuar',
+                    confirmButtonColor: '#7ac143',
+                    preConfirm: () => {
+                        const idPais = document.getElementById('selectPais').value;
+                        const idNegocio = document.getElementById('selectNegocio').value;
+
+                        if (!idPais || !idNegocio || idNegocio === "NA") {
+                            Swal.showValidationMessage("Debe seleccionar un país y un negocio.");
+                            return false;
+                        }
+
+                        selectedIdPais = idPais;
+                        selectedIdNegocio = idNegocio;
+                        selectedPais = document.getElementById('selectPais').options[document.getElementById('selectPais').selectedIndex].text;
+                        selectedNegocio = document.getElementById('selectNegocio').options[document.getElementById('selectNegocio').selectedIndex].text;
+
+                        return { idPais, idNegocio };
+                    }
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        Swal.fire({
+                            title: 'Cargando...',
+                            html: 'Generando OTC, revise su correo registrado.',
+                            didOpen: () => {
+                                Swal.showLoading();
+                            },
+                            allowOutsideClick: false,
+                            allowEscapeKey: false,
+                            showConfirmButton: false
+                        });
+                        enviarOTC();
+                    } else {
+                        // Si el usuario cierra o no confirma, podrías volver a llamar a seleccionarPaisNegocio o manejarlo como prefieras
+                        // seleccionarPaisNegocio(); // Ejemplo: reintentar la selección
+                    }
+                });
+
+                const selectPais = document.getElementById("selectPais");
+                const paisesUnicos = [...new Map(paisNegocioData.map(item => [item.idPais, item])).values()];
+                paisesUnicos.forEach(function (item) {
+                    const option = document.createElement("option");
+                    option.value = item.idPais;
+                    option.text = item.pais;
+                    selectPais.add(option);
+                });
+
+                selectPais.addEventListener("change", function () {
+                    const selectedCountryId = this.value;
+                    const selectNegocio = document.getElementById("selectNegocio");
+                    selectNegocio.innerHTML = "";
+
+                    if (selectedCountryId === "") {
+                        const defaultOpt = document.createElement("option");
+                        defaultOpt.value = "";
+                        defaultOpt.text = "Debe seleccionar primero un país";
+                        selectNegocio.add(defaultOpt);
+                        selectNegocio.disabled = true;
+                    } else {
+                        const negocios = paisNegocioData.filter(x => x.idPais == selectedCountryId);
+                        const uniqueNegocios = [...new Map(negocios.map(item => [item.idNegocio, item])).values()];
+
+                        if (uniqueNegocios.length === 0) {
+                            const opt = document.createElement("option");
+                            opt.value = "NA"; // Un valor para indicar que no hay negocios
+                            opt.text = "No hay negocios disponibles";
+                            selectNegocio.add(opt);
+                            selectNegocio.disabled = true; // Opcional: deshabilitar si no hay negocios
+                        } else {
+                            const defaultOpt = document.createElement("option");
+                            defaultOpt.value = "";
+                            defaultOpt.text = "-- Seleccione un negocio --";
+                            selectNegocio.add(defaultOpt);
+
+                            uniqueNegocios.forEach(function (item) {
+                                const option = document.createElement("option");
+                                option.value = item.idNegocio;
+                                option.text = item.negocio;
+                                selectNegocio.add(option);
+                            });
+                            selectNegocio.disabled = false;
+                        }
+                    }
+                });
+            }
+
+            function enviarOTC() {
+                fetch('/Acceso/EnviarOTC', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            pedirOTC();
+                        } else {
+                            Swal.fire({ icon: 'error', title: 'Error', text: data.message || "No se pudo enviar el OTC." });
+                        }
+                    })
+                    .catch(error => {
+                        Swal.fire({ icon: 'error', title: 'Error de Red', text: 'Hubo un problema al contactar el servidor.' });
+                    });
+            }
+
+            function pedirOTC() {
+                Swal.fire({
+                    title: `
+                                <strong style="color:#2c3e50;">
+                                    <i class="fas fa-lock" style="color:#7ac143; margin-right: 6px;"></i>
+                                    Verificación OTC
+                                </strong>
+                            `,
+                    html: `
+                                <p style="font-size:16px; color:#4a4a4a;">
+                                    Por favor, ingresa tu código de verificación de 4 dígitos para continuar.<br>
+                                    <span style="color:#7ac143; font-weight:bold;">ABM FALABELLA</span>
+                                </p>
+                            `,
+                    input: 'text',
+                    inputPlaceholder: 'Ej: 1234',
+                    inputAttributes: {
+                        maxlength: 4,
+                        style: 'text-align: center; font-size: 22px; letter-spacing: 5px;'
+                    },
+                    background: '#fcfdf8',
+                    confirmButtonText: 'Validar',
+                    confirmButtonColor: '#7ac143',
+                    allowOutsideClick: false,
+                    allowEscapeKey: false,
+                    showLoaderOnConfirm: true,
+                    preConfirm: (valorOTC) => {
+                        if (!/^\d{4}$/.test(valorOTC)) { // Validar que sean 4 dígitos
+                            Swal.showValidationMessage('El OTC debe ser de 4 dígitos.');
+                            return false;
+                        }
+                        return fetch(`/Acceso/ValidarOTC?idUsuario=@ViewBag.IdUsuario&otcIngresado=${valorOTC}&idPais=${selectedIdPais}&pais=${encodeURIComponent(selectedPais)}&idNegocio=${selectedIdNegocio}&negocio=${encodeURIComponent(selectedNegocio)}`)
+                            .then(response => {
+                                if (!response.ok) {
+                                    throw new Error('Error en la validación del OTC');
+                                }
+                                return response.json();
+                            })
+                            .then(data => {
+                                if (!data.valido) {
+                                    throw new Error('OTC INCORRECTO');
+                                }
+                                return data; // Devuelve data para el siguiente .then
+                            })
+                            .catch(error => {
+                                Swal.showValidationMessage(`${error.message}`);
+                                return false; // Para evitar que se cierre el modal si hay error
+                            });
+                    }
+                }).then((resultado) => {
+                    if (resultado.isConfirmed && resultado.value && resultado.value.valido) { //Verifica que isConfirmed y resultado.value.valido sean verdaderos
+                        // NUEVA ALERTA DE "INICIANDO SESIÓN"
+                        Swal.fire({
+                            title: 'Iniciando sesión',
+                            html: 'Por favor espere...',
+                            timerProgressBar: true,
+                            didOpen: () => {
+                                Swal.showLoading();
+                            },
+                            allowOutsideClick: false,
+                            allowEscapeKey: false,
+                            showConfirmButton: false // No mostrar botón de confirmación
+                        });
+                        // Redirección
+                        window.location.href = '/Home/Index';
+                    } else if (!resultado.isDismissed) { // Si no fue un cierre (dismiss) y no se confirmó (error de OTC)
+                        pedirOTC(); // Volver a pedir OTC si la validación falló y el usuario no cerró el diálogo.
+                    }
+                });
+            }
+        </script>
+    }
 }
