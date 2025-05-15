@@ -327,39 +327,24 @@ namespace ABM.Servicios
             using (IDbConnection dbdapper = new SqlConnection(connectionString))
             {
                 var query = @"
-                        SELECT 
-                        C.[idCarga],
-                        C.[idUsuario],
-                        C.[idRol],
-                        U.[nombre] AS Responsable,
-                        M.[motivo],
-                        M.[idMotivo],
-                        C.[estado],
-                        C.[comentario],
-                        C.[evidencia],
-                        C.[fecha_autorizacion],
-                        C.[fecha_creacion],
-                        C.[llave_ex],
-                        MD.[nombreusuario],
-                        MD.[perfil],
-                        MD.[cargospr],
-                        G.[Nom_Gerencia]
-                    FROM 
-                        ftc_comentarios C
-                    LEFT JOIN 
-                        ftc_motivo M ON C.idMotivo = M.idMotivo
-                    LEFT JOIN 
-                        ftc_matriz_diaria MD ON C.idCarga = MD.idCarga
-                    LEFT JOIN 
-                        ftc_usuario U ON C.[idUsuario] = U.idUsuario
-                    LEFT JOIN 
-                        ftc_gerencia G ON U.ID_gerencia = G.ID_gerencia
-                    WHERE 
-                        U.ID_gerencia = (
-                            SELECT ID_gerencia FROM ftc_usuario WHERE idUsuario = @idUsuarioLogueado
-                        )
-                    ORDER BY 
-                        C.idCarga DESC;";
+                            SELECT 
+                            C.[idCarga], C.[idUsuario], C.[idRol], U.[nombre] AS Responsable, M.[motivo], M.[idMotivo],
+                            C.[estado], C.[comentario], C.[evidencia], C.[fecha_autorizacion], C.[fecha_creacion],
+                            C.[llave_ex], 
+                            MD.[nombreusuario], MD.[perfil], MD.[cargospr], 
+                            G.[Nom_Gerencia],
+                            FP.pais AS Pais,      
+                            FN.negocio AS Negocio   
+                        FROM ftc_comentarios C
+                        LEFT JOIN ftc_motivo M ON C.idMotivo = M.idMotivo
+                        LEFT JOIN ftc_matriz_diaria MD ON C.idCarga = MD.idCarga 
+                        LEFT JOIN ftc_usuario U ON C.[idUsuario] = U.idUsuario
+                        LEFT JOIN ftc_gerencia G ON U.ID_gerencia = G.ID_gerencia
+                        INNER JOIN dbo.ftc_pais_negocio_sistema AL2 ON MD.idPaisNegocioSistema = AL2.idPaisNegocioSistema
+                        INNER JOIN dbo.ftc_pais FP ON AL2.idPais = FP.idPais
+                        INNER JOIN dbo.ftc_negocio FN ON AL2.idNegocio = FN.idNegocio
+                        WHERE U.idUsuario = @idUsuarioLogueado
+                        ORDER BY C.idCarga DESC;";
 
                 var lista = await dbdapper.QueryAsync<Comentarios>(query, new { idUsuarioLogueado });
 

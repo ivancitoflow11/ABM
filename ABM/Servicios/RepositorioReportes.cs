@@ -177,6 +177,7 @@ SELECT DISTINCT
     st.sistema,
     a.nombreusuario,
     a.cargospr,
+    a.cargo,
     a.perfil,
     a.fecultlogin   AS fecultlogin,
     a.cargomatriz,

@@ -15,7 +15,8 @@
         public string llave_ex { get; set; }
         public string motivo { get; set; }
         public string nombreusuario { get; set; }
-
+        public string Pais { get; set; }
+        public string Negocio { get; set; }
         public string fecha_autorizacion_format => (fecha_autorizacion != null) ? Convert.ToDateTime(fecha_autorizacion).ToString("dd-MM-yyyy") : "";
         public string fecha_creacion_format => (fecha_creacion != null) ? Convert.ToDateTime(fecha_creacion).ToString("dd-MM-yyyy") : "";
         public string perfil { get; set; }

@@ -49,6 +49,7 @@
                                     <th>Nombre Usuario</th>
                                     <th>Cargo</th>
                                     <th>Perfil</th>
+                                    <th>UserId</th>
                                     <th>Estado</th>
                                     <th>Fecha Finiquito</th>
                                     <th>Fecha AD</th>
@@ -62,6 +63,7 @@
                                 {
                                     <tr>
                                         <td class="text-center">Sin registros</td>
+                                        <td></td>
                                         <td></td>
                                         <td></td>
                                         <td></td>
@@ -95,6 +97,9 @@
                                                 @(item.perfil ?? "-")
                                             </td>
                                             <td style="white-space:nowrap;">
+                                                @(item.userid ?? "-")
+                                            </td>
+                                            <td style="white-space:nowrap;">
                                                 @(item.estado ?? "-")
                                             </td>
                                             <td style="white-space:nowrap;">
@@ -123,6 +128,7 @@
                                     <th>Nombre Usuario</th>
                                     <th>Cargo</th>
                                     <th>Perfil</th>
+                                    <th>UserId</th>
                                     <th>Estado</th>
                                     <th>Fecha Finiquito</th>
                                     <th>Fecha AD</th>

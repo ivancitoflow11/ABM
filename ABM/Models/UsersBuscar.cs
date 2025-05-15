@@ -12,6 +12,7 @@
 
         public string nombreusuario { get; set; }
         public string cargospr { get; set; }
+        public string cargo { get; set; }
         public string perfil { get; set; }
         public string cargomatriz { get; set; }
         public string perfilmatriz { get; set; }

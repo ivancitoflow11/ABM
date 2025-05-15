@@ -26,7 +26,7 @@ namespace ABM.Servicios
 
         Task<List<ListaUsuariosViewModel>> ObtenerTodosLosUsuariosYRoles();
         Task<bool> ActualizarOTC(int idUsuario, int codigoOTC);
-
+        Task<int?> ObtenerIdRolDeUsuario(int idUsuario);
     }
 
     public class RepositorioUsuarios : IRepositorioUsuarios
@@ -262,6 +262,12 @@ namespace ABM.Servicios
             }
         }
 
-
+        public async Task<int?> ObtenerIdRolDeUsuario(int idUsuario)
+        {
+            using (IDbConnection db = new SqlConnection(connectionString))
+            {
+                return await db.QuerySingleOrDefaultAsync<int?>("SELECT idRol FROM ftc_usuario WHERE idUsuario = @idUsuario", new { idUsuario });
+            }
+        }
     }
 }

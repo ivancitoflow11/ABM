@@ -1,7 +1,7 @@
 ﻿using ABM.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
-using ABM.Servicios;
+using ABM.Servicios; 
 using System;
 using Microsoft.AspNetCore.Http;
 using System.Security.Claims;
@@ -20,12 +20,15 @@ namespace ABM.Controllers
     {
         private readonly IRepositorioExcepciones _repositorioExcepciones;
         private readonly IRepositorioMatrizDiaria _repositorioMatrizDiaria;
+        private readonly IRepositorioUsuarios _repositorioUsuarios; 
 
         public ExcepcionesController(IRepositorioExcepciones repositorioExcepciones,
-                                     IRepositorioMatrizDiaria repositorioMatrizDiaria)
+                                     IRepositorioMatrizDiaria repositorioMatrizDiaria,
+                                     IRepositorioUsuarios repositorioUsuarios) 
         {
             _repositorioExcepciones = repositorioExcepciones;
             _repositorioMatrizDiaria = repositorioMatrizDiaria;
+            _repositorioUsuarios = repositorioUsuarios; 
         }
 
         public async Task<IActionResult> Index()
@@ -98,8 +101,16 @@ namespace ABM.Controllers
                     return Json(new { RESPUESTA = false, TIPO = 4, MENSAJE = "No se pudo identificar al usuario logueado." });
                 }
 
-                string roleIdString = HttpContext.User.FindFirstValue(ClaimTypes.Role);
-                int roleId = !string.IsNullOrEmpty(roleIdString) ? int.Parse(roleIdString) : 1;
+                int? idRolDesdeBD = await _repositorioUsuarios.ObtenerIdRolDeUsuario(userId);
+                if (!idRolDesdeBD.HasValue)
+                {
+                    Console.WriteLine($"Advertencia: No se encontró idRol para el usuario {userId} en ftc_usuario. Usando rol por defecto 1.");
+                    idRolDesdeBD = 1; 
+                }
+                int roleId = idRolDesdeBD.Value; 
+
+                Console.WriteLine($"Usuario ID: {userId}, Rol ID obtenido de BD: {roleId}");
+
 
                 if (string.IsNullOrEmpty(IdsCarga))
                     return Json(new { RESPUESTA = false, TIPO = 5, MENSAJE = "No se proporcionaron IDs de carga" });
@@ -120,13 +131,13 @@ namespace ABM.Controllers
                 }
                 else
                 {
-                    fechaHastaParaMatriz = new DateTime(1900, 1, 1); // Mínimo para SMALLDATETIME
-                                                                     // fechaHastaParaMatriz = ((DateTime)SqlDateTime.MinValue.Value).Date;
+                    fechaHastaParaMatriz = new DateTime(1900, 1, 1);
                 }
 
                 Console.WriteLine($"GuardarListaExcepciones - FechaHasta recibida del form: {FechaHasta:o}");
                 Console.WriteLine($"GuardarListaExcepciones - fechaAutorizacionParaComentario (para ftc_comentarios): {(fechaAutorizacionParaComentario.HasValue ? fechaAutorizacionParaComentario.Value.ToString("o") : "NULL")}");
                 Console.WriteLine($"GuardarListaExcepciones - fechaHastaParaMatriz (para Actualizarcl_matriz_diaria): {fechaHastaParaMatriz:o}");
+
 
                 foreach (string IdCargaStr in IDS)
                 {
@@ -173,7 +184,7 @@ namespace ABM.Controllers
                         {
                             idCarga = Matriz.idCarga,
                             idUsuario = userId,
-                            idRol = roleId,
+                            idRol = roleId, 
                             idMotivo = IdTipoMotivo,
                             estado = Estado,
                             evidencia = NombreArchivo,
@@ -187,7 +198,6 @@ namespace ABM.Controllers
                         await _repositorioExcepciones.GuardarComentariosExcepcion(nuevaExcepcion);
                         Console.WriteLine($"GuardarListaExcepciones - Comentario para IdCarga {idCargaActual} guardado exitosamente.");
 
-
                         Console.WriteLine($"GuardarListaExcepciones - Intentando actualizar Matriz Diaria para IdCarga {idCargaActual} con FechaHasta: {fechaHastaParaMatriz:o}");
                         await _repositorioMatrizDiaria.Actualizarcl_matriz_diariaPorExcepcion(
                             Matriz,
@@ -200,7 +210,6 @@ namespace ABM.Controllers
                     }
                     catch (Exception ex)
                     {
-                        // Loguear el error completo, incluyendo InnerException y StackTrace
                         string errorMessage = $"Error procesando la carga {IdCargaStr}: {ex.Message}";
                         if (ex.InnerException != null)
                         {
@@ -282,7 +291,7 @@ namespace ABM.Controllers
 
                 var search = HttpContext.Request.Form["search[value]"].ToString();
                 var draw = HttpContext.Request.Form["draw"].ToString();
-                var order = HttpContext.Request.Form["order[0][column]"].ToString();
+                var orderColumnIndex = HttpContext.Request.Form["order[0][column]"].ToString(); 
                 var orderDir = HttpContext.Request.Form["order[0][dir]"].ToString();
                 int startRec = int.Parse(HttpContext.Request.Form["start"]);
                 int pageSize = int.Parse(HttpContext.Request.Form["length"]);
@@ -291,22 +300,42 @@ namespace ABM.Controllers
 
                 if (!string.IsNullOrEmpty(search) && !string.IsNullOrWhiteSpace(search))
                 {
+                    string searchLower = search.ToLower();
                     excepciones = excepciones.Where(p =>
-                        (p.idCarga.ToString()?.ToLower().Contains(search.ToLower()) ?? false) ||
-                        (p.idUsuario.ToString()?.ToLower().Contains(search.ToLower()) ?? false) ||
-                        (p.idRol.ToString()?.ToLower().Contains(search.ToLower()) ?? false) ||
-                        (p.Responsable?.ToString().ToLower().Contains(search.ToLower()) ?? false) ||
-                        (p.motivo?.ToString().ToLower().Contains(search.ToLower()) ?? false) ||
-                        (p.estado?.ToString().ToLower().Contains(search.ToLower()) ?? false) ||
-                        (p.comentario?.ToLower().Contains(search.ToLower()) ?? false) ||
-                        (p.evidencia?.ToLower().Contains(search.ToLower()) ?? false) ||
-                        (p.fecha_autorizacion.ToString()?.ToLower().Contains(search.ToLower()) ?? false) ||
-                        (p.fecha_creacion.ToString()?.ToLower().Contains(search.ToLower()) ?? false) ||
-                        (p.llave_ex?.ToString().ToLower().Contains(search.ToLower()) ?? false)
+                        (p.idCarga.ToString()?.Contains(searchLower) ?? false) ||
+                        (p.Responsable?.ToLower().Contains(searchLower) ?? false) ||
+                        (p.motivo?.ToLower().Contains(searchLower) ?? false) ||
+                        (p.estado?.ToLower().Contains(searchLower) ?? false) ||
+                        (p.comentario?.ToLower().Contains(searchLower) ?? false) ||
+                        (p.fecha_autorizacion?.ToString("dd-MM-yyyy").Contains(searchLower) ?? false) ||
+                        (p.fecha_creacion?.ToString("dd-MM-yyyy").Contains(searchLower) ?? false) ||
+                        (p.nombreusuario?.ToLower().Contains(searchLower) ?? false) ||
+                        (p.cargospr?.ToLower().Contains(searchLower) ?? false) ||
+                        (p.perfil?.ToLower().Contains(searchLower) ?? false) ||
+                        (p.Pais?.ToLower().Contains(searchLower) ?? false) ||   
+                        (p.Negocio?.ToLower().Contains(searchLower) ?? false)    
                     ).ToList();
                 }
 
-                excepciones = SortByColumnWithOrder(order, orderDir, excepciones);
+                string orderColumnName = "idCarga"; 
+                switch (orderColumnIndex)
+                {
+                    case "0": orderColumnName = "idCarga"; break;
+                    case "1": orderColumnName = "motivo"; break;
+                    case "2": orderColumnName = "Responsable"; break;
+                    case "3": orderColumnName = "estado"; break;
+                    case "4": orderColumnName = "comentario"; break;
+                    // case "5" es Evidencia, no se ordena usualmente.
+                    case "6": orderColumnName = "fecha_autorizacion"; break;
+                    case "7": orderColumnName = "fecha_creacion"; break;
+                    case "8": orderColumnName = "nombreusuario"; break;
+                    case "9": orderColumnName = "cargospr"; break;
+                    case "10": orderColumnName = "perfil"; break;
+                    case "11": orderColumnName = "Pais"; break;   
+                    case "12": orderColumnName = "Negocio"; break;  
+                }
+
+                excepciones = SortByColumnWithOrder(orderColumnName, orderDir, excepciones);
                 int recFilter = excepciones.Count;
                 excepciones = excepciones.Skip(startRec).Take(pageSize).ToList();
 
@@ -319,30 +348,30 @@ namespace ABM.Controllers
             }
         }
 
-        private List<Comentarios> SortByColumnWithOrder(string order, string orderDir, List<Comentarios> data)
+        private List<Comentarios> SortByColumnWithOrder(string orderColumnName, string orderDir, List<Comentarios> data)
         {
-            List<Comentarios> lst = new List<Comentarios>();
             try
             {
-                switch (order)
+                var prop = typeof(Comentarios).GetProperty(orderColumnName, System.Reflection.BindingFlags.IgnoreCase | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
+                if (prop == null)
                 {
-                    case "0": lst = orderDir.Equals("DESC", StringComparison.CurrentCultureIgnoreCase) ? data.OrderByDescending(p => p.idCarga).ToList() : data.OrderBy(p => p.idCarga).ToList(); break;
-                    case "1": lst = orderDir.Equals("DESC", StringComparison.CurrentCultureIgnoreCase) ? data.OrderByDescending(p => p.motivo).ToList() : data.OrderBy(p => p.motivo).ToList(); break;
-                    case "2": lst = orderDir.Equals("DESC", StringComparison.CurrentCultureIgnoreCase) ? data.OrderByDescending(p => p.estado).ToList() : data.OrderBy(p => p.estado).ToList(); break;
-                    case "3": lst = orderDir.Equals("DESC", StringComparison.CurrentCultureIgnoreCase) ? data.OrderByDescending(p => p.comentario).ToList() : data.OrderBy(p => p.comentario).ToList(); break;
-                    case "4": lst = orderDir.Equals("DESC", StringComparison.CurrentCultureIgnoreCase) ? data.OrderByDescending(p => p.evidencia).ToList() : data.OrderBy(p => p.evidencia).ToList(); break;
-                    case "5": lst = orderDir.Equals("DESC", StringComparison.CurrentCultureIgnoreCase) ? data.OrderByDescending(p => p.fecha_autorizacion).ToList() : data.OrderBy(p => p.fecha_autorizacion).ToList(); break;
-                    case "6": lst = orderDir.Equals("DESC", StringComparison.CurrentCultureIgnoreCase) ? data.OrderByDescending(p => p.fecha_creacion).ToList() : data.OrderBy(p => p.fecha_creacion).ToList(); break;
-                    case "7": lst = orderDir.Equals("DESC", StringComparison.CurrentCultureIgnoreCase) ? data.OrderByDescending(p => p.llave_ex).ToList() : data.OrderBy(p => p.llave_ex).ToList(); break;
-                    default: lst = orderDir.Equals("DESC", StringComparison.CurrentCultureIgnoreCase) ? data.OrderByDescending(p => p.idCarga).ToList() : data.OrderBy(p => p.idCarga).ToList(); break;
+                    prop = typeof(Comentarios).GetProperty("idCarga");
+                }
+
+                if (orderDir.Equals("DESC", StringComparison.CurrentCultureIgnoreCase))
+                {
+                    return data.OrderByDescending(x => prop.GetValue(x, null)).ToList();
+                }
+                else
+                {
+                    return data.OrderBy(x => prop.GetValue(x, null)).ToList();
                 }
             }
             catch (Exception ex)
             {
                 Console.Write(ex);
-                return data;
+                return data.OrderBy(p => p.idCarga).ToList();
             }
-            return lst;
         }
 
         [HttpPost]
