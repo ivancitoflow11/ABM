@@ -13,7 +13,7 @@ namespace ABM.Servicios
         Task<List<ListaUsuariosViewModel>> ObtenerTodosLosUsuarios();
 
         Task<Usuario> ObtenerDatosUsuarioPerfilLogeado();
-
+        Task<Home> ObtenerDatosUsuarioHome();
 
         Task<Usuario> ValidarUsuario(string correo, string repeat_password);
         Task<Usuario> ObtenerPorId(int idUsuario);
@@ -116,6 +116,41 @@ namespace ABM.Servicios
                         int id = Convert.ToInt32(idClaim.Value);
                         return await dbdapper.QueryFirstOrDefaultAsync<Usuario>(
                             @"SELECT * FROM ftc_usuario WHERE idUsuario = @id", new { id });
+                    }
+                }
+                return null;
+            }
+        }
+
+        public async Task<Home> ObtenerDatosUsuarioHome()
+        {
+            using (IDbConnection dbdapper = new SqlConnection(connectionString))
+            {
+                if (httpContext.User.Identity.IsAuthenticated)
+                {
+                    var idClaim = httpContext.User.Claims
+                        .Where(x => x.Type == System.Security.Claims.ClaimTypes.NameIdentifier)
+                        .FirstOrDefault();
+
+                    if (idClaim != null)
+                    {
+                        int id = Convert.ToInt32(idClaim.Value);
+                        string query = @"
+                        SELECT
+                            u.idUsuario,
+                            u.nombre,
+                            u.apellidos,
+                            u.correo,
+                            u.inicioOtc,
+                            u.idRol,
+                            u.rut,         
+                            u.telefono,   
+                            u.usuario, 
+                            r.nombre AS RolNombre
+                        FROM ftc_usuario u
+                        LEFT JOIN ftc_rol r ON u.idRol = r.idRol
+                        WHERE u.idUsuario = @id";
+                        return await dbdapper.QueryFirstOrDefaultAsync<Home>(query, new { id });
                     }
                 }
                 return null;

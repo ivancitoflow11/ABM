@@ -9,6 +9,9 @@ using ABM.Servicios;
 using Microsoft.EntityFrameworkCore;
 using AutoMapper;
 using ABM.ViewModels;
+using System.Security.Claims;
+using Microsoft.AspNetCore.Http;
+using System.Linq;
 
 namespace ABM.Controllers
 {
@@ -19,20 +22,45 @@ namespace ABM.Controllers
         private readonly IRepositorioUsuarios repositorioUsuarios;
         private readonly IMapper mapper;
         private readonly IRepositorioRoles repositorioRoles;
+        private readonly IHttpContextAccessor _httpContextAccessor;
 
-        public HomeController(ILogger<HomeController> logger, IRepositorioUsuarios RepositorioUsuarios, IMapper Mapper, IRepositorioRoles RepositorioRoles)
+        public HomeController(ILogger<HomeController> logger, IRepositorioUsuarios RepositorioUsuarios, IMapper Mapper, IRepositorioRoles RepositorioRoles, IHttpContextAccessor httpContextAccessor)
         {
             _logger = logger;
             repositorioUsuarios = RepositorioUsuarios;
             mapper = Mapper;
             repositorioRoles = RepositorioRoles;
+            _httpContextAccessor = httpContextAccessor;
         }
 
         [HttpGet]
-        [Monitoreo("Index", "SELECT", "verIndex")]
-        public IActionResult Index()
+        [Monitoreo("Index", "SELECT", "verIndex")] 
+        public async Task<IActionResult> Index() 
         {
-            return View();
+            var viewModel = new HomeViewModel
+            {
+                IsAuthenticated = User.Identity.IsAuthenticated,
+                Pais = _httpContextAccessor.HttpContext.Session.GetString("Pais"),
+                Negocio = _httpContextAccessor.HttpContext.Session.GetString("Negocio")
+            };
+
+            if (viewModel.IsAuthenticated)
+            {
+                var usuarioDb = await repositorioUsuarios.ObtenerDatosUsuarioHome();
+
+                if (usuarioDb != null)
+                {
+                    viewModel.NombreCompleto = $"{usuarioDb.nombre} {usuarioDb.apellidos}".Trim();
+                    viewModel.Correo = usuarioDb.correo;
+                    viewModel.UltimoAcceso = usuarioDb.inicioOtc; 
+                    viewModel.RolNombre = usuarioDb.RolNombre; 
+                }
+                else
+                {
+                    viewModel.NombreCompleto = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Name)?.Value ?? "Usuario";
+                }
+            }
+            return View(viewModel);
         }
 
 

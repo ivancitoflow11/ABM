@@ -1,78 +1,274 @@
-﻿@using System.Security.Claims;
-@using Microsoft.AspNetCore.Http;
+﻿@model ABM.Models.HomeViewModel // Ajusta el namespace a tu ViewModel
 @{
     ViewData["Title"] = "Inicio";
-    string pais = Context.Session.GetString("Pais");
-    string negocio = Context.Session.GetString("Negocio");
 }
 
-<div style="min-height: 100vh; display: flex; justify-content: center; align-items: center; text-align: center; font-family: 'Segoe UI', sans-serif;">
-    @if (User.Identity!.IsAuthenticated)
-    {
-            <div style="backdrop-filter: blur(10px); background: rgba(255, 255, 255, 0.9); border: 1px solid rgba(170, 213, 0, 0.6); border-radius: 20px; padding: 40px; max-width: 600px; width: 90%; box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);">
-                <h1 style="font-size: 2.8rem; color: #3a3a3a; font-weight: bold;">Bienvenido(a),</h1>
-                <h2 style="font-size: 1.8rem; color: #4a4a4a; margin: 10px 0;">
-                @User.Claims.Where(c => c.Type == ClaimTypes.Name).Select(c => c.Value).SingleOrDefault()
-                </h2>
+@* Incluye Font Awesome para los iconos (si no lo tienes globalmente) *@
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" />
 
-            @if (!string.IsNullOrEmpty(pais) && !string.IsNullOrEmpty(negocio))
-            {
-                        <div style="font-size: 1.3rem; color: #4a4a4a; margin: 15px 0; padding: 10px;">
-                            <div style="display: flex; justify-content: center; align-items: center; gap: 8px;">
-                                <i class="fas fa-globe" style="color: #7ac143;"></i>
-                                <span>@pais</span>
-                            </div>
-                            <div style="display: flex; justify-content: center; align-items: center; gap: 8px; margin-top: 5px;">
-                                <i class="fas fa-building" style="color: #5bc0ff;"></i>
-                                <span>@negocio</span>
-                            </div>
-                        </div>
-            }
-
-                <p style="font-size: 1.2rem; margin-top: 20px; font-weight: bold;">
-                    <span style="color: #005be6;">ABM</span>
-                    <span style="color: #aad500;"> FALABELLA</span>
-                </p>
-                </div>
+<style>
+    .dashboard-container {
+        min-height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-family: 'Segoe UI', sans-serif;
+        background-color: #f4f7f6;
+        padding: 20px;
     }
-    else
+
+    .welcome-card-shared { /* Estilos base compartidos */
+        backdrop-filter: blur(10px);
+        background: rgba(255, 255, 255, 0.95);
+        border: 1px solid rgba(170, 213, 0, 0.6);
+        border-radius: 20px;
+        padding: 30px 40px;
+        width: 90%;
+        box-shadow: 0 10px 35px rgba(0, 0, 0, 0.12);
+    }
+
+    .welcome-card {
+        max-width: 750px; /* Más ancho para acomodar el grid */
+        text-align: left;
+    }
+
+        .welcome-card h1.greeting {
+            font-size: 2.5rem;
+            color: #3a3a3a;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .welcome-card h2.username {
+            font-size: 1.9rem;
+            color: #005be6; /* Color corporativo para el nombre */
+            margin-top: 0;
+            margin-bottom: 25px; /* Más espacio antes del grid */
+        }
+
+    .info-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); /* Columnas responsivas */
+        gap: 20px;
+        margin-top: 25px;
+        margin-bottom: 30px;
+    }
+
+    .info-card {
+        background: #ffffff;
+        border-radius: 12px; /* Bordes más redondeados */
+        padding: 20px;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.07); /* Sombra más sutil */
+        display: flex;
+        align-items: center;
+        gap: 18px; /* Espacio entre icono y texto */
+        transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    }
+
+        .info-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        }
+
+        .info-card i {
+            font-size: 2rem; /* Iconos un poco más grandes */
+            width: 45px;
+            text-align: center;
+            padding: 8px; /* Pequeño fondo para el icono */
+            border-radius: 50%;
+            color: #fff; /* Color de icono blanco */
+        }
+
+        .info-card .icon-email {
+            background-color: #d9534f;
+        }
+
+        .info-card .icon-role {
+            background-color: #5cb85c;
+        }
+
+        .info-card .icon-access {
+            background-color: #f0ad4e;
+        }
+
+        .info-card .icon-country {
+            background-color: #7ac143;
+        }
+
+        .info-card .icon-business {
+            background-color: #5bc0ff;
+        }
+
+    .info-card-content p.label { /* Etiqueta más pequeña */
+        margin: 0 0 4px 0;
+        font-size: 0.85rem;
+        color: #777;
+        text-transform: uppercase;
+    }
+
+    .info-card-content strong.value { /* Valor más prominente */
+        font-size: 1.15rem;
+        color: #333;
+        display: block;
+        word-wrap: break-word; /* Para correos largos */
+    }
+
+    .brand-footer {
+        text-align: center;
+        font-size: 1.2rem;
+        margin-top: 30px;
+        font-weight: bold;
+    }
+
+        .brand-footer .abm {
+            color: #005be6;
+        }
+
+        .brand-footer .falabella {
+            color: #aad500;
+        }
+
+    .login-prompt-card {
+        max-width: 600px;
+        text-align: center;
+    }
+
+        .login-prompt-card h1 {
+            font-size: 2.8rem;
+            color: #3a3a3a;
+            font-weight: bold;
+        }
+
+        .login-prompt-card h2 {
+            font-size: 2.3rem;
+            color: #4a4a4a;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+
+        .login-prompt-card .brand-text .abm {
+            color: #005be6;
+        }
+
+        .login-prompt-card .brand-text .falabella {
+            color: #aad500;
+        }
+
+        .login-prompt-card p.prompt-text {
+            font-size: 1.2rem;
+            color: #666;
+        }
+
+</style>
+
+<div class="dashboard-container">
+    @if (Model.IsAuthenticated && Model.NombreCompleto != null) // Asegurarse que hay datos para mostrar
     {
-            <div style="backdrop-filter: blur(10px); background: rgba(255, 255, 255, 0.9); border: 1px solid rgba(170, 213, 0, 0.6); border-radius: 20px; padding: 40px; max-width: 600px; width: 90%; box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);">
-                <h1 style="font-size: 2.8rem; color: #3a3a3a; font-weight: bold;">Bienvenido a</h1>
-                <h2 style="font-size: 2.3rem; color: #4a4a4a; font-weight: bold; margin-bottom: 20px;">
-                    <span style="color: #005be6;">ABM</span>
-                    <span style="color: #aad500;"> FALABELLA</span>
-                </h2>
-                <p style="font-size: 1.2rem; color: #666;">
-                    Por favor, inicia sesión para acceder a todas las funcionalidades del sistema.
-                </p>
+        <div class="welcome-card-shared welcome-card">
+            <h1 class="greeting">Bienvenido(a),</h1>
+            <h2 class="username">@Model.NombreCompleto</h2>
+
+            <div class="info-grid">
+                @if (!string.IsNullOrEmpty(Model.Correo))
+                {
+                    <div class="info-card">
+                        <i class="fas fa-envelope icon-email"></i>
+                        <div class="info-card-content">
+                            <p class="label">Correo Electrónico</p>
+                            <strong class="value">@Model.Correo</strong>
+                        </div>
+                    </div>
+                }
+
+                @if (!string.IsNullOrEmpty(Model.RolNombre))
+                {
+                    <div class="info-card">
+                        <i class="fas fa-user-tag icon-role"></i>
+                        <div class="info-card-content">
+                            <p class="label">Rol</p>
+                            <strong class="value">@Model.RolNombre</strong>
+                        </div>
+                    </div>
+                }
+
+                @if (Model.UltimoAcceso.HasValue)
+                {
+                    <div class="info-card">
+                        <i class="fas fa-clock icon-access"></i>
+                        <div class="info-card-content">
+                            <p class="label">Último Acceso</p>
+                            <strong class="value">@Model.UltimoAcceso.Value.ToString("dd/MM/yyyy HH:mm:ss")</strong>
+                        </div>
+                    </div>
+                }
+
+                @if (!string.IsNullOrEmpty(Model.Pais))
+                {
+                    <div class="info-card">
+                        <i class="fas fa-globe icon-country"></i>
+                        <div class="info-card-content">
+                            <p class="label">País</p>
+                            <strong class="value">@Model.Pais</strong>
+                        </div>
+                    </div>
+                }
+
+                @if (!string.IsNullOrEmpty(Model.Negocio))
+                {
+                    <div class="info-card">
+                        <i class="fas fa-building icon-business"></i>
+                        <div class="info-card-content">
+                            <p class="label">Negocio</p>
+                            <strong class="value">@Model.Negocio</strong>
+                        </div>
+                    </div>
+                }
             </div>
+
+            <p class="brand-footer">
+                <span class="abm">ABM</span>
+                <span class="falabella">FALABELLA</span>
+            </p>
+        </div>
+    }
+    else // Usuario no autenticado o datos no cargados
+    {
+        <div class="welcome-card-shared login-prompt-card">
+            <h1>Bienvenido a</h1>
+            <h2 class="brand-text">
+                <span class="abm">ABM</span>
+                <span class="falabella"> FALABELLA</span>
+            </h2>
+            <p class="prompt-text">
+                Por favor, inicia sesión para acceder a todas las funcionalidades del sistema.
+            </p>
+        </div>
     }
 </div>
 
 @section Scripts {
-        <script src="~/js/sweetalert/sweetalert.min.js"></script>
-        <script>
+    <script src="~/js/sweetalert/sweetalert.min.js"></script>
+    <script>
         @if (TempData["SuccessMessage"] != null)
         {
             <text>
-                        Swal.fire({
-                            icon: 'success',
-                            title: '@Html.Raw(TempData["SuccessMessage"])',
-                            showConfirmButton: false,
-                            timer: 2000
+                    Swal.fire({
+                        icon: 'success',
+                    title: '@Html.Raw(TempData["SuccessMessage"])',
+                    showConfirmButton: false,
+                    timer: 2000
                         });
             </text>
         }
         @if (TempData["ErrorMessage"] != null)
         {
             <text>
-                        Swal.fire({
-                            icon: 'error',
-                            title: '@Html.Raw(TempData["ErrorMessage"])',
-                            showConfirmButton: true
+                    Swal.fire({
+                        icon: 'error',
+                    title: '@Html.Raw(TempData["ErrorMessage"])',
+                    showConfirmButton: true
                         });
             </text>
         }
-        </script>
+    </script>
 }
