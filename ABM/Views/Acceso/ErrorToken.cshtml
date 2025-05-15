@@ -1,0 +1,54 @@
+﻿@{
+    ViewData["Title"] = "Error de Restablecimiento";
+    Layout = null; // Mismo layout que el login
+}
+
+<!DOCTYPE html>
+<html lang="es" dir="ltr" data-bs-theme="light" data-color-theme="Blue_Theme" data-layout="vertical">
+<head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="shortcut icon" type="image/png" href="~/images/logos/favicon_abm_32x32.png" />
+    <link rel="stylesheet" href="~/css/all.min.css" asp-append-version="true" />
+    <title>@ViewData["Title"]</title>
+    <style>
+        /* Reutiliza los estilos del Login.cshtml o crea unos específicos */
+        * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
+        body { font-family: "Poppins", sans-serif; }
+        .bg-img { background: url('/images/fdlog.png'); height: 100vh; background-size: cover; background-position: center; display: flex; align-items: center; justify-content: center; }
+        .content { z-index: 999; text-align: center; padding: 40px 32px; width: 450px; background: rgba(255, 255, 255, 0.08); box-shadow: -1px 4px 28px 0px rgba(0, 0, 0, 0.75); border-radius: 8px; }
+        .content header { color: white; font-size: 26px; font-weight: 600; margin-bottom: 20px; font-family: "Montserrat", sans-serif; text-shadow: -1px -1px 0 #A80000, 1px -1px 0 #A80000, -1px 1px 0 #A80000, 1px 1px 0 #A80000;}
+        .error-message { color: #ffdada; font-size: 1.1em; margin-bottom: 25px; }
+        .form-link a { background: #abd600; border: 1px solid #99bf00; color: white !important; font-size: 16px; font-weight: 600; cursor: pointer; font-family: "Montserrat", sans-serif; border-radius: 5px; transition: background-color 0.3s ease; padding: 12px 20px; text-decoration:none;}
+        .form-link a:hover { background: #99bf00; }
+        .logo-container { display: flex; flex-direction: column; align-items: center; margin-bottom: 10px; }
+        .logo-container img.logo-abm { width: 110px; margin-bottom: -30px; }
+        .logo-container img.logo-falabella { width: 250px; }
+        .footer-text { position: absolute; bottom: 20px; width: 100%; text-align: center; font-family: Verdana, sans-serif; font-weight: bold; color: white; z-index: 1000; font-size: 0.9em; }
+    </style>
+</head>
+<body>
+    <div class="bg-img">
+        <div class="content">
+            <div class="logo-container">
+                <img src="~/images/logos/logoabm-falabella.png" alt="Logo ABM" class="logo-abm" />
+                <img src="~/images/logos/logofalabellalogin.png" alt="Logo Falabella" class="logo-falabella" />
+            </div>
+            <header>ENLACE INVÁLIDO O EXPIRADO</header>
+            <div class="error-message">
+                <i class="fas fa-exclamation-triangle fa-2x" style="color: #FFC107; margin-bottom:15px;"></i><br />
+                @ViewData["MensajeError"]
+            </div>
+            <div class="form-link">
+                <a asp-action="OlvidoClave" asp-controller="Acceso">Solicitar Nuevo Enlace</a>
+                <span style="color:white; margin: 0 10px;">|</span>
+                <a asp-action="Login" asp-controller="Acceso" style="background-color:#6c757d; border-color:#5a6268;">Volver a Inicio de Sesión</a>
+            </div>
+        </div>
+        <div class="footer-text">
+            Desarrollado por Bidata
+        </div>
+    </div>
+</body>
+</html>

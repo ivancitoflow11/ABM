@@ -27,7 +27,14 @@ namespace ABM.Servicios
         Task<List<ListaUsuariosViewModel>> ObtenerTodosLosUsuariosYRoles();
         Task<bool> ActualizarOTC(int idUsuario, int codigoOTC);
         Task<int?> ObtenerIdRolDeUsuario(int idUsuario);
-    }
+
+        // Nuevos métodos para olvido de contraseña:
+        Task<Usuario> ObtenerUsuarioPorCorreo(string correo);
+        Task<bool> ActualizarTokenRestablecimiento(int idUsuario, string token, DateTime tokenExpiry);
+        Task<Usuario> ObtenerUsuarioPorTokenRestablecimiento(string token); // Este método debe verificar también la expiración internamente o devolverla.
+        Task<bool> ActualizarPasswordYConsumirToken(int idUsuario, string nuevaPasswordHashed, string nuevaPasswordOriginal); //Similar a primer inicio, podría necesitar la original para historial
+    
+}
 
     public class RepositorioUsuarios : IRepositorioUsuarios
     {
@@ -304,5 +311,77 @@ namespace ABM.Servicios
                 return await db.QuerySingleOrDefaultAsync<int?>("SELECT idRol FROM ftc_usuario WHERE idUsuario = @idUsuario", new { idUsuario });
             }
         }
+
+        // --- Nuevos métodos para olvido de contraseña ---
+
+        public async Task<Usuario> ObtenerUsuarioPorCorreo(string correo)
+        {
+            using (IDbConnection dbdapper = new SqlConnection(connectionString))
+            {
+                // Asegúrate de que el usuario también esté activo (ej: estado = 1)
+                // Se seleccionan todas las columnas para que el objeto Usuario se hidrate completamente.
+                string query = @"SELECT * FROM ftc_usuario 
+                         WHERE correo = @Correo AND estado = 1"; // Asumiendo estado = 1 para activo
+                return await dbdapper.QueryFirstOrDefaultAsync<Usuario>(query, new { Correo = correo });
+            }
+        }
+
+        public async Task<bool> ActualizarTokenRestablecimiento(int idUsuario, string token, DateTime tokenExpiry)
+        {
+            using (IDbConnection dbdapper = new SqlConnection(connectionString))
+            {
+                string query = @"
+        UPDATE ftc_usuario
+        SET ResetPasswordToken = @Token,
+            ResetPasswordTokenExpiry = @TokenExpiry
+        WHERE idUsuario = @IdUsuario";
+
+                int rows = await dbdapper.ExecuteAsync(query, new { IdUsuario = idUsuario, Token = token, TokenExpiry = tokenExpiry });
+                return rows > 0;
+            }
+        }
+
+        public async Task<Usuario> ObtenerUsuarioPorTokenRestablecimiento(string token)
+        {
+            using (IDbConnection dbdapper = new SqlConnection(connectionString))
+            {
+                // El controller debería verificar la expiración (ResetPasswordTokenExpiry) después de obtener el usuario.
+                // Se seleccionan todas las columnas para que el objeto Usuario se hidrate completamente,
+                // incluyendo ResetPasswordTokenExpiry.
+                string query = @"SELECT * FROM ftc_usuario 
+                         WHERE ResetPasswordToken = @Token AND estado = 1"; // Asumiendo estado = 1 para activo
+                return await dbdapper.QueryFirstOrDefaultAsync<Usuario>(query, new { Token = token });
+            }
+        }
+
+        public async Task<bool> ActualizarPasswordYConsumirToken(int idUsuario, string nuevaPasswordHashed, string nuevaPasswordOriginal)
+        {
+            using (IDbConnection dbdapper = new SqlConnection(connectionString))
+            {
+                // ADVERTENCIA: Guardar 'nuevaPasswordOriginal' en 'repeat_password' (si es texto plano) es inseguro.
+                // 'password' debe ser el hash seguro.
+                // 'estado_password' se asume 1 para indicar que la contraseña está activa/cambiada.
+                // 'primerInicio' se establece a 0.
+                string query = @"
+        UPDATE ftc_usuario
+        SET password = @PasswordHash,
+            repeat_password = @PasswordOriginal, -- ¡REVISAR SEGURIDAD DE ESTE CAMPO!
+            FechaCambioPassword = GETDATE(), -- Considera DateTime.UtcNow desde C# para consistencia
+            ResetPasswordToken = NULL,
+            ResetPasswordTokenExpiry = NULL,
+            primerInicio = 0,
+            estado_password = 1 -- Asumiendo 1 = contraseña activa/cambiada
+        WHERE idUsuario = @IdUsuario";
+
+                int rows = await dbdapper.ExecuteAsync(query, new
+                {
+                    IdUsuario = idUsuario,
+                    PasswordHash = nuevaPasswordHashed,
+                    PasswordOriginal = nuevaPasswordOriginal
+                });
+                return rows > 0;
+            }
+        }
+
     }
 }

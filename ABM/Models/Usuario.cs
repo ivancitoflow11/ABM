@@ -27,5 +27,8 @@
         public bool? ResponsableFirma { get; set; }
         public bool primerInicio { get; set; }
 
+        public string ResetPasswordToken { get; set; }
+        public DateTime? ResetPasswordTokenExpiry { get; set; }
+
     }
 }

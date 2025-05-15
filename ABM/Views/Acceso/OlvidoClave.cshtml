@@ -1,19 +1,22 @@
-﻿@{
+﻿@model ABM.Models.OlvidoClaveViewModel
+@{
+    ViewData["Title"] = "Olvidó su Contraseña"; // Definir ViewData["Title"] si no está ya
     Layout = null;
 }
 
 <!DOCTYPE html>
-<html lang="en" dir="ltr" data-bs-theme="light" data-color-theme="Blue_Theme" data-layout="vertical">
-
+<html lang="es" dir="ltr" data-bs-theme="light" data-color-theme="Blue_Theme" data-layout="vertical">
 <head>
     <meta charset="UTF-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
-    <link rel="shortcut icon" type="image/png" href="~/images/logos/logoimperial.png" />
-    <title>Recuperar Contraseña</title>
-    <script src="/js/sweetalert/sweetalert.min.js"></script>
+    <link rel="shortcut icon" type="image/png" href="~/images/logos/favicon_abm_32x32.png" />
+    <link rel="stylesheet" href="~/css/all.min.css" asp-append-version="true" />
+    <title>@ViewData["Title"]</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+
     <style>
+        /* ... (tus estilos existentes sin cambios) ... */
         * {
             margin: 0;
             padding: 0;
@@ -21,59 +24,58 @@
             user-select: none;
         }
 
+        body {
+            font-family: "Poppins", sans-serif;
+        }
+
         .bg-img {
-            background: url('/images/logft/fdlog.png');
+            background: url('/images/fdlog.png'); /* Asegúrate que la ruta sea correcta */
             height: 100vh;
             background-size: cover;
             background-position: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
-            .bg-img:after {
-                position: absolute;
-                content: "";
-                top: 0;
-                left: 0;
-                height: 100%;
-                width: 100%;
-                background: rgba(0, 0, 0, 0.7);
-            }
-
         .content {
-            position: absolute;
-            top: 50%;
-            left: 50%;
             z-index: 999;
             text-align: center;
-            padding: 60px 32px;
-            width: 370px;
-            transform: translate(-50%, -50%);
-            background: rgba(255, 255, 255, 0.04);
+            padding: 40px 32px;
+            width: 420px;
+            background: rgba(255, 255, 255, 0.08);
             box-shadow: -1px 4px 28px 0px rgba(0, 0, 0, 0.75);
+            border-radius: 8px;
         }
 
             .content header {
                 color: white;
-                font-size: 33px;
+                font-size: 26px;
                 font-weight: 600;
-                margin: 0 0 35px 0;
+                margin-bottom: 20px;
                 font-family: "Montserrat", sans-serif;
+                text-shadow: -1px -1px 0 #34a012, 1px -1px 0 #34a012, -1px 1px 0 #34a012, 1px 1px 0 #34a012;
             }
 
         .field {
             position: relative;
-            height: 45px;
+            height: 50px;
             width: 100%;
             display: flex;
             background: rgba(255, 255, 255, 0.94);
+            border-radius: 5px;
+            margin-bottom: 20px;
         }
 
-            .field span {
-                color: #222;
-                width: 40px;
-                line-height: 45px;
+            .field span.fa {
+                color: #555; /* O tu color #34a012 si lo prefieres directamente aquí */
+                width: 50px;
+                line-height: 50px;
+                text-align: center;
+                font-size: 18px;
             }
 
-            .field input {
+            .field input[type="email"], .field input[type="password"] {
                 height: 100%;
                 width: 100%;
                 background: transparent;
@@ -81,23 +83,85 @@
                 outline: none;
                 color: #222;
                 font-size: 16px;
+                padding: 0 15px;
                 font-family: "Poppins", sans-serif;
             }
 
-                .field input[type="submit"] {
-                    background: #3498db;
-                    border: 1px solid #2691d9;
-                    color: white;
-                    font-size: 18px;
-                    letter-spacing: 1px;
-                    font-weight: 600;
-                    cursor: pointer;
-                    font-family: "Montserrat", sans-serif;
+            .field input[type="submit"] {
+                background: #abd600;
+                border: 1px solid #99bf00;
+                color: white;
+                font-size: 18px;
+                letter-spacing: 1px;
+                font-weight: 600;
+                cursor: pointer;
+                font-family: "Montserrat", sans-serif;
+                border-radius: 5px;
+                transition: background-color 0.3s ease;
+                width: 100%;
+                height: 100%;
+            }
+
+                .field input[type="submit"]:hover {
+                    background: #99bf00;
                 }
 
-                    .field input[type="submit"]:hover {
-                        background: #2691d9;
-                    }
+        .form-link a {
+            color: white !important;
+            text-decoration: none !important;
+            font-size: 14px;
+            display: inline-block;
+            margin-top: 15px;
+        }
+
+            .form-link a:hover {
+                text-decoration: underline !important;
+            }
+
+        .alerta {
+            text-align: center;
+            font-family: Verdana, sans-serif;
+            color: white;
+            padding: 12px;
+            border-radius: 5px;
+            margin-top: 15px;
+            margin-bottom: 15px;
+            font-size: 0.9em;
+        }
+
+            .alerta.success {
+                background-color: #28a745;
+            }
+            /* Verde para éxito */
+            .alerta.error {
+                background-color: #dc3545;
+            }
+        /* Rojo para error */
+        .text-danger { /* Para validación de ASP.NET Core si la usas en el input Correo */
+            color: #ffdddd !important;
+            font-size: 0.85em;
+            text-align: left;
+            display: block;
+            margin-top: -15px; /* Ajusta para que quede debajo del campo de correo */
+            margin-bottom: 10px;
+            padding-left: 5px;
+        }
+
+        .logo-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+            .logo-container img.logo-abm {
+                width: 110px;
+                margin-bottom: -30px;
+            }
+
+            .logo-container img.logo-falabella {
+                width: 250px;
+            }
 
         .footer-text {
             position: absolute;
@@ -108,54 +172,107 @@
             font-weight: bold;
             color: white;
             z-index: 1000;
+            font-size: 0.9em;
+        }
+
+        .swal2-popup { /* Estilo para la fuente del SweetAlert */
+            font-family: 'Poppins', sans-serif !important;
         }
     </style>
 </head>
-
 <body>
     <div class="bg-img">
         <div class="content">
-            <img src="~/images/logos/abmlog.png" alt="Logo Imperial" class="" style="width:350px; margin-left:-15px">
-            <br />
-            <br />
-            <header>Recuperar Contraseña</header>
-            <form asp-controller="Acceso" asp-action="OlvidoClave" method="post" id="olvidoClaveForm">
-                <div class="field">
-                    <span class="fa fa-envelope"></span>
-                    <input class="form-control" placeholder="correo@ejemplo.com" required name="correo" type="email" />
+            <div class="logo-container">
+                <img src="~/images/logos/logoabm-falabella.png" alt="Logo ABM" class="logo-abm" />
+                <img src="~/images/logos/logofalabellalogin.png" alt="Logo Falabella" class="logo-falabella" />
+            </div>
+            <header>RECUPERAR CONTRASEÑA</header>
+
+            @if (ViewData["MensajeExito"] != null)
+            {
+                <div class="alerta success" role="alert">
+                    <i class="fa-solid fa-circle-check"></i> @ViewData["MensajeExito"]
                 </div>
-                <div class="field" style="margin-top:20px">
-                    <input type="submit" value="Enviar Correo de Recuperación">
+            }
+            @if (ViewData["MensajeError"] != null)
+            {
+                <div class="alerta error" role="alert">
+                    <i class="fa-solid fa-circle-exclamation"></i> @ViewData["MensajeError"]
+                </div>
+            }
+
+            <form asp-action="OlvidoClave" method="post" id="formOlvidoClave">
+                @* ID añadido para el script *@
+                @Html.AntiForgeryToken()
+                <p style="color: #f0f0f0; font-size: 0.9em; margin-bottom: 20px;">
+                    Ingresa tu correo electrónico y te enviaremos un enlace para restablecer tu contraseña.
+                </p>
+                <div class="field">
+                    <span class="fa fa-envelope" style="color: #34a012;"></span>
+                    <input asp-for="Correo" class="form-control" placeholder="correo@ejemplo.com" required />
+                </div>
+                <span asp-validation-for="Correo" class="text-danger"></span>
+
+                <div class="field" style="margin-top: 25px;">
+                    <input type="submit" value="ENVIAR ENLACE" />
                 </div>
             </form>
+            <div class="form-link">
+                <a asp-action="Login" asp-controller="Acceso">Volver a Inicio de Sesión</a>
+            </div>
         </div>
         <div class="footer-text">
             Desarrollado por Bidata
         </div>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/jquery-validation/dist/jquery.validate.min.js"></script>
+    <script src="~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js"></script>
+
     <script>
-        document.addEventListener("DOMContentLoaded", function () {
-            const mensaje = '@ViewData["Mensaje"]';
-            if (mensaje) {
-                if (mensaje.includes("No existe")) {
+        document.addEventListener('DOMContentLoaded', function () {
+            const formOlvidoClave = document.getElementById('formOlvidoClave');
+
+            if (formOlvidoClave) {
+                formOlvidoClave.addEventListener('submit', function (event) {
+                    var $form = $(this); // Necesario para usar .valid() de jQuery Validation
+
+                    // Primero, verifica la validación del lado del cliente de ASP.NET Core (si está configurada)
+                    if ($form.length && typeof $form.valid === 'function' && !$form.valid()) {
+                        // Si el formulario no es válido (ej: campo de correo vacío y es 'required',
+                        // o formato incorrecto si tienes [EmailAddress] en el ViewModel y validación unobtrusive),
+                        // no hagas nada más, deja que ASP.NET muestre los errores.
+                        return;
+                    }
+
+                    // Si la validación básica del cliente pasa, muestra el SweetAlert
+                    event.preventDefault(); // Previene el envío inmediato
+
                     Swal.fire({
-                        icon: "error",
-                        title: "Error",
-                        text: mensaje,
-                        confirmButtonColor: "#3498db"
+                        title: 'Procesando Solicitud...',
+                        html: 'Por favor, espere.<br>Estamos enviando el enlace de restablecimiento.',
+                        allowOutsideClick: false,
+                        allowEscapeKey: false,
+                        didOpen: () => {
+                            Swal.showLoading();
+                        },
+                        showConfirmButton: false
                     });
-                } else {
-                    Swal.fire({
-                        icon: "success",
-                        title: "Éxito",
-                        text: mensaje,
-                        confirmButtonColor: "#3498db"
-                    });
-                }
+
+                    // Envía el formulario después de un breve instante.
+                    // El RedirectToAction en tu controlador se encargará de la navegación
+                    // y la nueva página mostrará los mensajes de ViewData["MensajeExito"] o ViewData["MensajeError"].
+                    setTimeout(() => {
+                        this.submit(); // 'this' es el elemento <form>
+                    }, 300); // Un pequeño delay es opcional, para asegurar que el usuario vea la alerta.
+                });
             }
         });
     </script>
-</body>
 
+</body>
 </html>

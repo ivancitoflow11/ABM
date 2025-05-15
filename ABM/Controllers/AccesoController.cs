@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using System.Net.Mail;
 using System.Net;
+using ExcelDataReader.Log;
 
 namespace ABM.Controllers
 {
@@ -270,6 +271,174 @@ namespace ABM.Controllers
         private string HashPassword(string password)
         {
             return BCrypt.Net.BCrypt.HashPassword(password);
+        }
+
+
+        // NUEVOS MÉTODOS PARA OLVIDO DE CONTRASEÑA
+
+        [AllowAnonymous]
+        [HttpGet]
+        public IActionResult OlvidoClave()
+        {
+            if (TempData["MensajeExitoOlvido"] != null)
+            {
+                ViewData["MensajeExito"] = TempData["MensajeExitoOlvido"];
+            }
+            if (TempData["MensajeErrorOlvido"] != null)
+            {
+                ViewData["MensajeError"] = TempData["MensajeErrorOlvido"];
+            }
+            return View();
+        }
+
+        [AllowAnonymous]
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> OlvidoClave(OlvidoClaveViewModel model)
+        {
+            if (!ModelState.IsValid)
+            {
+                return View(model);
+            }
+
+            var usuario = await _repositorioUsuarios.ObtenerUsuarioPorCorreo(model.Correo);
+            if (usuario != null)
+            {
+                // El correo existe, proceder a generar token y enviar email
+                var token = Guid.NewGuid().ToString("N");
+                var expiryDate = DateTime.UtcNow.AddMinutes(15); // UTC para consistencia
+
+                bool tokenGuardado = await _repositorioUsuarios.ActualizarTokenRestablecimiento(usuario.idUsuario, token, expiryDate);
+
+                if (tokenGuardado)
+                {
+                    var resetLink = Url.Action("RestablecerClave", "Acceso", new { token }, Request.Scheme);
+                    await EnviarCorreoRestablecimiento(usuario.correo, resetLink, usuario.nombre);
+
+                    TempData["MensajeExitoOlvido"] = "Se ha enviado un enlace para restablecer su contraseña a su correo electrónico. Por favor, revise su bandeja de entrada y spam.";
+                }
+                else
+                {
+                    // Error al guardar el token, podría ser un problema interno
+                    TempData["MensajeErrorOlvido"] = "Ocurrió un error al procesar su solicitud. Por favor, intente más tarde.";
+                }
+            }
+            else
+            {
+                // El correo NO existe en la base de datos
+                // ADVERTENCIA: Esto puede ser un riesgo de seguridad (enumeración de usuarios).
+                TempData["MensajeErrorOlvido"] = "El correo electrónico ingresado no se encuentra registrado en nuestro sistema. Por favor, ingrese un correo válido.";
+            }
+            // Siempre redirigir para evitar reenvío del formulario con F5 y para que TempData funcione correctamente en la vista destino.
+            return RedirectToAction("OlvidoClave");
+        }
+
+        private async Task EnviarCorreoRestablecimiento(string correoDestino, string resetLink, string nombreUsuario)
+        {
+            var smtpServer = _configuration["EmailSettings:ServidorSMTP"];
+            var puerto = int.Parse(_configuration["EmailSettings:Puerto"]);
+            var remitente = _configuration["EmailSettings:CorreoRemitente"];
+            var nombreRemitente = _configuration["EmailSettings:NombreRemitente"];
+            var password = _configuration["EmailSettings:Password"];
+
+
+       
+
+            string html = $@"
+            <div style='font-family: Arial, sans-serif; color: #333; padding: 20px; border: 1px solid #ddd; max-width: 600px; margin: auto; background-color: #f9f9f9;'>
+                <div style='padding: 20px; text-align: center; background-color: #FFC107; color: #333;'> 
+                    <img src='/wwwroot/images/logos/logoabm-falabella.png' alt='Logo Empresa' style='max-width: 150px; margin-bottom:10px;'/> 
+                    <h2>Restablecimiento de Contraseña</h2>
+                </div>
+                <div style='padding: 20px;'>
+                    <p>Hola {nombreUsuario ?? "Usuario"},</p>
+                    <p>Hemos recibido una solicitud para restablecer la contraseña de tu cuenta.</p>
+                    <p>Por favor, haz clic en el siguiente enlace para crear una nueva contraseña:</p>
+                    <p style='text-align: center; margin: 20px 0;'>
+                        <a href='{resetLink}' style='background-color: #4CAF50; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-size: 16px;'>Restablecer Contraseña</a>
+                    </p>
+                    <p>Si no solicitaste un restablecimiento de contraseña, puedes ignorar este correo electrónico.</p>
+                    <p style='font-size: 12px; color: #888;'>Este enlace es válido por 15 minutos.</p>
+                    <hr style='border: 0; border-top: 1px solid #eee;'/>
+                    <p style='font-size: 12px; color: #888;'>Gracias por usar nuestro sistema.</p>
+                </div>
+                <div style='padding: 10px; text-align: center; font-size: 11px; color: #aaa; background-color: #f0f0f0;'>
+                    Este es un correo generado automáticamente, por favor no respondas a este mensaje.
+                </div>
+            </div>";
+
+            var mensaje = new MailMessage();
+            mensaje.From = new MailAddress(remitente, nombreRemitente);
+            mensaje.To.Add(correoDestino);
+            mensaje.Subject = "Restablece tu contraseña";
+            mensaje.Body = html;
+            mensaje.IsBodyHtml = true;
+
+            using (var smtp = new SmtpClient(smtpServer, puerto))
+            {
+                smtp.Credentials = new NetworkCredential(remitente, password);
+                smtp.EnableSsl = bool.Parse(_configuration["EmailSettings:EnableSsl"] ?? "true");
+                await smtp.SendMailAsync(mensaje);
+            }
+        }
+
+        [AllowAnonymous]
+        [HttpGet]
+        public async Task<IActionResult> RestablecerClave(string token)
+        {
+            if (string.IsNullOrWhiteSpace(token))
+            {
+                ViewData["MensajeError"] = "Token no proporcionado.";
+                return View("ErrorToken"); // Vista genérica para errores de token
+            }
+
+            var usuario = await _repositorioUsuarios.ObtenerUsuarioPorTokenRestablecimiento(token);
+            if (usuario == null || usuario.ResetPasswordTokenExpiry < DateTime.UtcNow)
+            {
+                ViewData["MensajeError"] = "El enlace de restablecimiento no es válido o ha expirado. Por favor, solicita uno nuevo.";
+                return View("ErrorToken");
+            }
+
+            var model = new RestablecerClaveViewModel { Token = token };
+            return View(model);
+        }
+
+        [AllowAnonymous]
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> RestablecerClave(RestablecerClaveViewModel model)
+        {
+            if (!ModelState.IsValid)
+            {
+                return View(model);
+            }
+
+            var usuario = await _repositorioUsuarios.ObtenerUsuarioPorTokenRestablecimiento(model.Token);
+            if (usuario == null || usuario.ResetPasswordTokenExpiry < DateTime.UtcNow)
+            {
+                ModelState.AddModelError("", "El enlace de restablecimiento no es válido o ha expirado. Por favor, solicita uno nuevo.");
+                // Considera limpiar el ViewData["MensajeError"] si prefieres el error del ModelState.
+                // ViewData["MensajeError"] = "El enlace de restablecimiento no es válido o ha expirado. Por favor, solicita uno nuevo.";
+                // return View("ErrorToken"); // O devuelve la misma vista con el error
+                return View(model);
+            }
+
+            string hashedPassword = HashPassword(model.NuevaContrasena);
+            // Aquí, el método del repositorio también debería invalidar el token (ponerlo a NULL)
+            // y actualizar la fecha de cambio de password y quitar el flag de primerInicio si existiera.
+            bool actualizado = await _repositorioUsuarios.ActualizarPasswordYConsumirToken(usuario.idUsuario, hashedPassword, model.NuevaContrasena);
+
+
+            if (actualizado)
+            {
+                TempData["MensajeLogin"] = "Tu contraseña ha sido restablecida correctamente. Ya puedes iniciar sesión.";
+                return RedirectToAction("Login");
+            }
+            else
+            {
+                ModelState.AddModelError("", "No se pudo actualizar la contraseña. Inténtalo de nuevo.");
+                return View(model);
+            }
         }
     }
 }
