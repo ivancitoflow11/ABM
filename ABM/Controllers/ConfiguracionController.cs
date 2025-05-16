@@ -3,12 +3,14 @@ using ABM.Filters;
 using ABM.Servicios;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 
 namespace ABM.Controllers
 {
+    [Authorize]
     public class ConfiguracionController : Controller
     {
         private readonly IRepositorioConfiguracion _repo;
