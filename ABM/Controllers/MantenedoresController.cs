@@ -109,6 +109,29 @@ namespace ABM.Controllers
             }
         }
 
+        [HttpGet]
+        public async Task<IActionResult> VerificarCorreoPasoActivos(string correo)
+        {
+            if (string.IsNullOrWhiteSpace(correo))
+            {
+                // Devuelve un resultado que indique que no se necesita advertencia o es un error de entrada
+                return Json(new { requiereAdvertencia = false, error = "Correo no proporcionado" });
+            }
+            try
+            {
+                bool existeEnPasoActivos = await _repositorioUsuarios.ExisteCorreoEnPasoActivos(correo);
+                // Si existe en paso_activos, no se requiere advertencia.
+                // Si NO existe, entonces se requiere advertencia.
+                return Json(new { requiereAdvertencia = !existeEnPasoActivos });
+            }
+            catch (Exception ex)
+            {
+                // Considera loggear el error ex
+                // Devuelve un error o un estado que indique que la verificación falló y quizás no mostrar la advertencia.
+                return Json(new { requiereAdvertencia = false, error = "Error al verificar el correo en paso_activos.", detalle = ex.Message });
+            }
+        }
+
         private string HashPassword(string password)
         {
             return BCrypt.Net.BCrypt.HashPassword(password);

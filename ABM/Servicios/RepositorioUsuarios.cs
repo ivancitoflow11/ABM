@@ -33,8 +33,10 @@ namespace ABM.Servicios
         Task<bool> ActualizarTokenRestablecimiento(int idUsuario, string token, DateTime tokenExpiry);
         Task<Usuario> ObtenerUsuarioPorTokenRestablecimiento(string token); // Este método debe verificar también la expiración internamente o devolverla.
         Task<bool> ActualizarPasswordYConsumirToken(int idUsuario, string nuevaPasswordHashed, string nuevaPasswordOriginal); //Similar a primer inicio, podría necesitar la original para historial
-    
-}
+        //METODO PARA PASO ACTIVOS
+
+        Task<bool> ExisteCorreoEnPasoActivos(string correo);
+    }
 
     public class RepositorioUsuarios : IRepositorioUsuarios
     {
@@ -62,7 +64,15 @@ namespace ABM.Servicios
                 return rows > 0;
             }
         }
-
+        public async Task<bool> ExisteCorreoEnPasoActivos(string correo)
+        {
+            using (IDbConnection dbdapper = new SqlConnection(connectionString))
+            {
+                string query = "SELECT COUNT(1) FROM ftc_paso_activos WHERE mailusuario = @correo";
+                int count = await dbdapper.ExecuteScalarAsync<int>(query, new { correo });
+                return count > 0;
+            }
+        }
         public async Task<List<ListaUsuariosViewModel>> ObtenerTodosLosUsuariosYRoles()
         {
             using (IDbConnection dbdapper = new SqlConnection(connectionString))

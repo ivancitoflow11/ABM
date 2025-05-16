@@ -11,13 +11,16 @@
         padding: 10px;
         font-size: 0.9rem;
     }
+    /* Estilo para el spinner en el botón */
+    .btn .spinner-border {
+        margin-right: 5px;
+    }
 </style>
 
 <div class="col-12" style="margin-top: 90px">
     <h4 style="margin-top:5px;">Crear Usuario</h4>
     <div class="card w-100 border position-relative overflow-hidden mb-0">
         <div class="card-body p-4">
-
 
             @if (TempData["ErrorMessage"] != null)
             {
@@ -26,11 +29,17 @@
                     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
                 </div>
             }
+            @if (TempData["SuccessMessage"] != null) // Para mostrar mensajes de éxito también
+            {
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    @TempData["SuccessMessage"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+                </div>
+            }
 
-            <form asp-controller="Mantenedores" asp-action="Registrarse" method="post">
+            <form id="registroUsuarioForm" asp-controller="Mantenedores" asp-action="Registrarse" method="post">
                 @Html.AntiForgeryToken()
                 <div class="row">
-                    <!-- Columna izquierda -->
                     <div class="col-lg-6" style="margin-top:15px;">
                         <div class="mb-3">
                             <label for="Nombre" class="form-label">Nombre</label>
@@ -51,7 +60,7 @@
                             <label for="Password" class="form-label">Contraseña</label>
                             <div class="input-group">
                                 <input class="form-control" type="password" placeholder="Ingrese su contraseña" asp-for="Password" id="password" />
-                                <span class="input-group-text" id="togglePassword">
+                                <span class="input-group-text" id="togglePassword" style="cursor:pointer;">
                                     <i class="fa fa-eye" aria-hidden="true"></i>
                                 </span>
                             </div>
@@ -60,7 +69,7 @@
                         <div class="mb-3">
                             <label for="MesesExpiracionClave" class="form-label">Meses para Expiración de Clave</label>
                             <select class="form-select" asp-for="MesesExpiracionClave" id="MesesExpiracionClave">
-                                <option disabled selected>Seleccione meses...</option>
+                                <option disabled selected value="">Seleccione meses...</option>
                                 @for (int i = 1; i <= 12; i++)
                                 {
                                     <option value="@i">@i</option>
@@ -70,7 +79,6 @@
                         </div>
                     </div>
 
-                    <!-- Columna derecha -->
                     <div class="col-lg-6" style="margin-top:15px;">
                         <div class="mb-3">
                             <label for="Apellidos" class="form-label">Apellidos</label>
@@ -79,7 +87,7 @@
                         </div>
                         <div class="mb-3">
                             <label for="Correo" class="form-label">Correo Electrónico</label>
-                            <input class="form-control" type="email" placeholder="correo@ejemplo.com" asp-for="Correo" />
+                            <input class="form-control" type="email" placeholder="correo@ejemplo.com" asp-for="Correo" id="Correo" />
                             @Html.ValidationMessageFor(m => m.Correo, "", new { @class = "text-danger" })
                         </div>
                         <div class="mb-3">
@@ -90,18 +98,16 @@
                             </div>
                             @Html.ValidationMessageFor(m => m.Telefono, "", new { @class = "text-danger" })
                         </div>
-
-
                         <div class="mb-3">
                             <label for="Repeat_Password" class="form-label">Repetir Contraseña</label>
                             <div class="input-group">
                                 <input class="form-control" type="password" placeholder="Repita la contraseña" asp-for="Repeat_Password" id="repeatPassword" />
-                                <span class="input-group-text" id="toggleRepeatPassword">
+                                <span class="input-group-text" id="toggleRepeatPassword" style="cursor:pointer;">
                                     <i class="fa fa-eye" aria-hidden="true"></i>
                                 </span>
                             </div>
                             @Html.ValidationMessageFor(m => m.Repeat_Password, "", new { @class = "text-danger" })
-                        </div>                       
+                        </div>
                         <div class="mb-3">
                             <label for="RolId" class="form-label">Rol</label>
                             <select class="form-select" asp-for="RolId" asp-items="@(new SelectList(Model.RolesDisponibles, "idRol", "nombre"))">
@@ -109,13 +115,11 @@
                             </select>
                             @Html.ValidationMessageFor(m => m.RolId, "", new { @class = "text-danger" })
                         </div>
-
                     </div>
 
-                    <!-- Botón de envío -->
                     <div class="col-12">
                         <div class="d-grid gap-2 mb-3" style="display: flex; justify-content: flex-end;">
-                            <button class="btn btn-success" type="submit" style="width: 300px; border-radius:40px; margin-top:15px;">Registrar Usuario</button>
+                            <button id="btnRegistrarUsuario" class="btn btn-success" type="submit" style="width: 300px; border-radius:40px; margin-top:15px;">Registrar Usuario</button>
                         </div>
                     </div>
                 </div>
@@ -126,22 +130,112 @@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
-<script>
-    function togglePasswordVisibility(inputId, toggleId) {
-        const passwordInput = document.getElementById(inputId);
-        const toggleElement = document.getElementById(toggleId);
-        const newType = passwordInput.getAttribute("type") === "password" ? "text" : "password";
-        passwordInput.setAttribute("type", newType);
-        toggleElement.querySelector("i").classList.toggle("fa-eye-slash");
-    }
+    <script>
+        function togglePasswordVisibility(inputId, toggleId) {
+            const passwordInput = document.getElementById(inputId);
+            const toggleElement = document.getElementById(toggleId);
+            const icon = toggleElement.querySelector("i");
+                const newType = passwordInput.getAttribute("type") === "password" ? "text" : "password";
+            passwordInput.setAttribute("type", newType);
+            icon.classList.toggle("fa-eye");
+            icon.classList.toggle("fa-eye-slash");
+            }
 
-    document.getElementById("togglePassword").addEventListener("click", function () {
-        togglePasswordVisibility("password", "togglePassword");
-    });
+        document.getElementById("togglePassword").addEventListener("click", function () {
+            togglePasswordVisibility("password", "togglePassword");
+            });
 
-    document.getElementById("toggleRepeatPassword").addEventListener("click", function () {
-        togglePasswordVisibility("repeatPassword", "toggleRepeatPassword");
-    });
-</script>
+            document.getElementById("toggleRepeatPassword").addEventListener("click", function () {
+                togglePasswordVisibility("repeatPassword", "toggleRepeatPassword");
+            });
+
+            document.addEventListener('DOMContentLoaded', function () {
+                const form = document.getElementById('registroUsuarioForm');
+                const correoInput = document.getElementById('Correo'); // ID del campo de correo
+                const submitButton = document.getElementById('btnRegistrarUsuario');
+                const originalButtonHtml = submitButton.innerHTML;
+
+                if (form && correoInput && submitButton) {
+                    form.addEventListener('submit', function (event) {
+                        // Primero, valida el formulario del lado del cliente con jQuery Unobtrusive Validation
+                        // Si no es válido, no hacemos la llamada AJAX y dejamos que se muestren los errores.
+                        if (!$(form).valid()) {
+                            return; // Detiene si las validaciones de unobtrusive fallan
+                        }
+
+                        event.preventDefault(); // Prevenir el envío inmediato del formulario
+
+                        const correo = correoInput.value;
+
+                        if (!correo || correo.trim() === "") {
+                            // Si el correo está vacío (aunque la validación del modelo debería atrapar esto)
+                            // o si quieres permitir el envío sin la verificación AJAX en este caso:
+                            // form.submit(); // O simplemente no hacer nada y dejar que las validaciones de servidor actúen
+                            Swal.fire('Información', 'Por favor, ingrese un correo electrónico.', 'info');
+                            return;
+                        }
+
+                        submitButton.disabled = true;
+                        submitButton.innerHTML = `<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Verificando...`;
+
+                        const urlVerificacion = '@Url.Action("VerificarCorreoPasoActivos", "Mantenedores")';
+
+                        fetch(`${urlVerificacion}?correo=${encodeURIComponent(correo)}`)
+                            .then(response => {
+                                if (!response.ok) {
+                                    throw new Error(`Error HTTP: ${response.status}`);
+                                }
+                                return response.json();
+                            })
+                            .then(data => {
+                                submitButton.disabled = false;
+                                submitButton.innerHTML = originalButtonHtml;
+
+                                if (data.error) {
+                                    console.error('Error al verificar correo:', data.detalle || data.error);
+                                    Swal.fire('Error', `No se pudo verificar el correo: ${data.detalle || data.error}`, 'error');
+                                    return;
+                                }
+
+                                if (data.requiereAdvertencia) {
+                                    // El correo NO existe en paso_activos, mostrar advertencia
+                                    Swal.fire({
+                                        title: 'Advertencia',
+                                        html: '⚠️ El correo de este usuario no figura en los registros de paso_activos.<br>¿Desea continuar de todos modos?',
+                                        icon: 'warning',
+                                        showCancelButton: true,
+                                        confirmButtonColor: '#28a745', // Verde (éxito de Bootstrap)
+                                        cancelButtonColor: '#6c757d',  // Gris (secundario de Bootstrap)
+                                        confirmButtonText: 'Continuar',
+                                        cancelButtonText: 'Cancelar'
+                                    }).then((result) => {
+                                        if (result.isConfirmed) {
+                                            // El usuario decidió continuar, enviar el formulario
+                                            // Para evitar volver a ejecutar este manejador de submit,
+                                            // podemos clonar el botón, o simplemente llamar a form.submit()
+                                            form.submit();
+                                        }
+                                    });
+                                } else {
+                                    // El correo SÍ existe en paso_activos o no se requiere advertencia,
+                                    // proceder con el envío normal del formulario
+                                    form.submit();
+                                }
+                            })
+                            .catch(error => {
+                                submitButton.disabled = false;
+                                submitButton.innerHTML = originalButtonHtml;
+                                console.error('Error en fetch o procesamiento:', error);
+                                Swal.fire('Error de Conexión', 'Ocurrió un problema al verificar el correo. Por favor, intente de nuevo.', 'error');
+                            });
+                    });
+                } else {
+                    if(!form) console.error("Formulario 'registroUsuarioForm' no encontrado.");
+                    if(!correoInput) console.error("Input de correo con ID 'Correo' no encontrado.");
+                    if(!submitButton) console.error("Botón de submit con ID 'btnRegistrarUsuario' no encontrado.");
+                }
+            });
+    </script>
 }
