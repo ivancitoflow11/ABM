@@ -307,16 +307,6 @@
         }
 
 </style>
-<br />
-<br />
-<div class="col-lg-8">
-              <div class="card">
-                <div class="card-body">
-                  <h4 class="card-title">Total Visits</h4>
-                  <div id="visitfromworld" class="w-100 h-400"></div>
-                </div>
-              </div>
-            </div>
 
 <div class="modern-dashboard-container">
     @if (Model.IsAuthenticated && Model.NombreCompleto != null)
@@ -431,21 +421,31 @@
 </div>
 
 @section Scripts {
-    <script src="~/libs/jvectormap/jquery-jvectormap.min.js"></script>
-    <script src="~/js/extra-libs/jvectormap/jquery-jvectormap-world-mill-en.js"></script>
-    <script src="~/js/dashboards/dashboard4.js"></script>
     <script src="~/js/sweetalert/sweetalert.min.js"></script>
     <script>
-        $(function () {
-            $('#visitfromworld').vectorMap({
-                map: 'world_mill_en',
-                backgroundColor: 'transparent',
-                regionStyle: {
-                    initial: {
-                        fill: '#5c87b2' // Un color para ver si el mapa se dibuja
-                    }
-                }
-            });
-        });
+        @if (TempData["SuccessMessage"] != null)
+        {
+            <text>
+                    Swal.fire({
+                        icon: 'success',
+                    title: '@Html.Raw(TempData["SuccessMessage"])',
+                    toast: true, 
+                    position: 'top-end',
+                    showConfirmButton: false,
+                    timer: 3000,
+                    timerProgressBar: true
+                        });
+            </text>
+        }
+        @if (TempData["ErrorMessage"] != null)
+        {
+            <text>
+                    Swal.fire({
+                        icon: 'error',
+                    title: '@Html.Raw(TempData["ErrorMessage"])',
+                    showConfirmButton: true
+                        });
+            </text>
+        }
     </script>
 }
