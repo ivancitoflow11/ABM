@@ -10,91 +10,127 @@
     <link href="~/css/leaflet.css" rel="stylesheet" />
 
     <style>
-        .map-container {
-            width: 100%;
-            margin: 0 auto;
+
+                .map-container {
+                        width: 100%;
+                        margin: 0 auto;
+                        position: relative;
         }
 
-        #map {
-            width: 100%;
-            height: 400px;
-            border-radius: 8px;
-            border: 1px solid #e0e0e0;
-            background: #fafafa;
+                #map {
+                        width: 100%;
+                        height: 800px;
+                        border-radius: 8px;
+                        border: 1px solid #e0e0e0;
+                        background: #fafafa;
         }
 
-        .country {
-            stroke: #fff;
-            stroke-width: 1;
-            cursor: pointer;
-            transition: fill .3s, filter .3s;
+                .country {
+                        stroke: #fff;
+                        stroke-width: 1;
+                        cursor: pointer;
+                        transition: fill .3s, filter .3s;
         }
 
-            .country:hover {
-                filter: brightness(1.1);
-            }
+                    .country:hover {
+                            filter: brightness(1.1);
+        }
 
-            .country.disabled {
-                fill: rgba(200, 200, 200, 0.15) !important;
-                cursor: default;
-                pointer-events: none;
-            }
+                    .country.disabled {
+                            fill: rgba(200, 200, 200, 0.15) !important;
+                            cursor: default;
+                            pointer-events: none;
+        }
 
-            /* semitransparencias para cada país */
-            .country[data-name="ARGENTINA"] {
-                fill: rgba(26,188,156,0.5);
-            }
+        /* semitransparencias para cada país */
+                    .country[data-name="ARGENTINA"] {
+                            fill: rgba(26,188,156,0.5);
+        }
 
-            .country[data-name="CHILE"] {
-                fill: rgba(52,152,219,0.5);
-            }
+                    .country[data-name="CHILE"] {
+                            fill: rgba(52,152,219,0.5);
+        }
 
-            .country[data-name="PERU"] {
-                fill: rgba(230,126,34,0.5);
-            }
+                    .country[data-name="PERU"] {
+                            fill: rgba(230,126,34,0.5);
+        }
 
-            .country[data-name="COLOMBIA"] {
-                fill: rgba(155,89,182,0.5);
-            }
+                    .country[data-name="COLOMBIA"] {
+                            fill: rgba(155,89,182,0.5);
+        }
 
-            .country[data-name="BRASIL"] {
-                fill: rgba(241,196,15,0.5);
-            }
+                    .country[data-name="BRASIL"] {
+                            fill: rgba(241,196,15,0.5);
+        }
 
-            .country[data-name="MEXICO"] {
-                fill: rgba(192,57,43,0.5);
-            }
+                    .country[data-name="MEXICO"] {
+                            fill: rgba(192,57,43,0.5);
+        }
 
-            .country[data-name="URUGUAY"] {
-                fill: rgba(22,160,133,0.5);
-            }
+                    .country[data-name="URUGUAY"] {
+                            fill: rgba(22,160,133,0.5);
+        }
 
-            .country[data-name="CHINA"] {
-                fill: rgba(127,140,141,0.5);
-            }
+                    .country[data-name="CHINA"] {
+                            fill: rgba(127,140,141,0.5);
+        }
 
-            /* halo suave al país seleccionado */
-            .country.selected {
-                filter: drop-shadow(0 0 8px rgba(0,0,0,0.3)) brightness(1.1);
-                fill-opacity: 1 !important;
-            }
+        /* halo suave al país seleccionado */
+                    .country.selected {
+                            filter: drop-shadow(0 0 8px rgba(0,0,0,0.3)) brightness(1.1);
+                            fill-opacity: 1 !important;
+        }
 
         /* etiquetas claras y nítidas */
-        #labels text {
-            font-family: 'Segoe UI', sans-serif;
-            font-size: 12px;
-            font-weight: 600;
-            fill: #2c3e50;
-            pointer-events: none;
-            text-shadow: 0 0 2px rgba(255,255,255,0.8);
+                #labels text {
+                        font-family: 'Segoe UI', sans-serif;
+                        font-size: 12px;
+                        font-weight: 600;
+                        fill: #2c3e50;
+                        pointer-events: none;
+                        text-shadow: 0 0 2px rgba(255,255,255,0.8);
         }
 
-        .selected-country {
-            text-align: center;
-            font-weight: bold;
-            color: #5090c0;
-            margin-top: 10px;
+                .selected-country {
+                        text-align: center;
+                        font-weight: bold;
+                        color: #5090c0;
+                        margin-top: 10px;
         }
+
+
+        /* Controles de zoom */
+                .zoom-controls {
+                        position: absolute;
+                        top: 10px;
+                        right: 10px;
+                        background: white;
+                        border-radius: 4px;
+                        box-shadow: 0 1px 5px rgba(0,0,0,0.2);
+                        z-index: 10;
+        }
+
+                .zoom-btn {
+                        width: 30px;
+                        height: 30px;
+                        font-size: 16px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        cursor: pointer;
+                        border: none;
+                        background: white;
+        }
+
+                    .zoom-btn:hover {
+                            background: #f0f0f0;
+        }
+
+                    .zoom-btn:first-child {
+                            border-bottom: 1px solid #e0e0e0;
+        }
+
+
     </style>
 </head>
 <body>
@@ -106,48 +142,318 @@
         Visión corporativa – @(Context.Session.GetString("Negocio") ?? "Negocio")
     </h3>
 
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Mapa en el lado izquierdo (ocupa 6 columnas de 12) -->
+            <div class="col-md-6">
+                <div class="map-container">
+                    <h5 style="text-align:center; font-family:'Segoe UI',sans-serif">Seleccione un País</h5>
 
-    <div class="map-container">
-        <h5 style="text-align:center; font-family:'Segoe UI',sans-serif">Seleccione un País</h5>
+                    <div class="zoom-controls">
+                        <button class="zoom-btn" id="zoom-in">+</button>
+                        <button class="zoom-btn" id="zoom-out">-</button>
+                    </div>
 
-        <svg viewBox="50 150 500 600" id="map">
-            <!-- 1) Formas -->
-            <g id="shapes">
-                <path class="country" data-id="3" data-name="ARGENTINA" d="M300,500 L320,600 L280,700 L350,650 L370,550 L320,480 Z" />
-                <path class="country" data-id="1" data-name="CHILE" d="M270,500 L300,500 L320,600 L280,700 L260,650 Z" />
-                <path class="country" data-id="6" data-name="PERU" d="M220,380 L270,400 L300,450 L270,500 L240,470 L220,430 Z" />
-                <path class="country" data-id="2" data-name="COLOMBIA" d="M220,330 L280,310 L310,350 L270,400 L220,380 Z" />
-                <path class="country" data-id="11" data-name="BRASIL" d="M310,350 L400,350 L450,450 L370,550 L320,480 L300,450 L270,400 Z" />
-                <path class="country" data-id="8" data-name="MEXICO" d="M100,200 L180,220 L160,280 L100,300 L80,250 Z" />
-                <path class="country" data-id="10" data-name="URUGUAY" d="M350,580 L370,550 L390,570 L370,590 Z" />
-                <path class="country" data-id="7" data-name="CHINA" d="M480,180 L520,180 L520,220 L480,220 Z" />
-            </g>
+                    <svg viewBox="50 150 500 600" id="map">
+                        <!-- Definición de gradientes para efecto de relieve -->
+                        <defs>
+                            <!-- Gradientes para cada país -->
+                            <linearGradient id="gradientArgentina" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="10%" stop-color="#45c6ae" />
+                                <stop offset="90%" stop-color="#1a7e68" />
+                            </linearGradient>
 
-            <!-- 2) Etiquetas encima -->
-            <g id="labels">
-                <text data-id="3" x="320" y="590">Argentina</text>
-                <text data-id="1" x="265" y="620">Chile</text>
-                <text data-id="6" x="245" y="430">Perú</text>
-                <text data-id="2" x="250" y="340">Colombia</text>
-                <text data-id="11" x="370" y="420">Brasil</text>
-                <text data-id="8" x="130" y="240">México</text>
-                <text data-id="10" x="370" y="580">Uruguay</text>
-                <text data-id="7" x="500" y="205">China</text>
-            </g>
-        </svg>
+                            <linearGradient id="gradientChile" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="10%" stop-color="#79b8ed" />
+                                <stop offset="90%" stop-color="#2980b9" />
+                            </linearGradient>
 
-        <div class="selected-country" id="selectedCountry">
-            País seleccionado:
-            @{
-                var selPais = Model.ListaPaises.FirstOrDefault(x => x.IdPais == Model.SelectedPais);
-                @((selPais?.NombrePais) ?? "Ninguno")
-                ;
-            }
+                            <linearGradient id="gradientPeru" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="10%" stop-color="#f8b678" />
+                                <stop offset="90%" stop-color="#d35400" />
+                            </linearGradient>
+
+                            <linearGradient id="gradientColombia" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="10%" stop-color="#c39bd3" />
+                                <stop offset="90%" stop-color="#8e44ad" />
+                            </linearGradient>
+
+                            <linearGradient id="gradientBrasil" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="10%" stop-color="#f9e79f" />
+                                <stop offset="90%" stop-color="#d4ac0d" />
+                            </linearGradient>
+
+                            <linearGradient id="gradientMexico" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="10%" stop-color="#e74c3c" />
+                                <stop offset="90%" stop-color="#922b21" />
+                            </linearGradient>
+
+                            <linearGradient id="gradientUruguay" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="10%" stop-color="#3498db" />
+                                <stop offset="90%" stop-color="#1a5276" />
+                            </linearGradient>
+
+                            <linearGradient id="gradientChina" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="10%" stop-color="#aeb6bf" />
+                                <stop offset="90%" stop-color="#5d6d7e" />
+                            </linearGradient>
+                        </defs>
+
+                        <!-- Mapa de Sudamérica ajustado para evitar superposiciones -->
+                        <g id="shapes">
+                            <!-- Cambiamos el orden para resolver problemas de superposición -->
+                            <!-- Brasil primero (al fondo) -->
+                            <path class="country" data-id="11" data-name="BRASIL"
+                                  d="M310,350
+                                     C320,347 325,346 330,345
+                                     L360,340 L390,345
+                                     Q405,350 420,360
+                                     L450,390
+                                     C460,410 465,420 470,430
+                                     L470,470
+                                     C465,485 458,495 450,500
+                                     L420,525
+                                     Q408,518 395,510
+                                     L380,525 L370,530
+                                     C355,515 340,500 315,470
+                                     L305,450 L295,430
+                                     Q288,420 280,410
+                                     L290,380
+                                     C295,372 298,368 300,365
+                                     L310,350 Z" />
+
+                            <!-- Luego Perú -->
+                            <path class="country" data-id="6" data-name="PERU"
+                                  d="M250,380
+                                     Q265,385 280,390
+                                     C285,395 290,410 295,430
+                                     L305,450 L305,495
+                                     Q300,492 295,490
+                                     L280,480
+                                     C270,475 265,470 260,465
+                                     L245,440
+                                     Q240,425 235,410
+                                     C230,400 235,390 250,380 Z" />
+
+                            <!-- Colombia -->
+                            <path class="country" data-id="2" data-name="COLOMBIA"
+                                  d="M240,320
+                                     Q255,318 270,315
+                                     L280,325
+                                     C288,330 292,332 295,335
+                                     L310,350
+                                     C305,358 300,362 300,365
+                                     L290,380
+                                     Q285,385 280,390
+                                     L250,380
+                                     C242,375 238,368 235,360
+                                     L230,340
+                                     C233,330 237,325 240,320 Z" />
+
+                            <!-- Argentina ajustada para la nueva posición de Uruguay -->
+                            <path class="country" data-id="3" data-name="ARGENTINA"
+                                  d="M305,450
+                                     Q310,460 315,470
+                                     C320,468 325,466 330,465
+                                     L340,475
+                                     Q348,483 355,490
+                                     L365,510
+                                     C368,520 369,525 370,530
+                                     L375,550 L380,590
+                                     Q378,610 375,630
+                                     L370,650
+                                     C368,658 367,662 365,665
+                                     L355,680 L340,695 L320,705 L295,710
+                                     Q292,712 290,715
+                                     L295,700 L300,670 L305,640 L310,610 L315,580 L315,550 L312,520
+                                     Q308,508 305,495
+                                     L305,450 Z" />
+
+                            <!-- Uruguay -->
+                            <path class="country" data-id="10" data-name="URUGUAY"
+                                  d="M370,530
+                                     L380,525
+                                     Q395,528 405,535
+                                     L410,550
+                                     C408,560 405,565 400,570
+                                     L385,575
+                                     C380,565 375,550 370,530 Z" />
+
+                            <!-- Chile (último para que aparezca por encima) -->
+                            <path class="country" data-id="1" data-name="CHILE"
+                                  d="M295,490
+                                     Q300,492 305,495
+                                     C308,505 310,515 312,520
+                                     L315,550 L315,580
+                                     C314,595 312,605 310,610
+                                     L305,640 L300,670 L295,700
+                                     Q292,708 290,715
+                                     L285,710
+                                     C284,700 283,695 282,690
+                                     L280,665
+                                     C280,650 281,640 282,635
+                                     L285,605
+                                     Q288,590 290,575
+                                     L292,545
+                                     Q291,530 290,515 Z" />
+
+                            <!-- Países adicionales -->
+                            <path class="country" data-id="8" data-name="MEXICO"
+                                  d="M100,200 L115,195 L130,192 L145,195 L160,200 L175,210 L180,220 L175,235 L170,250 L165,265 L155,275 L140,280 L125,285 L110,290 L100,295 L90,290 L85,280 L80,265 L80,250 L85,235 L90,220 L95,210 Z" />
+
+                            <path class="country" data-id="7" data-name="CHINA"
+                                  d="M480,180 L485,175 L495,172 L505,175 L515,180 L520,190 L522,200 L520,210 L515,220 L505,225 L495,228 L485,225 L480,220 L478,210 L478,200 L478,190 Z" />
+                        </g>
+
+                        <!-- Etiquetas de países mejoradas -->
+                        <g id="labels">
+                            <text data-id="3" x="320" y="590">Argentina</text>
+                            <text data-id="1" x="275" y="620">Chile</text>
+                            <text data-id="6" x="245" y="430">Perú</text>
+                            <text data-id="2" x="250" y="340">Colombia</text>
+                            <text data-id="11" x="370" y="420">Brasil</text>
+                            <text data-id="8" x="130" y="240">México</text>
+                            <text data-id="10" x="385" y="550">Uruguay</text>
+                            <text data-id="7" x="500" y="205">China</text>
+                        </g>
+                    </svg>
+
+                    <div class="selected-country" id="selectedCountry">
+                        País seleccionado:
+                        @{
+                            var selPais = Model.ListaPaises.FirstOrDefault(x => x.IdPais == Model.SelectedPais);
+                            @((selPais?.NombrePais) ?? "Ninguno")
+                            ;
+                        }
+                    </div>
+
+                    <form asp-action="VisionCorporativa" method="get" id="countryForm">
+                        <input type="hidden" id="idPais" name="idPais" value="@Model.SelectedPais" />
+                    </form>
+                </div>
+            </div>
+
+            <!-- Cards en el lado derecho (ocupa 6 columnas de 12) -->
+            <div class="col-md-6">
+                <!-- Primera card: Resumen Sistema -->
+                <div class="card mb-4" style="max-height: 480px; overflow-y: auto;">
+                    <div class="card-header text-white" style="background-color: #acd743;">
+                        Resumen Sistema
+                    </div>
+                    <div class="card-body">
+                        <ul class="nav nav-tabs" role="tablist">
+                            <li class="nav-item">
+                                <a class="nav-link active" data-bs-toggle="tab" href="#sistema" role="tab">
+                                    <span>RIESGO SISTEMAS</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" data-bs-toggle="tab" href="#pais" role="tab">
+                                    <span>RIESGO PAÍS</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" data-bs-toggle="tab" href="#evolucion" role="tab">
+                                    <span>EVOLUCIÓN DÍA</span>
+                                </a>
+                            </li>
+                        </ul>
+                        <!-- Tab panes -->
+                        <div class="tab-content">
+                            <div class="tab-pane active p-3" id="sistema" role="tabpanel">
+                                <p class="fw-semibold mb-3">Resultados a la última fecha de carga:</p>
+                                <table class="table table-bordered">
+                                    <thead>
+                                        <tr>
+                                            <th scope="col">Sistemas</th>
+                                            <th scope="col">Finiquitados</th>
+                                            <th scope="col">No Encontrados</th>
+                                            <th scope="col">Activos</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @if (Model.ListaRiesgoSistema != null && Model.ListaRiesgoSistema.Any())
+                                        {
+                                            foreach (var item in Model.ListaRiesgoSistema)
+                                            {
+                                                <tr>
+                                                    <td>@item.Sistema</td>
+                                                    <td>@item.Finiquitados</td>
+                                                    <td>@item.NoEncontrados</td>
+                                                    <td>@item.Activos</td>
+                                                </tr>
+                                            }
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="tab-pane p-3" id="pais" role="tabpanel">
+                                <p class="fw-semibold mb-3">Resultados a la última fecha de carga:</p>
+                                <table class="table table-bordered">
+                                    <thead>
+                                        <tr>
+                                            <th scope="col">País</th>
+                                            <th scope="col">Finiquitados</th>
+                                            <th scope="col">No Encontrados</th>
+                                            <th scope="col">Activos</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @if (Model.ListaRiesgoPais != null && Model.ListaRiesgoPais.Any())
+                                        {
+                                            @foreach (var item in Model.ListaRiesgoPais)
+                                            {
+                                                <tr>
+                                                    <td>@item.Pais</td>
+                                                    <td>@item.cnt_finiquitados</td>
+                                                    <td>@item.cnt_no_encontrados</td>
+                                                    <td>@item.cnt_activos</td>
+                                                </tr>
+                                            }
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="tab-pane p-3" id="evolucion" role="tabpanel">
+                                <p class="fw-semibold mb-3">Resultados últimos 60 días:</p>
+                                <table id="tendenciasTable" class="table table-bordered">
+                                    <thead>
+                                        <tr>
+                                            <th scope="col" onclick="sortTable()">Fecha Carga &#x25B2;&#x25BC;</th>
+                                            <th scope="col">Finiquitados</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="tendenciasBody">
+                                        @if (Model.ListaTendenciaDiaria != null && Model.ListaTendenciaDiaria.Any())
+                                        {
+                                            foreach (var item in Model.ListaTendenciaDiaria)
+                                            {
+                                                <tr>
+                                                    <td>@item.feccarga</td>
+                                                    <td>@item.cnt_finiquitados</td>
+                                                </tr>
+                                            }
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Segunda card: Mapa Riesgo ABM -->
+                <div class="card mb-4">
+                    <div class="card-header text-white" style="background-color: #acd743;">
+                        Mapa Riesgo ABM
+                    </div>
+                    <h1 style="text-align:center; margin-top:19px; font-size: 25px; font-family: 'Poppins', sans-serif; font-weight: normal; color: #85929e;">Riesgo Perfil</h1>
+                    <div class="card-body">
+                        <div id="risk" style="height: 300px; width: 100%;background-image: url('/images/calor.png'); background-size: cover; background-position: center; height: 200px;">
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
-
-        <form asp-action="VisionCorporativa" method="get" id="countryForm">
-            <input type="hidden" id="idPais" name="idPais" value="@Model.SelectedPais" />
-        </form>
     </div>
 
     <div class="container mt-12" hidden>
@@ -172,138 +478,6 @@
             </div>
         </div>
     </div>
-
-
-
-
-    <div class="row">
-        <div class="col-md-6">
-            <div class="card mb-4">
-                <div class="card-header text-white" style="background-color: #acd743;">
-                    Mapa Riesgo ABM
-                </div>
-                <h1 style="text-align:center; margin-top:19px; font-size: 25px; font-family: 'Poppins', sans-serif; font-weight: normal; color: #85929e;">Riesgo Perfil</h1>
-
-
-
-
-                <div class="card-body">
-                    <!-- Aquí eliminé col-md-6 para que el gráfico ocupe el 100% -->
-                    <div id="risk" style="height: 300px; width: 100%;background-image: url('/images/calor.png'); background-size: cover; background-position: center; height: 200px;">
-                    </div>
-                    <!-- Contenido para la gestión histórica -->
-                </div>
-            </div>
-        </div>
-        <div class="col-md-6">
-            <div class="card mb-4" style="max-height: 450px; overflow-y: auto;">
-                <div class="card-header text-white" style="background-color: #acd743;">
-                    Resumen Sistema
-                </div>
-                <div class="card-body">
-                    <ul class="nav nav-tabs" role="tablist">
-                        <li class="nav-item">
-                            <a class="nav-link active" data-bs-toggle="tab" href="#sistema" role="tab">
-                                <span>RIESGO SISTEMAS</span>
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" data-bs-toggle="tab" href="#pais" role="tab">
-                                <span>RIESGO PAÍS</span>
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" data-bs-toggle="tab" href="#evolucion" role="tab">
-                                <span>EVOLUCIÓN DÍA</span>
-                            </a>
-                        </li>
-                    </ul>
-                    <!-- Tab panes -->
-                    <div class="tab-content">
-                        <div class="tab-pane active p-3" id="sistema" role="tabpanel">
-                            <p class="fw-semibold mb-3">Resultados a la última fecha de carga:</p>
-                            <table class="table table-bordered">
-                                <thead>
-                                    <tr>
-                                        <th scope="col">Sistemas</th>
-                                        <th scope="col">Finiquitados</th>
-                                        <th scope="col">No Encontrados</th>
-                                        <th scope="col">Activos</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @if (Model.ListaRiesgoSistema != null && Model.ListaRiesgoSistema.Any())
-                                    {
-                                        foreach (var item in Model.ListaRiesgoSistema)
-                                        {
-                                            <tr>
-                                                <td>@item.Sistema</td>
-                                                <td>@item.Finiquitados</td>
-                                                <td>@item.NoEncontrados</td>
-                                                <td>@item.Activos</td>
-                                            </tr>
-                                        }
-                                    }
-
-                                </tbody>
-                            </table>
-                        </div>
-                        <div class="tab-pane p-3" id="pais" role="tabpanel">
-                            <p class="fw-semibold mb-3">Resultados a la última fecha de carga:</p>
-                            <table class="table table-bordered">
-                                <thead>
-                                    <tr>
-                                        <th scope="col">País</th>
-                                        <th scope="col">Finiquitados</th>
-                                        <th scope="col">No Encontrados</th>
-                                        <th scope="col">Activos</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @if (Model.ListaRiesgoPais != null && Model.ListaRiesgoPais.Any())
-                                    {
-                                        @foreach (var item in Model.ListaRiesgoPais)
-                                        {
-                                            <tr>
-                                                <td>@item.Pais</td>
-                                                <td>@item.cnt_finiquitados</td>
-                                                <td>@item.cnt_no_encontrados</td>
-                                                <td>@item.cnt_activos</td>
-                                            </tr>
-                                        }
-                                    }
-                                </tbody>
-                            </table>
-                        </div>
-                        <div class="tab-pane p-3" id="evolucion" role="tabpanel">
-                            <p class="fw-semibold mb-3">Resultados últimos 60 días:</p>
-                            <table id="tendenciasTable" class="table table-bordered">
-                                <thead>
-                                    <tr>
-                                        <th scope="col" onclick="sortTable()">Fecha Carga &#x25B2;&#x25BC;</th>
-                                        <th scope="col">Finiquitados</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="tendenciasBody">
-                                    @if (Model.ListaTendenciaDiaria != null && Model.ListaTendenciaDiaria.Any())
-                                    {
-                                        foreach (var item in Model.ListaTendenciaDiaria)
-                                        {
-                                            <tr>
-                                                <td>@item.feccarga</td>
-                                                <td>@item.cnt_finiquitados</td>
-                                            </tr>
-                                        }
-                                    }
-                                </tbody>
-                            </table>
-                        </div>
-
-                    </div>
-                </div>
-            </div>
-        </div>
-        <br />
 
         <div class="row">
             <div class="col-md-12">
@@ -357,8 +531,8 @@
                 Model.ListaPaises.Select(p => p.IdPais)
                 )
                 );
-
                 const countries = document.querySelectorAll('#map .country');
+
                 // 2) Inicial: resaltar el que ya trae la sesión
                 const sel = Number(document.getElementById('idPais').value);
                 if (sel) {
@@ -372,29 +546,60 @@
                     const label = document.querySelector(
                         `#map #labels text[data-id="${id}"]`
                     );
-
                     if (!validIds.includes(id)) {
                         country.classList.add('disabled');
                         if (label) label.remove();
                         return;
                     }
-
                     // 4) País válido → hacemos click para filtrar
                     country.addEventListener('click', () => {
                         // limpiamos previos
                         countries.forEach(c => c.classList.remove('selected'));
                         country.classList.add('selected');
-
                         // actualizamos texto y recargamos
                         const name = country.dataset.name;
                         document.getElementById('selectedCountry').textContent =
                             `País seleccionado: ${name}`;
-
                         // GET limpio
                         window.location.href =
                             '@Url.Action("VisionCorporativa", "Vision")?idPais=' + id;
                     });
                 });
+
+                // Funcionalidad de zoom
+                let currentZoom = 1;
+                const zoomFactor = 0.2;
+                const mapSvg = document.getElementById('map');
+                const mapViewBox = mapSvg.getAttribute('viewBox').split(' ');
+                const originalViewBox = [...mapViewBox]; // Guardar viewBox original
+
+                document.getElementById('zoom-in').addEventListener('click', () => {
+                    if (currentZoom < 3) { // Limitar el zoom in
+                        currentZoom += zoomFactor;
+                        updateZoom();
+                    }
+                });
+
+                document.getElementById('zoom-out').addEventListener('click', () => {
+                    if (currentZoom > 0.5) { // Limitar el zoom out
+                        currentZoom -= zoomFactor;
+                        updateZoom();
+                    }
+                });
+
+                function updateZoom() {
+                    // Calcular el nuevo viewBox con zoom desde el centro
+                    const centerX = parseFloat(originalViewBox[0]) + parseFloat(originalViewBox[2]) / 2;
+                    const centerY = parseFloat(originalViewBox[1]) + parseFloat(originalViewBox[3]) / 2;
+
+                    const newWidth = parseFloat(originalViewBox[2]) / currentZoom;
+                    const newHeight = parseFloat(originalViewBox[3]) / currentZoom;
+
+                    const newX = centerX - newWidth / 2;
+                    const newY = centerY - newHeight / 2;
+
+                    mapSvg.setAttribute('viewBox', `${newX} ${newY} ${newWidth} ${newHeight}`);
+                }
             });
         </script>
         <script>
