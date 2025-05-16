@@ -9,7 +9,7 @@ namespace ABM.Models
 
         [Required(ErrorMessage = "La nueva contraseña es obligatoria.")]
         [DataType(DataType.Password)]
-        [StringLength(100, ErrorMessage = "La contraseña debe tener al menos {2} caracteres y un máximo de {1}.", MinimumLength = 14)]
+        [StringLength(100, ErrorMessage = "La contraseña debe tener al menos un minimo de 14 Caracteres!", MinimumLength = 14)]
         [RegularExpression(@"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^a-zA-Z\d\s:])(?!.*\s).{14,}$",
             ErrorMessage = "La contraseña debe tener al menos 14 caracteres, incluyendo al menos una mayúscula, una minúscula, un número y un símbolo especial (ej: !@#$%^&*). No debe contener espacios en blanco.")]
         [Display(Name = "Nueva Contraseña")]

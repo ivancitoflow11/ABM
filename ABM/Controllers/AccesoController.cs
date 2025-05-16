@@ -9,6 +9,9 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using System.Net.Mail;
 using System.Net;
 using ExcelDataReader.Log;
+using Microsoft.AspNetCore.Hosting;
+using System.Drawing;
+using System.Net.Mime;
 
 namespace ABM.Controllers
 {
@@ -18,13 +21,15 @@ namespace ABM.Controllers
         private readonly IRepositorioUsuarios _repositorioUsuarios;
         private readonly IRepositorioRoles _repositorioRoles;
         private readonly IConfiguration _configuration;
+		private readonly IWebHostEnvironment _hostingEnvironment;
 
-        public AccesoController(IRepositorioUsuarios repositorioUsuarios, IRepositorioRoles repositorioRoles, IConfiguration configuration)
+		public AccesoController(IRepositorioUsuarios repositorioUsuarios, IRepositorioRoles repositorioRoles, IConfiguration configuration, IWebHostEnvironment hostingEnvironment)
         {
             _repositorioUsuarios = repositorioUsuarios;
             _repositorioRoles = repositorioRoles;
             _configuration = configuration;
-        }
+			_hostingEnvironment = hostingEnvironment;
+		}
 
         [AllowAnonymous]
         [HttpGet]
@@ -331,7 +336,8 @@ namespace ABM.Controllers
             }
             // Siempre redirigir para evitar reenvío del formulario con F5 y para que TempData funcione correctamente en la vista destino.
             return RedirectToAction("OlvidoClave");
-        }
+		}
+
 
         private async Task EnviarCorreoRestablecimiento(string correoDestino, string resetLink, string nombreUsuario)
         {
@@ -342,47 +348,71 @@ namespace ABM.Controllers
             var password = _configuration["EmailSettings:Password"];
 
 
+
+
+            string cuerpoHtml = $@"
+        <div style='font-family: Arial, sans-serif; color: #333; padding: 20px; border: 1px solid #ddd; max-width: 600px; margin: auto; background-color: #f9f9f9;'>
+            <div style='padding: 20px; text-align: center; background-color: #93f35c; color: #333;'>
+                <h2>Restablecimiento de Contraseña</h2>
+            </div>
+            <div style='padding: 20px;'>
+                <p>Hola {nombreUsuario ?? "Usuario"},</p>
+                <p>Hemos recibido una solicitud para restablecer la contraseña de tu cuenta.</p>
+                <p>Por favor, haz clic en el siguiente enlace para crear una nueva contraseña:</p>
+                <p style='text-align: center; margin: 20px 0;'>
+                    <a href='{resetLink}' style='background-color: #4CAF50; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-size: 16px;'>Restablecer Contraseña</a>
+                </p>
+                <p>Si no solicitaste un restablecimiento de contraseña, puedes ignorar este correo electrónico.</p>
+                <p style='font-size: 12px; color: #888;'>Este enlace es válido por 15 minutos.</p>
+                <hr style='border: 0; border-top: 1px solid #eee;'/>
+                <p style='font-size: 12px; color: #888;'>Gracias por usar nuestro sistema.</p>
+            </div>
+            <div style='padding: 10px; text-align: center; font-size: 11px; color: #aaa; background-color: #f0f0f0;'>
+                Este es un correo generado automáticamente, por favor no respondas a este mensaje.
+            </div>
+        </div>";
+
+            try
+            {
+                var mensaje = new MailMessage();
+                mensaje.From = new MailAddress(remitente, nombreRemitente);
+                mensaje.To.Add(correoDestino);
+                mensaje.Subject = "Restablece tu contraseña";
+
+                // Crear la vista alternativa para el HTML
+                AlternateView vistaHtml = AlternateView.CreateAlternateViewFromString(cuerpoHtml, null, MediaTypeNames.Text.Html);
+
        
 
-            string html = $@"
-            <div style='font-family: Arial, sans-serif; color: #333; padding: 20px; border: 1px solid #ddd; max-width: 600px; margin: auto; background-color: #f9f9f9;'>
-                <div style='padding: 20px; text-align: center; background-color: #FFC107; color: #333;'> 
-                    <img src='/wwwroot/images/logos/logoabm-falabella.png' alt='Logo Empresa' style='max-width: 150px; margin-bottom:10px;'/> 
-                    <h2>Restablecimiento de Contraseña</h2>
-                </div>
-                <div style='padding: 20px;'>
-                    <p>Hola {nombreUsuario ?? "Usuario"},</p>
-                    <p>Hemos recibido una solicitud para restablecer la contraseña de tu cuenta.</p>
-                    <p>Por favor, haz clic en el siguiente enlace para crear una nueva contraseña:</p>
-                    <p style='text-align: center; margin: 20px 0;'>
-                        <a href='{resetLink}' style='background-color: #4CAF50; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-size: 16px;'>Restablecer Contraseña</a>
-                    </p>
-                    <p>Si no solicitaste un restablecimiento de contraseña, puedes ignorar este correo electrónico.</p>
-                    <p style='font-size: 12px; color: #888;'>Este enlace es válido por 15 minutos.</p>
-                    <hr style='border: 0; border-top: 1px solid #eee;'/>
-                    <p style='font-size: 12px; color: #888;'>Gracias por usar nuestro sistema.</p>
-                </div>
-                <div style='padding: 10px; text-align: center; font-size: 11px; color: #aaa; background-color: #f0f0f0;'>
-                    Este es un correo generado automáticamente, por favor no respondas a este mensaje.
-                </div>
-            </div>";
+                // Añadir la vista HTML (con la imagen incrustada) al mensaje
+                mensaje.AlternateViews.Add(vistaHtml);
 
-            var mensaje = new MailMessage();
-            mensaje.From = new MailAddress(remitente, nombreRemitente);
-            mensaje.To.Add(correoDestino);
-            mensaje.Subject = "Restablece tu contraseña";
-            mensaje.Body = html;
-            mensaje.IsBodyHtml = true;
-
-            using (var smtp = new SmtpClient(smtpServer, puerto))
+                using (var smtp = new SmtpClient(smtpServer, puerto))
+                {
+                    smtp.Credentials = new NetworkCredential(remitente, password);
+                    smtp.EnableSsl = bool.Parse(_configuration["EmailSettings:EnableSsl"] ?? "true");
+                    await smtp.SendMailAsync(mensaje);
+                }
+                // Opcional: Registrar éxito
+                // _logger.LogInformation($"Correo de restablecimiento enviado a {correoDestino}");
+            }
+            catch (Exception ex)
             {
-                smtp.Credentials = new NetworkCredential(remitente, password);
-                smtp.EnableSsl = bool.Parse(_configuration["EmailSettings:EnableSsl"] ?? "true");
-                await smtp.SendMailAsync(mensaje);
+                // Opcional: Registrar el error
+                Console.WriteLine($"Error al enviar correo de restablecimiento a {correoDestino}: {ex.ToString()}");
+                // _logger.LogError(ex, $"Error al enviar correo de restablecimiento a {correoDestino}");
+                // Considera cómo quieres manejar las excepciones (re-lanzar, notificar, etc.)
             }
         }
 
-        [AllowAnonymous]
+		// Podrías tener un método de acción para probar esto, por ejemplo:
+		// public async Task<IActionResult> TestEnviarCorreo()
+		// {
+		//     await EnviarCorreoRestablecimiento("destinatario@ejemplo.com", "http://tusitio.com/restablecer?token=abcdef", "NombreUsuarioPrueba");
+		//     return Content("Intento de envío de correo realizado.");
+		// }
+
+		[AllowAnonymous]
         [HttpGet]
         public async Task<IActionResult> RestablecerClave(string token)
         {

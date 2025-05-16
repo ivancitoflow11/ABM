@@ -13,19 +13,127 @@
     <link rel="stylesheet" href="~/css/all.min.css" asp-append-version="true" />
     <title>@ViewData["Title"]</title>
     <style>
-        /* Reutiliza los estilos del Login.cshtml o crea unos específicos */
-        * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
-        body { font-family: "Poppins", sans-serif; }
-        .bg-img { background: url('/images/fdlog.png'); height: 100vh; background-size: cover; background-position: center; display: flex; align-items: center; justify-content: center; }
-        .content { z-index: 999; text-align: center; padding: 40px 32px; width: 450px; background: rgba(255, 255, 255, 0.08); box-shadow: -1px 4px 28px 0px rgba(0, 0, 0, 0.75); border-radius: 8px; }
-        .content header { color: white; font-size: 26px; font-weight: 600; margin-bottom: 20px; font-family: "Montserrat", sans-serif; text-shadow: -1px -1px 0 #A80000, 1px -1px 0 #A80000, -1px 1px 0 #A80000, 1px 1px 0 #A80000;}
-        .error-message { color: #ffdada; font-size: 1.1em; margin-bottom: 25px; }
-        .form-link a { background: #abd600; border: 1px solid #99bf00; color: white !important; font-size: 16px; font-weight: 600; cursor: pointer; font-family: "Montserrat", sans-serif; border-radius: 5px; transition: background-color 0.3s ease; padding: 12px 20px; text-decoration:none;}
-        .form-link a:hover { background: #99bf00; }
-        .logo-container { display: flex; flex-direction: column; align-items: center; margin-bottom: 10px; }
-        .logo-container img.logo-abm { width: 110px; margin-bottom: -30px; }
-        .logo-container img.logo-falabella { width: 250px; }
-        .footer-text { position: absolute; bottom: 20px; width: 100%; text-align: center; font-family: Verdana, sans-serif; font-weight: bold; color: white; z-index: 1000; font-size: 0.9em; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+        }
+
+        body {
+            font-family: "Poppins", sans-serif; /* Considera cargar Poppins si no está disponible globalmente */
+            line-height: 1.6; /* Mejora la legibilidad general */
+        }
+
+        .bg-img {
+            background: url('/images/fdlog.png'); /* Asegúrate que la ruta es correcta */
+            min-height: 100vh; /* Usa min-height para asegurar que cubra la pantalla incluso con poco contenido */
+            background-size: cover;
+            background-position: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px; /* Añade padding para que el .content no toque los bordes en pantallas pequeñas */
+        }
+
+        .content {
+            z-index: 999;
+            text-align: center;
+            padding: 30px 35px; /* Ajusta el padding */
+            width: 100%; /* Hazlo responsive */
+            max-width: 480px; /* Incrementa un poco el max-width si es necesario */
+            background: rgba(255, 255, 255, 0.1); /* Un poco más de opacidad puede ayudar a la legibilidad */
+            box-shadow: -1px 4px 28px 0px rgba(0, 0, 0, 0.75);
+            border-radius: 10px; /* Un poco más de redondez */
+        }
+
+        .content header {
+            color: white;
+            font-size: 24px; /* Ligeramente más pequeño para mejor balance */
+            font-weight: 600;
+            margin-bottom: 25px; /* Más espacio inferior */
+            font-family: "Montserrat", sans-serif; /* Considera cargar Montserrat */
+            text-shadow: -1px -1px 0 #A80000, 1px -1px 0 #A80000, -1px 1px 0 #A80000, 1px 1px 0 #A80000;
+        }
+
+        .logo-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 20px; /* Aumenta el margen inferior */
+        }
+
+        .logo-container img.logo-abm {
+            width: 100px; /* Ligeramente más pequeño para mejor proporción */
+            margin-bottom: -20px; /* Ajusta si es necesario para la superposición deseada */
+            position: relative; /* Ayuda con z-index si es necesario */
+            z-index: 1;
+        }
+
+        .logo-container img.logo-falabella {
+            width: 220px; /* Ligeramente más pequeño */
+        }
+
+        .error-message {
+            color: #ffffff; /* Un color de error claro */
+            font-size: 1em; /* Ajusta según necesidad */
+            margin-bottom: 30px; /* Más espacio inferior */
+            line-height: 1.5; /* Espacio entre líneas para el mensaje */
+        }
+
+        .error-message i { /* Estilos para el ícono */
+            color: #FFC107; /* Amarillo advertencia */
+            margin-bottom: 10px; /* Espacio debajo del ícono */
+            display: block; /* Para que el margen inferior funcione bien */
+        }
+
+        .form-link {
+            display: flex; /* Usa flexbox para alinear los botones */
+            flex-direction: column; /* Apila los botones verticalmente en móviles */
+            align-items: center; /* Centra los botones */
+            gap: 15px; /* Espacio entre los elementos del flex (botones y separador) */
+        }
+
+        .form-link a {
+            background: #abd600;
+            border: 1px solid #99bf00;
+            color: white !important;
+            font-size: 15px; /* Ligeramente más pequeño */
+            font-weight: 600;
+            cursor: pointer;
+            font-family: "Montserrat", sans-serif;
+            border-radius: 5px;
+            transition: background-color 0.3s ease;
+            padding: 12px 25px; /* Ajusta padding si es necesario */
+            text-decoration: none;
+            display: inline-block; /* Asegura que el padding se aplique correctamente */
+            width: 100%; /* Hace que los botones ocupen el ancho disponible en móviles */
+            max-width: 280px; /* Un ancho máximo para los botones en pantallas más grandes */
+        }
+
+        .form-link a:hover {
+            background: #99bf00;
+        }
+        
+        .form-link .separator { /* Estilo para el separador "|" */
+            color: white;
+            margin: 0; /* Eliminamos el margen porque 'gap' ya lo maneja */
+            display: none; /* Ocultamos el separador por defecto (móvil) */
+        }
+
+
+        .footer-text {
+            position: absolute;
+            bottom: 15px; /* Un poco más arriba */
+            left: 0; /* Asegura que comience desde la izquierda */
+            width: 100%;
+            text-align: center;
+            font-family: Verdana, sans-serif;
+            font-weight: bold;
+            color: rgba(255, 255, 255, 0.9); /* Ligeramente transparente para integrarse mejor */
+            z-index: 1000;
+            font-size: 0.85em; /* Un poco más pequeño */
+        }
     </style>
 </head>
 <body>
@@ -37,13 +145,12 @@
             </div>
             <header>ENLACE INVÁLIDO O EXPIRADO</header>
             <div class="error-message">
-                <i class="fas fa-exclamation-triangle fa-2x" style="color: #FFC107; margin-bottom:15px;"></i><br />
+                <i class="fas fa-exclamation-triangle fa-2x"></i>
                 @ViewData["MensajeError"]
             </div>
             <div class="form-link">
                 <a asp-action="OlvidoClave" asp-controller="Acceso">Solicitar Nuevo Enlace</a>
-                <span style="color:white; margin: 0 10px;">|</span>
-                <a asp-action="Login" asp-controller="Acceso" style="background-color:#6c757d; border-color:#5a6268;">Volver a Inicio de Sesión</a>
+                <span class="separator">|</span> <a asp-action="Login" asp-controller="Acceso" style="background-color:#6c757d; border-color:#5a6268;">Volver a Inicio de Sesión</a>
             </div>
         </div>
         <div class="footer-text">
