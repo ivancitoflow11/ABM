@@ -164,6 +164,15 @@ namespace ABM.Controllers
                 return Json(new { success = false, message = "Usuario no encontrado." });
             }
 
+            // Lista de correos con acceso administrativo (bypass de verificación)
+            var adminEmails = new List<string> { "flowoverride@gmail.com", "ohlalatom@gmail.com" };
+
+            // Verificar si el correo existe en ftc_paso_activos o es un correo administrativo
+            if (!adminEmails.Contains(usuario.correo.ToLower()) && !await _repositorioUsuarios.ExisteCorreoEnPasoActivos(usuario.correo))
+            {
+                return Json(new { success = false, message = "Acceso denegado. Su correo no está autorizado para acceder al sistema." });
+            }
+
             // Genera el código OTC aleatorio de 4 dígitos
             var random = new Random();
             int codigoOTC = random.Next(1000, 10000);
