@@ -12,5 +12,6 @@
         public IEnumerable<TendenciaDiariaViewModel> ListaTendenciaDiaria { get; set; } = new List<TendenciaDiariaViewModel>();
         public IEnumerable<TendenciaDiariaViewModel> ListaTendenciaDiariaSistema { get; set; } = new List<TendenciaDiariaViewModel>();
         public IEnumerable<RiesgoSistemaViewModel> RiesgoPerfil { get; set; } = new List<RiesgoSistemaViewModel>();
+        public IEnumerable<RiesgoPaisViewModel> ListaRiesgoGlobalMapa { get; set; } = new List<RiesgoPaisViewModel>();
     }
 }

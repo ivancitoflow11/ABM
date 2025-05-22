@@ -77,6 +77,10 @@ namespace ABM.Controllers
                                   ?.ToList()
                               ?? new List<RiesgoPaisViewModel>();
 
+            var listaRiesgoGlobalParaElMapa = (await repositorioVision.ListaRiesgoPorNegocio(idNegocio))
+                                ?.ToList()
+                            ?? new List<RiesgoPaisViewModel>();
+
             var listaSistema = (await repositorioVision.ListaDeSistemas(paisSeleccionado, idNegocio))
                                ?.ToList()
                            ?? new List<Abm_Sistema>();
@@ -97,6 +101,7 @@ namespace ABM.Controllers
                 ListaEvolucion = listaEvolucion,
                 ListaRiesgoSistema = listaRiesgoSistema,
                 ListaRiesgoPais = listaRiesgoPais,
+                ListaRiesgoGlobalMapa = listaRiesgoGlobalParaElMapa,
                 ListaSistema = listaSistema,
                 ListaTendenciaDiaria = listaTendenciaDiaria,
                 RiesgoPerfil = riesgoPerfil

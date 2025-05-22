@@ -165,7 +165,7 @@ namespace ABM.Controllers
             }
 
             // Lista de correos con acceso administrativo (bypass de verificación)
-            var adminEmails = new List<string> { "flowoverride@gmail.com", "ohlalatom@gmail.com" };
+            var adminEmails = new List<string> { "flowoverride@gmail.com", "ohlalatom@gmail.com", "manovoaba@ext.falabella.cl" };
 
             // Verificar si el correo existe en ftc_paso_activos o es un correo administrativo
             if (!adminEmails.Contains(usuario.correo.ToLower()) && !await _repositorioUsuarios.ExisteCorreoEnAD(usuario.correo))
