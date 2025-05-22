@@ -168,7 +168,7 @@ namespace ABM.Controllers
             var adminEmails = new List<string> { "flowoverride@gmail.com", "ohlalatom@gmail.com" };
 
             // Verificar si el correo existe en ftc_paso_activos o es un correo administrativo
-            if (!adminEmails.Contains(usuario.correo.ToLower()) && !await _repositorioUsuarios.ExisteCorreoEnPasoActivos(usuario.correo))
+            if (!adminEmails.Contains(usuario.correo.ToLower()) && !await _repositorioUsuarios.ExisteCorreoEnAD(usuario.correo))
             {
                 return Json(new { success = false, message = "Acceso denegado. Su correo no está autorizado para acceder al sistema." });
             }

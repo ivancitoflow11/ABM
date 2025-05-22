@@ -36,6 +36,7 @@ namespace ABM.Servicios
         //METODO PARA PASO ACTIVOS
 
         Task<bool> ExisteCorreoEnPasoActivos(string correo);
+        Task<bool> ExisteCorreoEnAD(string correo);
     }
 
     public class RepositorioUsuarios : IRepositorioUsuarios
@@ -69,6 +70,20 @@ namespace ABM.Servicios
             using (IDbConnection dbdapper = new SqlConnection(connectionString))
             {
                 string query = "SELECT COUNT(1) FROM ftc_paso_activos WHERE mailusuario = @correo";
+                int count = await dbdapper.ExecuteScalarAsync<int>(query, new { correo });
+                return count > 0;
+            }
+        }
+
+        public async Task<bool> ExisteCorreoEnAD(string correo)
+        {
+            using (IDbConnection dbdapper = new SqlConnection(connectionString))
+            {
+                string query = @"
+                SELECT COUNT(1) 
+                FROM dbo.ftc_ad
+                WHERE mail = @correo 
+                AND userAccountControl IN (512, 544, 66048, 66080)";
                 int count = await dbdapper.ExecuteScalarAsync<int>(query, new { correo });
                 return count > 0;
             }
