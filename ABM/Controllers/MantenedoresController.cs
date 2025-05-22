@@ -132,6 +132,27 @@ namespace ABM.Controllers
             }
         }
 
+        [HttpGet]
+        public async Task<IActionResult> VerificarCorreoEnAD(string correo)
+        {
+            if (string.IsNullOrWhiteSpace(correo))
+            {
+                return Json(new { requiereAdvertencia = false, error = "Correo no proporcionado" });
+            }
+            try
+            {
+                bool existeEnAD = await _repositorioUsuarios.ExisteCorreoEnAD(correo);
+                // Si existe en AD, NO se requiere advertencia (el correo está autorizado).
+                // Si NO existe en AD, entonces SÍ se requiere advertencia.
+                return Json(new { requiereAdvertencia = !existeEnAD });
+            }
+            catch (Exception ex)
+            {
+                // Considera loggear el error ex
+                return Json(new { requiereAdvertencia = false, error = "Error al verificar el correo en AD.", detalle = ex.Message });
+            }
+        }
+
         private string HashPassword(string password)
         {
             return BCrypt.Net.BCrypt.HashPassword(password);

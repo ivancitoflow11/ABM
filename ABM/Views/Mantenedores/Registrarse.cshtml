@@ -180,7 +180,7 @@
                     submitButton.disabled = true;
                     submitButton.innerHTML = `<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Verificando...`;
 
-                    const urlVerificacion = '@Url.Action("VerificarCorreoPasoActivos", "Mantenedores")';
+                    const urlVerificacion = '@Url.Action("VerificarCorreoEnAD", "Mantenedores")';
 
                     fetch(`${urlVerificacion}?correo=${encodeURIComponent(correo)}`)
                         .then(response => {
@@ -200,10 +200,10 @@
                             }
 
                             if (data.requiereAdvertencia) {
-                                // El correo NO existe en paso_activos, mostrar advertencia
+                                // El correo NO existe en ad, mostrar advertencia
                                 Swal.fire({
                                     title: 'Advertencia',
-                                    html: '⚠️ El correo de este usuario no figura en los registros de paso_activos.<br>¿Desea continuar de todos modos?',
+                                    html: '⚠️ El correo de este usuario no figura en los registros de Active Directory.<br>¿Desea continuar de todos modos?',
                                     icon: 'warning',
                                     showCancelButton: true,
                                     confirmButtonColor: '#28a745', // Verde (éxito de Bootstrap)
@@ -219,7 +219,7 @@
                                     }
                                 });
                             } else {
-                                // El correo SÍ existe en paso_activos o no se requiere advertencia,
+                                // El correo SÍ existe en ad o no se requiere advertencia,
                                 // proceder con el envío normal del formulario
                                 form.submit();
                             }
