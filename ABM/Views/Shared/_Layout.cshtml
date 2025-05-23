@@ -969,7 +969,7 @@
 				}
 				container.innerHTML = '<div class="text-center py-5">Cargando…</div>';
 
-				fetch('@Url.Action("PnsSelectorPartial", "Home")')
+				fetch('@Url.Action("PnsSelectorPartial", "Home")') // Asegúrate que "Home" es el controlador correcto
 					.then(response => {
 						if (!response.ok) {
 							throw new Error(`Error de red al cargar PnsSelectorPartial: ${response.statusText}`);
@@ -990,6 +990,10 @@
 						let data;
 						try {
 							data = JSON.parse(pnsDataElement.textContent);
+							if (!Array.isArray(data)) {
+								console.warn("pns-data no es un array, se usará un array vacío si no se puede procesar.");
+								data = []; // Fallback a array vacío si no es un array
+							}
 						} catch (e) {
 							console.error("Error al parsear JSON de 'pns-data':", e);
 							container.innerHTML = '<div class="text-center py-5 text-danger">Error: Datos de configuración inválidos.</div>';
@@ -999,38 +1003,68 @@
 						const $pais = container.querySelector('#selectPais');
 						const $nego = container.querySelector('#selectNegocio');
 						const $form = container.querySelector('#formCambiarPNS');
+						// Asumimos que el botón de submit tiene id="btnAplicarSeleccionPNS" en tu vista parcial
+						// Si no, usa container.querySelector('button[type="submit"]') o un selector más específico.
+						const $submitButton = container.querySelector('#btnAplicarSeleccionPNS') || container.querySelector('button[type="submit"]');
 
-						if (!$pais || !$nego || !$form) {
-							console.error("Uno o más elementos del formulario PNS (selectPais, selectNegocio, formCambiarPNS) no fueron encontrados en el partial.");
+
+						if (!$pais || !$nego || !$form || !$submitButton) {
+							console.error("Uno o más elementos del formulario PNS (selectPais, selectNegocio, formCambiarPNS, botón de submit) no fueron encontrados en el partial.");
 							// Podrías mostrar un error en 'container' si estos elementos son cruciales
 							return;
 						}
 
+						// Función para actualizar el estado del botón de submit
+						function updateSubmitButtonState() {
+							const paisSelected = $pais.value && $pais.value !== "";
+							const negocioSelected = $nego.value && $nego.value !== "" && !$nego.disabled;
+							$submitButton.disabled = !(paisSelected && negocioSelected);
+						}
+
+						// Estado inicial del botón y del select de negocio
+						$nego.disabled = true; // El select de negocio empieza deshabilitado
+						updateSubmitButtonState(); // El botón de submit empieza deshabilitado
+
 						$pais.addEventListener('change', () => {
 							const paisId = +$pais.value; // El '+' convierte a número
-							const negociosFiltrados = data.filter(x => x.idPais === paisId);
 
-							// Limpiar opciones anteriores y añadir la opción por defecto
-							$nego.innerHTML = `<option value="">--Selecciona un negocio--</option>`;
+							// Limpiar opciones anteriores de negocio, añadir la opción por defecto y deshabilitar
+							$nego.innerHTML = `<option value="" selected disabled>-- Selecciona un negocio --</option>`;
+							$nego.disabled = true; // Deshabilitar mientras se actualiza o si no hay país
 
-							negociosFiltrados.forEach(x => {
-								const option = document.createElement('option');
-								option.value = x.idNegocio;
-								option.textContent = x.negocio;
-								$nego.appendChild(option);
-							});
-							$nego.disabled = negociosFiltrados.length === 0;
+							if ($pais.value && data && Array.isArray(data)) { // Asegurar que data es un array y hay un país seleccionado
+								const negociosFiltrados = data.filter(x => x.idPais === paisId);
+
+								if (negociosFiltrados.length > 0) {
+									negociosFiltrados.forEach(x => {
+										const option = document.createElement('option');
+										option.value = x.idNegocio;
+										option.textContent = x.negocio;
+										$nego.appendChild(option);
+									});
+									$nego.disabled = false; // Habilitar si hay negocios
+								}
+							}
+							updateSubmitButtonState(); // Actualizar estado del botón
+						});
+
+						$nego.addEventListener('change', () => {
+							updateSubmitButtonState(); // Actualizar estado del botón
 						});
 
 						$form.addEventListener('submit', e => {
 							e.preventDefault();
+
+							if ($submitButton.disabled) {
+								alert("Por favor, selecciona un país y un negocio antes de aplicar."); // O una notificación más elegante
+								return;
+							}
+
 							const idPais = +$pais.value;
 							const paisTxt = $pais.options[$pais.selectedIndex].text;
 							const idNegocio = +$nego.value;
 							const negoTxt = $nego.options[$nego.selectedIndex].text;
 
-							// Para el token antifalsificación. Asegúrate que jQuery esté cargado si usas '$'
-							// o usa document.querySelector('input[name="__RequestVerificationToken"]').value; si no usas jQuery.
 							const antiforgeryTokenInput = document.querySelector('input[name="__RequestVerificationToken"]');
 							const antiforgeryToken = antiforgeryTokenInput ? antiforgeryTokenInput.value : null;
 
@@ -1040,7 +1074,13 @@
 								return;
 							}
 
-							fetch('@Url.Action("CambiarPns", "Home")', {
+							// Muestra un indicador de carga en el botón
+							const originalButtonText = $submitButton.innerHTML;
+							$submitButton.disabled = true;
+							$submitButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Aplicando...';
+
+
+							fetch('@Url.Action("CambiarPns", "Home")', { // Asegúrate que "Home" es el controlador correcto
 								method: 'POST',
 								headers: {
 									'Content-Type': 'application/json',
@@ -1050,7 +1090,6 @@
 							})
 								.then(response => {
 									if (!response.ok) {
-										// Intentar obtener un mensaje de error del cuerpo si es posible
 										return response.json().catch(() => ({})).then(errBody => {
 											throw new Error(`Error de red al cambiar PNS: ${response.statusText}. Detalles: ${errBody.message || 'No disponibles'}`);
 										});
@@ -1059,6 +1098,8 @@
 								})
 								.then(r => {
 									if (r.success) {
+										// Opcional: Mostrar mensaje de éxito antes de recargar
+										// alert("Selección aplicada con éxito. La página se recargará.");
 										location.reload();
 									} else {
 										alert("No se pudo cambiar el país/negocio. " + (r.message || "Respuesta no exitosa del servidor."));
@@ -1067,6 +1108,16 @@
 								.catch(error => {
 									console.error("Error en fetch para CambiarPns:", error);
 									alert(`Ocurrió un error al intentar cambiar el país/negocio: ${error.message}`);
+								})
+								.finally(() => {
+									// Restaura el botón a su estado original
+									$submitButton.innerHTML = originalButtonText;
+									// El estado de disabled se manejará por updateSubmitButtonState si es necesario,
+									// o puedes decidir si re-habilitarlo o no aquí dependiendo de la lógica post-submit.
+									// Por ahora, lo dejamos que updateSubmitButtonState lo maneje en cambios subsiguientes.
+									// Si el modal se cierra, no importa. Si permanece abierto,
+									// y el usuario quiere cambiar de nuevo, la lógica de habilitación funcionará.
+									updateSubmitButtonState(); // Re-evaluar estado del botón
 								});
 						});
 					})
@@ -1076,6 +1127,7 @@
 					});
 			});
 		});
+
 	</script>
 
 	<script>
