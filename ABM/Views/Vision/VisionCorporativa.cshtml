@@ -9,7 +9,66 @@
     <title>Vision Corporativa</title>
     <link href="~/css/leaflet.css" rel="stylesheet" />
 
-    
+    <style>
+        .color-legend {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin: 15px 0;
+            flex-wrap: wrap;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 5px 10px;
+            background: #f8f9fa;
+            border-radius: 20px;
+            border: 1px solid #dee2e6;
+            font-size: 14px;
+        }
+        
+        .legend-color {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            border: 1px solid #333;
+        }
+        
+        .map-container {
+            position: relative;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        .location-marker {
+            position: absolute;
+            font-size: 24px;
+            color: #333;
+            z-index: 1000;
+            pointer-events: none;
+            animation: pulse 2s infinite;
+        }
+        
+        @@keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+        
+        .selected-country {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 10px;
+            border-radius: 8px;
+            margin-top: 15px;
+            text-align: center;
+            font-weight: bold;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+    </style>
 </head>
 <body>
     <br />
@@ -26,9 +85,30 @@
             <div class="col-md-6">
                 <div class="card">
                     <div class="card-body">
-                        <h4 class="card-title">Seleccione un País</h4>
-                        <div id="visitfromworld" style="width: 100%; height: 750px; border-radius: 8px; border: 1px solid #e0e0e0;"></div>
-                        <div class="selected-country" id="selectedCountryJvm" style="text-align: center; font-weight: bold; color: #5090c0; margin-top: 10px;">
+                        <h4 class="card-title text-center mb-3">Seleccione un País</h4>
+                        
+                        <!-- Indicador de colores -->
+                        <div class="color-legend">
+                            <div class="legend-item">
+                                <div class="legend-color" style="background-color: #FF0000;"></div>
+                                <span>Finiquitados</span>
+                            </div>
+                            <div class="legend-item">
+                                <div class="legend-color" style="background-color: #28a745;"></div>
+                                <span>Activos</span>
+                            </div>
+                            <div class="legend-item">
+                                <div class="legend-color" style="background-color: #D3D3D3;"></div>
+                                <span>Sin Datos</span>
+                            </div>
+                        </div>
+                        
+                        <div class="map-container">
+                            <div id="visitfromworld" style="width: 100%; height: 750px;"></div>
+                            <i id="locationMarker" class="fas fa-location-dot location-marker" style="display: none;"></i>
+                        </div>
+                        
+                        <div class="selected-country" id="selectedCountryJvm">
                             País seleccionado:
                             @{
                                 var selPaisJvm = Model.ListaPaises.FirstOrDefault(x => x.IdPais == Model.SelectedPais);
@@ -36,7 +116,8 @@
                                 ;
                             }
                         </div>
-                        <form asp-action="VisionCorporativa" method="get" id="countryFormJvm">
+                        
+                        <form asp-action="VisionCorporativa" method="get" id="countryFormJvm" style="display: none;">
                             <input type="hidden" id="idPaisJvm" name="idPais" value="@Model.SelectedPais" />
                         </form>
                     </div>
@@ -238,11 +319,11 @@
         <script src="/js/canvasjs-chart-3.10.9/canvasjs.min.js"></script>
         <script>
             $(function () {
-                const colorVerdeNegocio = '#28a745'; // Verde para países con negocio
-                const colorAzulSeleccionado = '#007bff'; // Azul para país seleccionado
-                const colorGrisOtros = '#D3D3D3'; // Gris para otros países
+                const colorRojoFiniquitados = '#FF0000';
+                const colorVerdePorDefecto = '#28a745';
+                const colorGrisOtros = '#D3D3D3';
 
-                const paisesMapeados = { // Solo necesitas codigoJvm aquí si los colores son fijos
+                const paisesMapeados = {
                     1: { codigoJvm: 'CL' },
                     2: { codigoJvm: 'CO' },
                     3: { codigoJvm: 'AR' },
@@ -253,174 +334,213 @@
                     11: { codigoJvm: 'BR' }
                 };
 
-                const idsPaisesConNegocio = @Html.Raw(Json.Serialize(Model.ListaPaises.Select(p => p.IdPais)));
-                const modelPaisesData = @Html.Raw(Json.Serialize(Model.ListaPaises.Select(p => new { p.IdPais, p.NombrePais })));
+                const todosLosPaisesDelNegocio = @Html.Raw(Json.Serialize(Model.ListaPaises.Select(p => new { 
+                    idPais = p.IdPais, 
+                    nombrePais = p.NombrePais 
+                })));
                 const selectedPaisIdDesdeModelo = @Model.SelectedPais;
+        
+                const datosRiesgoGlobales = @Html.Raw(Json.Serialize(Model.ListaRiesgoGlobalMapa.Select(r => new {
+                    idPais = r.IdPais,
+                    nombre = r.Pais,
+                    cnt_finiquitados = r.cnt_finiquitados
+                })));
 
-                let coloresEspecificosParaSeries = {}; // { 'CL': 'color', 'AR': 'color' }
+                let mapObject;
                 let initialSelectedRegionCode = null;
                 let codigosJvmPaisesConNegocio = [];
-                var mapObject; // Para guardar la referencia al mapa
 
-                idsPaisesConNegocio.forEach(idModelo => {
-                    if (paisesMapeados[idModelo]) {
-                        const codigoJvm = paisesMapeados[idModelo].codigoJvm;
+                todosLosPaisesDelNegocio.forEach(paisInfo => {
+                    if (paisesMapeados[paisInfo.idPais] && paisesMapeados[paisInfo.idPais].codigoJvm) {
+                        const codigoJvm = paisesMapeados[paisInfo.idPais].codigoJvm;
                         codigosJvmPaisesConNegocio.push(codigoJvm);
-
-                        // Por defecto, los países con negocio son verdes
-                        coloresEspecificosParaSeries[codigoJvm] = colorVerdeNegocio;
-
-                        if (idModelo == selectedPaisIdDesdeModelo) {
+                        if (paisInfo.idPais == selectedPaisIdDesdeModelo) {
                             initialSelectedRegionCode = codigoJvm;
-                            // Si está seleccionado desde el modelo, su color inicial es azul
-                            coloresEspecificosParaSeries[codigoJvm] = colorAzulSeleccionado;
                         }
                     }
                 });
 
+                function determinarColorPais(idPaisActual) {
+                    const riesgoData = datosRiesgoGlobales.find(r => r.idPais == idPaisActual);
+                    if (riesgoData) {
+                        if (riesgoData.cnt_finiquitados > 0) {
+                            return colorRojoFiniquitados;
+                        }
+                    }
+                    return colorVerdePorDefecto;
+                }
+
+                function obtenerColoresRegiones() {
+                    let colores = {};
+                    todosLosPaisesDelNegocio.forEach(paisInfo => {
+                        if (paisesMapeados[paisInfo.idPais] && paisesMapeados[paisInfo.idPais].codigoJvm) {
+                            const codigoJvm = paisesMapeados[paisInfo.idPais].codigoJvm;
+                            colores[codigoJvm] = determinarColorPais(paisInfo.idPais);
+                        }
+                    });
+                    return colores;
+                }
+
+                function actualizarMarcadorUbicacion(mapInstance, idPaisSeleccionadoActual) {
+                    const marker = $('#locationMarker');
+            
+                    if (idPaisSeleccionadoActual && paisesMapeados[idPaisSeleccionadoActual] && paisesMapeados[idPaisSeleccionadoActual].codigoJvm) {
+                        const codigoJvmSeleccionado = paisesMapeados[idPaisSeleccionadoActual].codigoJvm;
+                
+                        // Obtener las coordenadas del país en el mapa
+                        try {
+                            const path = mapInstance.getRegionPath(codigoJvmSeleccionado);
+                            if (path && path.getBBox) {
+                                const bbox = path.getBBox();
+                                const centerX = bbox.x + bbox.width / 2;
+                                const centerY = bbox.y + bbox.height / 2;
+                        
+                                // Posicionar el ícono
+                                marker.css({
+                                    'left': centerX + 'px',
+                                    'top': centerY + 'px',
+                                    'transform': 'translate(-50%, -100%)',
+                                    'display': 'block'
+                                });
+                            }
+                        } catch (e) {
+                            console.log('Error positioning marker:', e);
+                            marker.hide();
+                        }
+                    } else {
+                        marker.hide();
+                    }
+                }
+
                 $('#visitfromworld').vectorMap({
                     map: 'world_mill_en',
                     backgroundColor: '#FFFFFF',
-                    // Configuración de focusOn para América Latina
-                    focusOn: {
-                        x: 0.25,        // Posición horizontal (0-1)
-                        y: 0.6,         // Posición vertical (0-1)
-                        scale: 2,       // Nivel de zoom
-                        animate: true   // Animación al cargar
+                    focusOn: { 
+                        x: 0.3, 
+                        y: 1, 
+                        scale: 6,  // Aumentado para mayor zoom
+                        animate: true 
                     },
                     regionStyle: {
-                        initial: {
-                            fill: colorGrisOtros, // GRIS BASE PARA TODOS LOS PAÍSES
-                            "stroke-width": 0.5,
-                            stroke: "#FFFFFF",
-                            cursor: 'default'
+                        initial: { 
+                            fill: colorGrisOtros, 
+                            "stroke-width": 0.5, 
+                            stroke: "#FFFFFF", 
+                            cursor: 'default' 
                         },
-                        hover: function (event, code, region) {
-                            if (codigosJvmPaisesConNegocio.includes(code)) {
-                                return {
-                                    fillOpacity: 0.7,
-                                    cursor: 'pointer'
-                                };
-                            }
-                            return { cursor: 'default' };
-                        },
-                        selected: { // Estilo visual de jVectorMap al seleccionar (borde, etc.)
-                            // El color de relleno lo manejaremos dinámicamente con series.setValues
-                            fillOpacity: 1
+                        hover: (event, code) => codigosJvmPaisesConNegocio.includes(code) ? 
+                            { fillOpacity: 0.7, cursor: 'pointer', 'stroke-width': 1.5, stroke: "#333" } : 
+                            { cursor: 'default' },
+                        selected: { 
+                            fillOpacity: 1, 
+                            'stroke-width': 2, 
+                            stroke: "#333" 
                         },
                         selectedHover: {}
                     },
                     series: {
                         regions: [{
-                            values: coloresEspecificosParaSeries, // Colores iniciales (verde/azul)
+                            values: obtenerColoresRegiones(),
                             attribute: 'fill'
-                            // No se usa defaultFill aquí, ya que regionStyle.initial.fill lo maneja
                         }]
                     },
                     regionsSelectable: true,
                     regionsSelectableOne: true,
                     onRegionClick: function (event, code, regionName) {
-                        var currentMap = $('#visitfromworld').vectorMap('get', 'mapObject'); // Obtener instancia del mapa
+                        mapObject = mapObject || $('#visitfromworld').vectorMap('get', 'mapObject');
+                        let idPaisClickeado = null;
+                
+                        for (const idKey in paisesMapeados) {
+                            if (paisesMapeados[idKey].codigoJvm === code) {
+                                idPaisClickeado = parseInt(idKey);
+                                break;
+                            }
+                        }
 
-                        if (!codigosJvmPaisesConNegocio.includes(code)) {
+                        const paisInfoGeneral = todosLosPaisesDelNegocio.find(p => p.idPais == idPaisClickeado);
+
+                        if (!idPaisClickeado || !paisInfoGeneral) {
                             event.preventDefault();
-                            // Si se hizo clic en un país gris, deseleccionar y restaurar colores
-                            currentMap.clearSelectedRegions();
-                            let tempColores = {};
-                            codigosJvmPaisesConNegocio.forEach(c => {
-                                tempColores[c] = colorVerdeNegocio; // Todos los de negocio a verde
-                            });
-                            currentMap.series.regions[0].setValues(tempColores);
+                            mapObject.clearSelectedRegions();
+                            actualizarMarcadorUbicacion(mapObject, null);
                             $('#selectedCountryJvm').text('País seleccionado: Ninguno');
                             return;
                         }
+                
+                        const nombrePaisDisplay = paisInfoGeneral.nombrePais ? paisInfoGeneral.nombrePais : regionName;
+                        $('#selectedCountryJvm').text(`País seleccionado: ${nombrePaisDisplay}`);
+                
+                        // Actualizar marcador con un pequeño delay para asegurar que el mapa esté renderizado
+                        setTimeout(() => {
+                            actualizarMarcadorUbicacion(mapObject, idPaisClickeado);
+                        }, 100);
 
-                        // Si se hizo clic en un país con negocio
-                        let idPaisOriginal = null;
-                        let nombrePaisParaActualizarDOM = "Cargando...";
-
-                        for (const id in paisesMapeados) {
-                            if (paisesMapeados[id].codigoJvm === code) {
-                                idPaisOriginal = id;
-                                const paisInfoServer = modelPaisesData.find(p => p.IdPais == idPaisOriginal);
-                                if (paisInfoServer && paisInfoServer.NombrePais) {
-                                    nombrePaisParaActualizarDOM = paisInfoServer.NombrePais;
-                                } else if (regionName) {
-                                    nombrePaisParaActualizarDOM = regionName;
-                                }
-                                break;
-                            }
-                        }
-
-                        $('#selectedCountryJvm').text(`País seleccionado: ${nombrePaisParaActualizarDOM}`);
-
-                        // Actualizar dinámicamente los colores
-                        let nuevosColores = {};
-                        codigosJvmPaisesConNegocio.forEach(jvmCode => {
-                            if (jvmCode === code) { // El país clickeado/seleccionado
-                                nuevosColores[jvmCode] = colorAzulSeleccionado;
-                            } else { // Otros países con negocio
-                                nuevosColores[jvmCode] = colorVerdeNegocio;
-                            }
-                        });
-                        currentMap.series.regions[0].setValues(nuevosColores);
-                        // La selección visual de jVectorMap (borde, etc.) se maneja automáticamente
-                        // al no hacer event.preventDefault() para regiones seleccionables.
-
-                        if (idPaisOriginal) {
-                            window.location.href = '@Url.Action("VisionCorporativa", "Vision")?idPais=' + idPaisOriginal;
-                        } else {
-                            $('#selectedCountryJvm').text(`País seleccionado: Error`);
+                        if (idPaisClickeado) {
+                            window.location.href = '@Url.Action("VisionCorporativa", "Vision")?idPais=' + idPaisClickeado;
                         }
                     },
                     onRegionTipShow: function (e, el, code) {
-                        if (!codigosJvmPaisesConNegocio.includes(code)) {
-                            e.preventDefault();
-                            return;
-                        }
-                        let nombrePaisParaTooltip = el.html();
-                        for (const id in paisesMapeados) {
-                            if (paisesMapeados[id].codigoJvm === code) {
-                                const paisInfoServer = modelPaisesData.find(p => p.IdPais == id);
-                                if (paisInfoServer && paisInfoServer.NombrePais) {
-                                    nombrePaisParaTooltip = paisInfoServer.NombrePais;
-                                }
+                        let idPaisHover = null;
+                        for (const idKey in paisesMapeados) {
+                            if (paisesMapeados[idKey].codigoJvm === code) {
+                                idPaisHover = parseInt(idKey);
                                 break;
                             }
                         }
-                        el.html(nombrePaisParaTooltip);
+                
+                        const paisInfoGeneral = todosLosPaisesDelNegocio.find(p => p.idPais == idPaisHover);
+                        if (!paisInfoGeneral) {
+                            e.preventDefault();
+                            return;
+                        }
+                
+                        let tooltipHtml = `<strong>${paisInfoGeneral.nombrePais ? paisInfoGeneral.nombrePais : code}</strong>`;
+                        const riesgoData = datosRiesgoGlobales.find(r => r.idPais == idPaisHover);
+
+                        if (riesgoData) {
+                            if (riesgoData.cnt_finiquitados > 0) {
+                                tooltipHtml += `<br/><span style="color: #FF0000;">● Finiquitados: ${riesgoData.cnt_finiquitados}</span>`;
+                            }
+                            if (riesgoData.cnt_finiquitados === 0) {
+                                tooltipHtml += `<br/><span style="color: #28a745;">● Estado: Activo</span>`;
+                            }
+                        }
+                        el.html(tooltipHtml);
                     },
                     zoomButtons: true,
                     zoomOnScroll: true,
-                    onLoaded: function (event, currentMapInstance) { // 'map' aquí es la instancia
-                        mapObject = currentMapInstance; // Guardar referencia
+                    onLoaded: function (event, currentMapInstance) {
+                        mapObject = currentMapInstance;
                         let nombrePaisInicialRender = "Ninguno";
+                        const paisSeleccionadoEnModelo = todosLosPaisesDelNegocio.find(p => p.idPais == selectedPaisIdDesdeModelo);
 
-                        // Aplicar colores iniciales y selección
-                        let coloresInicialesCarga = {};
-                        codigosJvmPaisesConNegocio.forEach(c => {
-                            coloresInicialesCarga[c] = (c === initialSelectedRegionCode) ? colorAzulSeleccionado : colorVerdeNegocio;
-                        });
-                        mapObject.series.regions[0].setValues(coloresInicialesCarga);
-
-                        if (initialSelectedRegionCode) {
-                            mapObject.setSelectedRegions(initialSelectedRegionCode); // Para el estilo visual de jVectorMap
-                            const idPaisInicial = Object.keys(paisesMapeados).find(key => paisesMapeados[key].codigoJvm === initialSelectedRegionCode);
-                            if (idPaisInicial) {
-                                const paisInfoServer = modelPaisesData.find(p => p.IdPais == idPaisInicial);
-                                if (paisInfoServer && paisInfoServer.NombrePais) {
-                                    nombrePaisInicialRender = paisInfoServer.NombrePais;
+                        if (initialSelectedRegionCode && paisesMapeados[selectedPaisIdDesdeModelo] && paisesMapeados[selectedPaisIdDesdeModelo].codigoJvm) {
+                            if (codigosJvmPaisesConNegocio.includes(initialSelectedRegionCode)){
+                                mapObject.setSelectedRegions(initialSelectedRegionCode);
+                                setTimeout(() => {
+                                    actualizarMarcadorUbicacion(mapObject, selectedPaisIdDesdeModelo);
+                                }, 500);
+                                if (paisSeleccionadoEnModelo) {
+                                    nombrePaisInicialRender = paisSeleccionadoEnModelo.nombrePais;
                                 }
+                            } else {
+                                actualizarMarcadorUbicacion(mapObject, null);
+                                if (paisSeleccionadoEnModelo) nombrePaisInicialRender = paisSeleccionadoEnModelo.nombrePais;
                             }
                         } else {
-                            // Si no hay selección inicial, pero hay un selectedPaisIdDesdeModelo (podría ser un ID inválido o no mapeado)
-                            const paisSeleccionadoModelo = modelPaisesData.find(p => p.IdPais == selectedPaisIdDesdeModelo);
-                            if (paisSeleccionadoModelo && paisSeleccionadoModelo.NombrePais) {
-                                // Esto es solo para el texto, el color ya sería verde por defecto si no es initialSelectedRegionCode
-                                nombrePaisInicialRender = paisSeleccionadoModelo.NombrePais;
-                            }
+                            actualizarMarcadorUbicacion(mapObject, null);
+                            if (paisSeleccionadoEnModelo) nombrePaisInicialRender = paisSeleccionadoEnModelo.nombrePais;
                         }
                         $('#selectedCountryJvm').text(`País seleccionado: ${nombrePaisInicialRender}`);
+                    }
+                });
+
+                // Actualizar posición del marcador cuando se hace zoom o se mueve el mapa
+                $(window).on('resize', function() {
+                    if (mapObject && $('#idPaisJvm').val()) {
+                        setTimeout(() => {
+                            actualizarMarcadorUbicacion(mapObject, parseInt($('#idPaisJvm').val()));
+                        }, 100);
                     }
                 });
             });

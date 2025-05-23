@@ -171,30 +171,34 @@ namespace ABM.Servicios
             using (IDbConnection dbdapper = new SqlConnection(connectionString))
             {
                 var sql = @"
-                WITH UltimaCarga AS (
-                    SELECT TOP 1 feccarga
-                    FROM dbo.ftc_gestion_diaria
-                    ORDER BY TRY_CONVERT(date, feccarga, 23) DESC
-                )
-                SELECT
-                    UPPER(p.pais)                   AS pais,
-                    SUM(gd.cnt_finiquitados)       AS cnt_finiquitados,
-                    SUM(gd.cnt_no_encontrados)     AS cnt_no_encontrados,
-                    SUM(gd.cnt_activos)            AS cnt_activos
-                FROM dbo.ftc_gestion_diaria AS gd
-                INNER JOIN dbo.ftc_pais_negocio_sistema AS pns
-                    ON gd.idPaisNegocioSistema = pns.idPaisNegocioSistema
-                INNER JOIN dbo.ftc_pais AS p
-                    ON pns.idPais = p.idPais
-                INNER JOIN dbo.ftc_negocio AS n
-                    ON pns.idNegocio = n.idNegocio
-                INNER JOIN dbo.ftc_sistema AS s
-                    ON pns.idSistema = s.idSistema
-                WHERE 
-                    gd.feccarga      = (SELECT feccarga FROM UltimaCarga)
-                    AND pns.idNegocio = @idNegocio
-                GROUP BY p.pais
-                ORDER BY p.pais;
+                    WITH UltimaCarga AS (
+                        SELECT TOP 1 feccarga
+                        FROM dbo.ftc_gestion_diaria
+                        ORDER BY TRY_CONVERT(date, feccarga, 23) DESC
+                    )
+                    SELECT
+                        p.idPais AS IdPais,             
+                        UPPER(p.pais)              AS Pais,
+                        SUM(gd.cnt_finiquitados)   AS cnt_finiquitados,
+                        SUM(gd.cnt_no_encontrados) AS cnt_no_encontrados,
+                        SUM(gd.cnt_activos)        AS cnt_activos
+                    FROM dbo.ftc_gestion_diaria AS gd
+                    INNER JOIN dbo.ftc_pais_negocio_sistema AS pns
+                        ON gd.idPaisNegocioSistema = pns.idPaisNegocioSistema
+                    INNER JOIN dbo.ftc_pais AS p
+                        ON pns.idPais = p.idPais
+                    INNER JOIN dbo.ftc_negocio AS n
+                        ON pns.idNegocio = n.idNegocio
+                    INNER JOIN dbo.ftc_sistema AS s
+                        ON pns.idSistema = s.idSistema
+                    WHERE 
+                        gd.feccarga   = (SELECT feccarga FROM UltimaCarga)
+                        AND pns.idNegocio = @idNegocio
+                    GROUP BY 
+                        p.idPais, 
+                        p.pais    
+                    ORDER BY 
+                        p.pais;
                 ";
                 return await dbdapper.QueryAsync<RiesgoPaisViewModel>(sql, new { idNegocio });
             }
