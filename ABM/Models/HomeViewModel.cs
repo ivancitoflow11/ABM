@@ -9,5 +9,6 @@
         public string RolNombre { get; set; }
         public string Pais { get; set; }
         public string Negocio { get; set; }
+        public DateTime? FechaExpiracionPassword { get; set; }
     }
 }

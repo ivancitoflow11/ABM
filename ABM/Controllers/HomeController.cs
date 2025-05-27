@@ -34,8 +34,8 @@ namespace ABM.Controllers
         }
 
         [HttpGet]
-        [Monitoreo("Index", "SELECT", "verIndex")] 
-        public async Task<IActionResult> Index() 
+        [Monitoreo("Index", "SELECT", "verIndex")]
+        public async Task<IActionResult> Index()
         {
             var viewModel = new HomeViewModel
             {
@@ -52,12 +52,23 @@ namespace ABM.Controllers
                 {
                     viewModel.NombreCompleto = $"{usuarioDb.nombre} {usuarioDb.apellidos}".Trim();
                     viewModel.Correo = usuarioDb.correo;
-                    viewModel.UltimoAcceso = usuarioDb.inicioOtc; 
-                    viewModel.RolNombre = usuarioDb.RolNombre; 
+                    viewModel.UltimoAcceso = usuarioDb.inicioOtc;
+                    viewModel.RolNombre = usuarioDb.RolNombre;
+
+                    // si es 0 o negativo, no se debe calcular la expiración o significa que no expira.
+                    if (usuarioDb.FechaCambioPassword.HasValue && usuarioDb.MesesExpiracionClave > 0)
+                    {
+                        viewModel.FechaExpiracionPassword = usuarioDb.FechaCambioPassword.Value.AddMonths(usuarioDb.MesesExpiracionClave);
+                    }
+                    else
+                    {
+                        viewModel.FechaExpiracionPassword = null; // No se puede calcular o no expira
+                    }
                 }
                 else
                 {
                     viewModel.NombreCompleto = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Name)?.Value ?? "Usuario";
+                    viewModel.FechaExpiracionPassword = null;
                 }
             }
             return View(viewModel);

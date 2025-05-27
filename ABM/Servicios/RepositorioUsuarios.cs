@@ -243,7 +243,9 @@ namespace ABM.Servicios
                             u.rut,         
                             u.telefono,   
                             u.usuario, 
-                            r.nombre AS RolNombre
+                            r.nombre AS RolNombre,
+                            u.FechaCambioPassword,
+                            u.MesesExpiracionClave
                         FROM ftc_usuario u
                         LEFT JOIN ftc_rol r ON u.idRol = r.idRol
                         WHERE u.idUsuario = @id";

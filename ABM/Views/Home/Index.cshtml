@@ -182,6 +182,14 @@
                 background-color: var(--accent-color-1);
             }
 
+        /* NUEVO ESTILO PARA EXPIRACIÓN DE CONTRASEÑA */
+        .metric-card.password-expiry {
+            border-left-color: #6f42c1; 
+        }
+
+            .metric-card.password-expiry .metric-icon {
+                background-color: #6f42c1; 
+            }
 
     .metric-info .label {
         font-size: 0.85rem;
@@ -375,6 +383,18 @@
                             </div>
                         </div>
                     }
+                    @* --- NUEVA CARD PARA FECHA DE EXPIRACIÓN DE CONTRASEÑA --- *@
+                    @if (Model.FechaExpiracionPassword.HasValue)
+                    {
+                        <div class="metric-card password-expiry">
+                            <div class="metric-icon"><i class="fas fa-key"></i></div>
+                            <div class="metric-info">
+                                <p class="label">Contraseña Vence</p>
+                                <p class="value">@Model.FechaExpiracionPassword.Value.ToString("dd MMM yyyy")</p>
+                            </div>
+                        </div>
+                    }
+                    @* --- FIN DE LA NUEVA CARD --- *@
                 </div>
             </section>
 
@@ -393,9 +413,9 @@
                         <div class="action-icon"><i class="fas fa-chart-pie"></i></div>
                         <span class="action-label">Ver Estadísticas</span>
                     </a> *@
-                    <a href="" class="action-tile">
-                        <div class="action-icon"><i class="fas fa-life-ring"></i></div>
-                        <span class="action-label">Soporte Técnico</span>
+                    <a href="@Url.Action("AjustesPerfil", "Perfil")" class="action-tile">
+                        <div class="action-icon"><i class="fa-solid fa-user-gear"></i></div>
+                        <span class="action-label">Ajustes de Perfil</span>
                     </a>
                 </div>
             </section>
