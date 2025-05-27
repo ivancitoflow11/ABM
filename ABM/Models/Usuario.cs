@@ -30,5 +30,8 @@
         public string ResetPasswordToken { get; set; }
         public DateTime? ResetPasswordTokenExpiry { get; set; }
 
+        public string? FotoUrl { get; set; }
+
+        public DateTime? FechaNacimiento { get; set; }
     }
 }

@@ -34,6 +34,19 @@
 
 	var pais = HttpContextAccessor.HttpContext.Session.GetString("Pais") ?? "";
 	var negocio = HttpContextAccessor.HttpContext.Session.GetString("Negocio") ?? "";
+
+
+	string fotoPerfilUrlParaLayout;
+	if (usuario != null && !string.IsNullOrEmpty(usuario.FotoUrl) && usuario.FotoUrl != "avatar_default.png")
+	{
+
+		fotoPerfilUrlParaLayout = Url.Content($"~/imagenes/perfil/{usuario.FotoUrl}");
+	}
+	else
+	{
+
+		fotoPerfilUrlParaLayout = Url.Content("~/imagenes/perfil/avatar_default.png");
+	}
 }
 
 
@@ -90,7 +103,7 @@
 						 style="">
 						<!-- User profile image -->
 						<div class="profile-img">
-							<img src="~/images/imavatar.png" alt="user" class="w-100 rounded-circle overflow-hidden" />
+							<img src="@fotoPerfilUrlParaLayout" alt="Foto de perfil" class="w-100 rounded-circle overflow-hidden" />
 						</div>
 						<!-- User profile text-->
 						<div class="profile-text hide-menu pt-1 dropdown">
@@ -528,14 +541,13 @@
 									<!-- ------------------------------- -->
 									<li class="nav-item hover-dd dropdown">
 										<a class="nav-link nav-icon-hover" href="javascript:void(0)" id="drop2" aria-expanded="false">
-											<!-- Texto antes de la imagen de perfil -->
-											<img src="~/images/imavatar.png" alt="user" class="profile-pic rounded-circle round-30" />
+											<img src="@fotoPerfilUrlParaLayout" alt="Foto de perfil" class="profile-pic rounded-circle round-30" />
 										</a>
 										<div class="dropdown-menu pt-0 content-dd overflow-hidden pt-0 dropdown-menu-end user-dd" aria-labelledby="drop2">
 											<div class="profile-dropdown position-relative" data-simplebar>
 												<div class="py-3 border-bottom">
 													<div class="d-flex align-items-center px-3">
-														<img src="~/images/imavatar.png" class="rounded-circle round-50" alt="" />
+														<img src="@fotoPerfilUrlParaLayout" class="rounded-circle round-50" alt="Foto de perfil" />
 														<div class="ms-3">
 															<h5 class="mb-1 fs-4">@User.Claims.Where(c => c.Type == ClaimTypes.Name).Select(c => c.Value).SingleOrDefault()</h5>
 															<p class="mb-0 fs-2 d-flex align-items-center text-muted">
@@ -551,6 +563,12 @@
 															<a href="" class="" target="_blank">
 																<i data-feather="settings" class="feather-sm text-success"></i>
 																Manual de usuario
+															</a>
+														</div>
+														<div class="py-8 px-3 d-flex justify-content-between dropdown-item align-items-center h6 mb-0 rounded-2 link">
+															<a asp-controller="Perfil" asp-action="AjustesPerfil" class="">
+																<i data-feather="user" class="feather-sm text-success"></i>
+																Ajustes de Usuario
 															</a>
 														</div>
 														<div class="py-8 px-3 d-flex justify-content-between dropdown-item align-items-center h6 mb-0 rounded-2 link" id="support-button">

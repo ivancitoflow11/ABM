@@ -37,7 +37,11 @@ namespace ABM.Servicios
 
         Task<bool> ExisteCorreoEnPasoActivos(string correo);
         Task<bool> ExisteCorreoEnAD(string correo);
-    }
+
+        //AJUSTES PERFIL
+        Task<bool> ActualizarDatosPerfil(Usuario usuario);
+		Task<bool> ActualizarPasswordUsuarioLogeado(int idUsuario, string nuevaPasswordHasheada, string nuevaPasswordPlain);
+	}
 
     public class RepositorioUsuarios : IRepositorioUsuarios
     {
@@ -48,6 +52,67 @@ namespace ABM.Servicios
         {
             connectionString = configuration.GetConnectionString("CadenaSQL");
             httpContext = httpContextAccessor.HttpContext;
+        }
+
+		public async Task<bool> ActualizarPasswordUsuarioLogeado(int idUsuario, string nuevaPasswordHasheada, string nuevaPasswordPlain)
+		{
+			using (IDbConnection dbdapper = new SqlConnection(connectionString))
+			{
+				// Esta consulta actualiza la contraseña (hasheada y en texto plano para repeat_password),
+				// la fecha de cambio de contraseña y establece el estado de la contraseña como activo (asumiendo 1).
+				// No modifica 'primerInicio'.
+				string query = @"
+                UPDATE ftc_usuario
+                SET 
+                    password = @PasswordHasheada,
+                    repeat_password = @PasswordPlain, -- ¡Considera las implicaciones de seguridad!
+                    FechaCambioPassword = GETDATE(),
+                    estado_password = 1 -- Asumiendo que 1 significa que la contraseña está activa/válida
+                    -- Opcional: podrías considerar limpiar ResetPasswordToken y ResetPasswordTokenExpiry aquí también si fuera relevante
+                    -- ResetPasswordToken = NULL,
+                    -- ResetPasswordTokenExpiry = NULL 
+                WHERE idUsuario = @IdUsuario;";
+
+				var parameters = new
+				{
+					IdUsuario = idUsuario,
+					PasswordHasheada = nuevaPasswordHasheada,
+					PasswordPlain = nuevaPasswordPlain
+				};
+
+				int rowsAffected = await dbdapper.ExecuteAsync(query, parameters);
+				return rowsAffected > 0;
+			}
+		}
+		public async Task<bool> ActualizarDatosPerfil(Usuario usuario)
+        {
+
+            using (IDbConnection db = new SqlConnection(connectionString))
+            {
+
+                string query = @"
+                UPDATE ftc_usuario SET
+                    Nombre = @Nombre,
+                    Apellidos = @Apellidos,
+                    Telefono = @Telefono,
+                    FotoUrl = @FotoUrl, 
+                    FechaNacimiento = @FechaNacimiento,
+                    FultimaModificacion = GETDATE() 
+                WHERE idUsuario = @idUsuario;";
+
+                var parameters = new
+                {
+                    usuario.nombre,
+                    usuario.apellidos,
+                    usuario.telefono,
+                    usuario.FotoUrl, 
+                    usuario.FechaNacimiento,
+                    usuario.idUsuario
+                };
+
+                int rowsAffected = await db.ExecuteAsync(query, parameters);
+                return rowsAffected > 0;
+            }
         }
         public async Task<bool> ActualizarPasswordPrimerInicio(int idUsuario, string nuevaPasswordHasheada, string nuevaPasswordPlain)
         {

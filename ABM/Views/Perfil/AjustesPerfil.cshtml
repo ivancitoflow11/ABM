@@ -1,0 +1,250 @@
+﻿@model ABM.Models.Usuario
+@{
+    ViewData["Title"] = "Ajustes de Perfil";
+}
+
+@* @{
+    var successMessage = TempData["SuccessMessage"] as string;
+    var errorMessage = TempData["ErrorMessage"] as string;
+} *@
+
+<style>
+    .user-profile-tab .nav-item .nav-link.active {
+        border-bottom: 2px solid #0056b3; /* Ajusta el color a tu tema */
+        color: #0056b3;
+    }
+    .user-profile-tab .nav-item .nav-link {
+        border-bottom: 2px solid transparent;
+    }
+    .form-label {
+        font-weight: 500;
+    }
+    .profile-pic-preview {
+        width: 120px;
+        height: 120px;
+        object-fit: cover;
+        border: 3px solid #eee;
+        border-radius: 50%; /* Para hacerla redonda */
+    }
+</style>
+
+<div class="container-fluid" style="margin-top:20px;">
+    <div class="font-weight-medium shadow-none position-relative overflow-hidden mb-4">
+        <div class="card-body px-0">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h4 class="font-weight-medium fs-14 mb-0">Configuración de Cuenta</h4>
+                    <nav aria-label="breadcrumb">
+                        <ol class="breadcrumb">
+                            <li class="breadcrumb-item">
+                                <a class="text-muted text-decoration-none" asp-controller="Home" asp-action="Index">Home</a>
+                            </li>
+                            <li class="breadcrumb-item text-muted" aria-current="page">Ajustes de Perfil</li>
+                        </ol>
+                    </nav>
+                </div>
+            </div>
+        </div>
+    </div>
+@* 
+    @if (!string.IsNullOrEmpty(successMessage))
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @Html.Raw(successMessage)
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+    @if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            @Html.Raw(errorMessage)
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+    @if (!ViewData.ModelState.IsValid && ViewData.ModelState[string.Empty] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <strong>Por favor, corrija los siguientes errores:</strong>
+            <ul>
+                @foreach (var error in ViewData.ModelState[string.Empty].Errors)
+                {
+                    <li>@error.ErrorMessage</li>
+                }
+            </ul>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    } *@
+
+    <div class="card">
+        <ul class="nav nav-pills user-profile-tab custom-hr-pills" id="pills-tab" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="pills-perfil-tab" data-bs-toggle="pill" data-bs-target="#pills-perfil" type="button" role="tab" aria-controls="pills-perfil" aria-selected="true">
+                    <i class="fas fa-user-edit me-2"></i>
+                    <span class="d-none d-md-block">Ajustes de Perfil</span>
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <a class="nav-link" asp-controller="Perfil" asp-action="CambiarPasswordUsuarioLogeado">
+                    <i class="fas fa-key me-2"></i>
+                    <span class="d-none d-md-block">Cambiar Contraseña</span>
+                </a>
+            </li>
+        </ul>
+
+        <div class="card-body">
+            <div class="tab-content" id="pills-tabContent">
+                <div class="tab-pane fade show active" id="pills-perfil" role="tabpanel" aria-labelledby="pills-perfil-tab" tabindex="0">
+                    <form asp-controller="Perfil" asp-action="AjustesPerfil" enctype="multipart/form-data" method="post">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" asp-for="idUsuario" />
+                        <input type="hidden" asp-for="correo" />
+                        <input type="hidden" asp-for="usuario" />
+                        <input type="hidden" asp-for="rut" />
+                        <input type="hidden" asp-for="idRol" />
+                        <input type="hidden" asp-for="estado" />
+                        <input type="hidden" asp-for="FotoUrl" id="currentFotoUrl" />
+
+                        <div class="row">
+                            <div class="col-lg-12 mb-4">
+                                <div class="card shadow-sm border position-relative overflow-hidden">
+                                    <div class="card-body p-4">
+                                        <h5 class="card-title fw-semibold">Foto de Perfil</h5>
+                                        <p class="card-subtitle mb-4">Cambia tu foto de perfil aquí.</p>
+                                        <div class="text-center">
+                                            @{
+                                                string rutaImagenActual = string.IsNullOrEmpty(Model.FotoUrl) || Model.FotoUrl == "avatar_default.png" ?
+                                                Url.Content("~/imagenes/perfil/avatar_default.png") :
+                                                Url.Content("~/imagenes/perfil/" + Model.FotoUrl);
+
+                                                var physicalPathDefault = System.IO.Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "imagenes", "perfil", "avatar_default.png");
+                                                var physicalPathUser = string.IsNullOrEmpty(Model.FotoUrl) ? "" : System.IO.Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "imagenes", "perfil", Model.FotoUrl);
+
+                                                if (!string.IsNullOrEmpty(Model.FotoUrl) && Model.FotoUrl != "avatar_default.png" && !System.IO.File.Exists(physicalPathUser))
+                                                {
+                                                    rutaImagenActual = Url.Content("~/imagenes/perfil/avatar_default.png");
+                                                }
+                                                else if (string.IsNullOrEmpty(Model.FotoUrl) && !System.IO.File.Exists(physicalPathDefault))
+                                                {
+                                                    rutaImagenActual = "https://via.placeholder.com/120"; // Fallback si no hay ni default
+                                                }
+                                            }
+                                            <img src="@rutaImagenActual" alt="Foto de Perfil" id="profilePicturePreview" class="img-fluid rounded-circle profile-pic-preview mb-3">
+
+                                            <input type="file" id="fotoPerfilFile" name="fotoPerfilFile" class="form-control mb-2" accept="image/png, image/jpeg, image/jpg" onchange="previewImageOnChange(event)">
+                                            <small class="form-text text-muted">Permitido: JPG, JPEG, PNG. Tamaño máximo: 5MB.</small>
+                                            <span asp-validation-for="FotoUrl" class="text-danger d-block"></span>
+                                            @{
+                                                var fileError = ViewData.ModelState["fotoPerfilFile"]?.Errors.FirstOrDefault();
+                                                if (fileError != null)
+                                                {
+                                                    <span class="text-danger d-block">@fileError.ErrorMessage</span>
+                                                }
+                                            }
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-lg-12">
+                                <div class="card shadow-sm border position-relative overflow-hidden mb-0">
+                                    <div class="card-body p-4">
+                                        <h5 class="card-title fw-semibold">Datos Personales</h5>
+                                        <p class="card-subtitle mb-4">Para cambiar tu información personal, edítala y guarda aquí.</p>
+
+                                        <div class="row">
+                                            <div class="col-md-6 mb-3">
+                                                <label asp-for="nombre" class="form-label">Nombres</label>
+                                                <input type="text" asp-for="nombre" class="form-control" placeholder="Ej: Juan Alberto">
+                                                <span asp-validation-for="nombre" class="text-danger"></span>
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <label asp-for="apellidos" class="form-label">Apellidos</label>
+                                                <input type="text" asp-for="apellidos" class="form-control" placeholder="Ej: Pérez González">
+                                                <span asp-validation-for="apellidos" class="text-danger"></span>
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-md-6 mb-3">
+                                                <label asp-for="rut" class="form-label">RUT</label>
+                                                <input type="text" asp-for="rut" class="form-control" readonly>
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <label asp-for="telefono" class="form-label">Teléfono</label>
+                                                <input type="text" asp-for="telefono" class="form-control" placeholder="Ej: +56912345678">
+                                                <span asp-validation-for="telefono" class="text-danger"></span>
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-md-6 mb-3">
+                                                <label asp-for="correo" class="form-label">Correo Electrónico</label>
+                                                <input type="email" asp-for="correo" class="form-control" readonly>
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <label asp-for="usuario" class="form-label">Nombre de Usuario</label>
+                                                <input type="text" asp-for="usuario" class="form-control" readonly>
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-md-6 mb-3">
+                                                <label asp-for="FechaNacimiento" class="form-label">Fecha de Nacimiento</label>
+                                                <input type="date" asp-for="FechaNacimiento" class="form-control"
+                                                       value="@(Model.FechaNacimiento.HasValue ? Model.FechaNacimiento.Value.ToString("yyyy-MM-dd") : "")">
+                                                <span asp-validation-for="FechaNacimiento" class="text-danger"></span>
+                                            </div>
+                                        </div>
+
+                                        <div class="col-12 mt-4">
+                                            <div class="d-flex justify-content-end gap-2">
+                                                <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+                                                <a asp-action="Index" asp-controller="Home" class="btn btn-light border">Cancelar</a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+    <script>
+        function previewImageOnChange(event) {
+            const reader = new FileReader();
+            const output = document.getElementById('profilePicturePreview');
+            const currentFotoUrlInput = document.getElementById('currentFotoUrl');
+            const defaultImageUrl = "@Url.Content("~/imagenes/perfil/avatar_default.png")";
+            const placeholderUrl = "https://via.placeholder.com/120";
+
+            reader.onload = function () {
+                output.src = reader.result;
+            }
+
+            if (event.target.files && event.target.files[0]) {
+                reader.readAsDataURL(event.target.files[0]);
+            } else {
+                let originalSrc = defaultImageUrl;
+                if (currentFotoUrlInput && currentFotoUrlInput.value && currentFotoUrlInput.value !== "avatar_default.png") {
+                    originalSrc = "@Url.Content("~/imagenes/perfil/")" + currentFotoUrlInput.value;
+                }
+
+                // Intenta cargar la imagen original o la default, si falla usa placeholder
+                const imgTest = new Image();
+                imgTest.onload = function() { output.src = imgTest.src; };
+                imgTest.onerror = function() {
+                    const defaultImgTest = new Image();
+                    defaultImgTest.onload = function() { output.src = defaultImgTest.src; };
+                    defaultImgTest.onerror = function() { output.src = placeholderUrl; };
+                    defaultImgTest.src = defaultImageUrl;
+                };
+                imgTest.src = originalSrc;
+            }
+        }
+    </script>
+}
