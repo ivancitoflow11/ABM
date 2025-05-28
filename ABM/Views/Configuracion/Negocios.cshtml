@@ -1,0 +1,234 @@
+﻿@model IEnumerable<ABM.Models.Negocio>
+@{
+    ViewData["Title"] = "Negocios";
+
+    // Lectura de valores en POST para repopular el formulario en caso de error
+    string nombreNegocioValue = "";
+    if (ViewData["NombreNegocioValue"] != null) // Usamos ViewData establecido en el controlador
+    {
+        nombreNegocioValue = ViewData["NombreNegocioValue"].ToString();
+    }
+    else if (Context.Request.Method == "POST" && Context.Request.HasFormContentType && !ViewData.ModelState.IsValid)
+    {
+        // Fallback si ViewData no fue seteado, pero no es ideal ya que el controlador debería manejarlo.
+        nombreNegocioValue = Context.Request.Form["Nombre"];
+    }
+}
+<link rel="stylesheet" href="~/css/botones.css" asp-append-version="true" />
+<link rel="stylesheet" href="/libs/datatables.net-bs4/css/dataTables.bootstrap4.min.css" />
+
+<div class="pt-5">
+    <h4 class="mt-5">Gestión de Negocios</h4>
+
+    <div class="card mb-4">
+        <div class="card-header text-white" style="background-color:#acd743;">
+            Crear Negocio
+        </div>
+        <div class="card-body">
+            <form asp-controller="Configuracion"
+                  asp-action="CrearNegocio"
+                  method="post"
+                  class="row g-3">
+
+                <div class="col-md-8"> @* Ajusta el ancho según necesites *@
+                    <label asp-for="FirstOrDefault().Nombre" class="form-label"></label>
+                    <input type="text"
+                           name="Nombre" @* Debe coincidir con la propiedad del modelo Negocio *@
+                           class="form-control"
+                           value="@nombreNegocioValue"
+                           placeholder="Ejemplo: RETAIL FINANCIERO"
+                           required />
+                    @{
+                        var msNom = ViewData.ModelState["Nombre"]; // Usar "Nombre"
+                    }
+                    @if (msNom != null && msNom.Errors.Count > 0)
+                    {
+                        <span class="text-danger">
+                            @msNom.Errors[0].ErrorMessage
+                        </span>
+                    }
+                </div>
+
+                <div class="col-md-4 d-flex align-items-end"> @* Ajusta el ancho *@
+                    <button type="submit" class="btn btn-success">Crear</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-header text-white" style="background-color:#acd743;">
+            Listado de Negocios
+        </div>
+        <br />
+        <br />
+        <div class="mb-3" style="width:25%; margin-left:20px">
+            <input type="text" id="searchNegociosInput" class="form-control"
+                   placeholder="Buscar negocio..." />
+        </div>
+
+        <div class="card-body table-responsive">
+            <table id="tablaNegocios"
+                   class="table table-striped table-bordered nowrap"
+                   style="width:100%; text-align:center;">
+                <thead>
+                    <tr>
+                        <th>Nombre</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var n in Model)
+                    {
+                        <tr data-id="@n.IdNegocio">
+                            <td>@n.Nombre</td>
+                            <td>
+                                <button type="button"
+                                        class="btn btn-sm btn-success btn-edit-neg" @* Clase específica *@
+                                        data-id="@n.IdNegocio"
+                                        title="Editar Negocio">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <th>Nombre</th>
+                        <th>Acciones</th>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+
+    <div class="modal fade" id="editarNegModal" tabindex="-1" @* ID específico *@
+         aria-labelledby="editarNegModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header" style="background-color:#acd743;">
+                    <h5 class="modal-title text-white" id="editarNegModalLabel">
+                        Editar Negocio
+                    </h5>
+                    <button type="button" class="btn-close"
+                            data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="formEditarNeg" 
+                          asp-controller="Configuracion"
+                          asp-action="EditarNegocio" 
+                          method="post"
+                          class="row g-3">
+                        <input type="hidden" name="IdNegocio" id="edit-IdNegocio" /> 
+
+                        <div class="col-md-12"> 
+                            <label class="form-label">Nombre del Negocio</label>
+                            <input type="text" name="Nombre" id="edit-Nombre" 
+                                   class="form-control" required />
+                            <span class="text-danger" id="errorNombreNeg"></span> 
+                        </div>
+
+                        <div class="col-12 text-end">
+                            <button type="button" class="btn btn-danger"
+                                    data-bs-dismiss="modal">
+                                Cancelar
+                            </button>
+                            <button type="submit" class="btn btn-success">Guardar</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="/js/vendor.min.js"></script>
+    <script src="/libs/datatables.net/js/jquery.dataTables.min.js"></script>
+    <script src="/js/datatable/datatable-advanced.init.js" asp-append-version="true"></script>
+
+    <script>
+        $(function () {
+            // Inicializar DataTable con paginación de 10 y sin filtro integrado
+            var table = $('#tablaNegocios').DataTable({ // ID de la tabla de negocios
+                pageLength: 10,
+                dom: 'ltip', // ltip para lengthMenu, table, info, pagination
+                lengthMenu: [[10, 20, 50, -1], [10, 20, 50, "Todos"]],
+                language: {
+                    lengthMenu: "Mostrar _MENU_ registros",
+                    info: "Mostrando _START_ a _END_ de _TOTAL_ entradas",
+                    infoEmpty: "Mostrando 0 a 0 de 0 entradas",
+                    infoFiltered: "(filtrado de _MAX_ totales)",
+                    zeroRecords: "No se encontraron registros",
+                    paginate: {
+                        first: "Primero",
+                        last: "Último",
+                        next: "Siguiente",
+                        previous: "Anterior"
+                    }
+                },
+                // Definir columnas, importante si el número de columnas cambia
+                columns: [
+                    { "data": "nombre" }, // Asumiendo que el JSON de AJAX devolverá esto, o DataTable lo inferirá
+                    { "data": "acciones", "orderable": false, "searchable": false } // Para el botón de editar
+                ]
+            });
+
+            // Búsqueda custom
+            $('#searchNegociosInput').on('keyup', function () { // Input de búsqueda específico
+                table.search(this.value).draw();
+            });
+
+            // Delegación de evento para edición
+            $('#tablaNegocios').on('click', '.btn-edit-neg', function () { // Clase de botón específica
+                var id = $(this).data('id');
+                $.get('@Url.Action("EditarNegocio", "Configuracion")', { id: id }) // Acción correcta
+                    .done(function (data) { // 'data' es el objeto Negocio
+                        $('#errorNombreNeg').text(''); // Limpiar error específico
+                        $('#edit-IdNegocio').val(data.idNegocio); // 'idNegocio' desde el JSON
+                        $('#edit-Nombre').val(data.nombre);       // 'nombre' desde el JSON
+                        new bootstrap.Modal(
+                            document.getElementById('editarNegModal') // ID de modal específico
+                        ).show();
+                    })
+                    .fail(function() {
+                        alert("Error al obtener los datos del negocio.");
+                    });
+            });
+
+            // Submit AJAX del formulario de edición
+            $('#formEditarNeg').on('submit', function (e) { // ID de formulario específico
+                e.preventDefault();
+                var form = this;
+                var formData = new FormData(form);
+
+                $('#errorNombreNeg').text(''); // Limpiar errores antes de enviar
+
+                $.ajax({
+                    url: form.action,
+                    method: form.method,
+                    data: formData,
+                    processData: false,
+                    contentType: false
+                })
+                .done(function () {
+                    location.reload(); // Recargar la página para ver cambios
+                })
+                .fail(function (xhr) {
+                    if (xhr.responseJSON) {
+                        var errors = xhr.responseJSON;
+                        // El controlador devuelve un diccionario donde la clave es el nombre del campo (ej: "Nombre")
+                        if (errors.Nombre) { // Usar "Nombre" que es la propiedad del modelo
+                             $('#errorNombreNeg').text(errors.Nombre);
+                        } else {
+                             $('#errorNombreNeg').text("Error desconocido al guardar.");
+                        }
+                    } else {
+                        $('#errorNombreNeg').text('Error al guardar. Intente nuevamente.');
+                    }
+                });
+            });
+        });
+    </script>
+}

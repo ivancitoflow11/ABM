@@ -25,6 +25,13 @@ namespace ABM.Servicios
         Task<bool> ExisteSistemaNombre(string sistema, int? idSistema = null);
         Task<int> CrearSistema(Sistema nuevo);
         Task<int> ActualizarSistema(Sistema editado);
+
+        // --- Métodos para Negocios ---
+        Task<IEnumerable<Negocio>> ObtenerNegocios();
+        Task<Negocio?> ObtenerNegocioPorId(int idNegocio);
+        Task<bool> ExisteNegocioNombre(string nombre, int? idNegocio = null); // Solo validación por nombre
+        Task<int> CrearNegocio(Negocio nuevo);
+        Task<int> ActualizarNegocio(Negocio editado);
     }
 
     public class RepositorioConfiguracion : IRepositorioConfiguracion
@@ -163,6 +170,57 @@ namespace ABM.Servicios
                        sistema    = @sistema,
                        nriesgo    = @nriesgo
                  WHERE idSistema = @idSistema;";
+            return await db.ExecuteAsync(sql, editado);
+        }
+
+        // --- METODOS NEGOCIOS ---
+        public async Task<IEnumerable<Negocio>> ObtenerNegocios()
+        {
+            using var db = new SqlConnection(connectionString);
+            // En la tabla ftc_negocio, la columna se llama 'negocio', la mapeamos a 'Nombre' en el modelo
+            var sql = @"SELECT idNegocio, negocio AS Nombre FROM ftc_negocio";
+            return await db.QueryAsync<Negocio>(sql);
+        }
+
+        public async Task<Negocio?> ObtenerNegocioPorId(int idNegocio)
+        {
+            using var db = new SqlConnection(connectionString);
+            var sql = @"
+                SELECT idNegocio, negocio AS Nombre
+                  FROM ftc_negocio
+                 WHERE idNegocio = @idNegocio";
+            return await db.QueryFirstOrDefaultAsync<Negocio>(sql, new { idNegocio });
+        }
+
+        public async Task<bool> ExisteNegocioNombre(string nombre, int? idNegocio = null)
+        {
+            using var db = new SqlConnection(connectionString);
+            // La columna en la base de datos es 'negocio'
+            var sql = idNegocio == null
+                ? "SELECT COUNT(1) FROM ftc_negocio WHERE negocio = @nombre"
+                : "SELECT COUNT(1) FROM ftc_negocio WHERE negocio = @nombre AND idNegocio <> @idNegocio";
+            var count = await db.ExecuteScalarAsync<int>(sql, new { nombre, idNegocio });
+            return count > 0;
+        }
+
+        public async Task<int> CrearNegocio(Negocio nuevo)
+        {
+            using var db = new SqlConnection(connectionString);
+            // El modelo tiene 'Nombre', pero la columna en la BD es 'negocio'
+            var sql = @"
+                INSERT INTO ftc_negocio (negocio) 
+                VALUES (@Nombre); 
+                SELECT CAST(SCOPE_IDENTITY() AS int);"; // SCOPE_IDENTITY() para obtener el ID insertado
+            return await db.ExecuteScalarAsync<int>(sql, nuevo);
+        }
+
+        public async Task<int> ActualizarNegocio(Negocio editado)
+        {
+            using var db = new SqlConnection(connectionString);
+            var sql = @"
+                UPDATE ftc_negocio
+                   SET negocio = @Nombre 
+                 WHERE idNegocio = @IdNegocio;";
             return await db.ExecuteAsync(sql, editado);
         }
     }

@@ -167,5 +167,71 @@ namespace ABM.Controllers
             await _repo.ActualizarSistema(modelo);
             return Ok();
         }
-    }
+
+        //-----------------------------CONTROLLER PARA LOS NEGOCIOS ---------------------------------------------
+
+        // GET: /Configuracion/Negocios
+        [HttpGet]
+        [Monitoreo("Negocios", "SELECT", "verListadoNegocios")]
+        public async Task<IActionResult> Negocios()
+        {
+            var lista = await _repo.ObtenerNegocios();
+            return View("Negocios", lista);
+        }
+
+        // POST: /Configuracion/CrearNegocio
+        [HttpPost]
+        [Monitoreo("Negocios", "INSERT", "crearNegocio")]
+        public async Task<IActionResult> CrearNegocio(Negocio modelo) // El modelo es Negocio
+        {
+            // Solo validamos por nombre para Negocio
+            if (await _repo.ExisteNegocioNombre(modelo.Nombre)) // Usar modelo.Nombre
+                ModelState.AddModelError(nameof(modelo.Nombre), "El nombre del negocio ya existe.");
+
+            if (!ModelState.IsValid)
+            {
+                // Repopular el valor del formulario para que el usuario no lo pierda
+                ViewData["NombreNegocioValue"] = modelo.Nombre;
+                return View("Negocios", await _repo.ObtenerNegocios());
+            }
+
+            await _repo.CrearNegocio(modelo);
+            return RedirectToAction(nameof(Negocios));
+        }
+
+        // GET: /Configuracion/EditarNegocio?id=#
+        [HttpGet]
+        [Monitoreo("EditarNegocio", "SELECT", "obtenerNegocioPorId")]
+        public async Task<IActionResult> EditarNegocio(int id) // Recibe id
+        {
+            var negocio = await _repo.ObtenerNegocioPorId(id);
+            if (negocio == null) return NotFound();
+            return Json(negocio); // Devuelve el objeto Negocio
+        }
+
+        // POST: /Configuracion/EditarNegocio
+        [HttpPost]
+        [Monitoreo("EditarNegocio", "UPDATE", "editarNegocio")]
+        public async Task<IActionResult> EditarNegocio(Negocio modelo) // Recibe el modelo Negocio
+        {
+            // Validamos por nombre, excluyendo el ID actual
+            if (await _repo.ExisteNegocioNombre(modelo.Nombre, modelo.IdNegocio))
+                ModelState.AddModelError(nameof(modelo.Nombre), "El nombre del negocio ya existe.");
+
+            if (!ModelState.IsValid)
+            {
+                var errores = ModelState
+                    .Where(kvp => kvp.Value.Errors.Any())
+                    .ToDictionary(
+                        kvp => kvp.Key, // La clave será "Nombre" (del modelo Negocio)
+                        kvp => kvp.Value.Errors.First().ErrorMessage
+                    );
+                return BadRequest(errores);
+            }
+
+            await _repo.ActualizarNegocio(modelo);
+            return Ok();
+        }
+    
+}
 }
