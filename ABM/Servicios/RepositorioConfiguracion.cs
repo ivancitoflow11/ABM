@@ -32,6 +32,17 @@ namespace ABM.Servicios
         Task<bool> ExisteNegocioNombre(string nombre, int? idNegocio = null); // Solo validación por nombre
         Task<int> CrearNegocio(Negocio nuevo);
         Task<int> ActualizarNegocio(Negocio editado);
+
+        // --- Métodos para CrucePaisNegocioSistema (CrucePNS) ---
+        Task<int> CrearPaisNegocioSistema(PaisNegocioSistema pns);
+        Task CrearPnsjt(Pnsjt pnsjt);
+        Task<CrucePNSViewModel?> ObtenerCrucePNSPorId(int idPaisNegocioSistema);
+        Task<Pnsjt?> ObtenerPnsjtPorIdPaisNegocioSistema(int idPaisNegocioSistema);
+        Task<bool> ActualizarPaisNegocioSistema(PaisNegocioSistema pns);
+        Task<bool> ActualizarPnsjt(Pnsjt pnsjt);
+        Task<IEnumerable<CrucePNSViewModel>> ObtenerCrucesPNS(); // Para la vista de listado
+        Task<bool> ExisteCrucePNS(int idPais, int idNegocio, int idSistema, int? idPaisNegocioSistema = null); // Para validación de unicidad
+        Task<PaisNegocioSistema?> ObtenerPaisNegocioSistemaPorId(int idPaisNegocioSistema);
     }
 
     public class RepositorioConfiguracion : IRepositorioConfiguracion
@@ -222,6 +233,127 @@ namespace ABM.Servicios
                    SET negocio = @Nombre 
                  WHERE idNegocio = @IdNegocio;";
             return await db.ExecuteAsync(sql, editado);
+        }
+
+        // --- para CrucePaisNegocioSistema ---
+
+        public async Task<int> CrearPaisNegocioSistema(PaisNegocioSistema pns)
+        {
+            using var db = new SqlConnection(connectionString);
+            var sql = @"
+                INSERT INTO ftc_pais_negocio_sistema (idSistema, idNegocio, idPais, estado)
+                VALUES (@IdSistema, @IdNegocio, @IdPais, @Estado);
+                SELECT CAST(SCOPE_IDENTITY() AS int);";
+            return await db.ExecuteScalarAsync<int>(sql, pns);
+        }
+
+        public async Task CrearPnsjt(Pnsjt pnsjt)
+        {
+            using var db = new SqlConnection(connectionString);
+            var sql = @"
+                INSERT INTO ftc_pnsjt (tabla, trans, idPaisNegocioSistema, ip, responsable)
+                VALUES (@Tabla, @Trans, @IdPaisNegocioSistema, @Ip, @Responsable);";
+            await db.ExecuteAsync(sql, pnsjt);
+        }
+
+        public async Task<IEnumerable<CrucePNSViewModel>> ObtenerCrucesPNS()
+        {
+            using var db = new SqlConnection(connectionString);
+            var sql = @"
+        SELECT
+            pns.idPaisNegocioSistema,
+            pns.idPais,
+            pa.pais AS NombrePais,
+            pns.idNegocio,
+            n.negocio AS NombreNegocio,
+            pns.idSistema,
+            s.sistema AS NombreSistema,
+            pns.estado,
+            jt.Id_pns,
+            jt.tabla,
+            jt.trans,
+            jt.ip,
+            jt.responsable
+        FROM ftc_pais_negocio_sistema pns
+        JOIN ftc_pais pa ON pns.idPais = pa.idPais
+        JOIN ftc_negocio n ON pns.idNegocio = n.idNegocio
+        JOIN ftc_sistema s ON pns.idSistema = s.idSistema
+        INNER JOIN ftc_pnsjt jt ON pns.idPaisNegocioSistema = jt.idPaisNegocioSistema 
+        ORDER BY pns.idPaisNegocioSistema DESC;";
+            return await db.QueryAsync<CrucePNSViewModel>(sql);
+        }
+
+        public async Task<CrucePNSViewModel?> ObtenerCrucePNSPorId(int idPaisNegocioSistema)
+        {
+            using var db = new SqlConnection(connectionString);
+            var sql = @"
+                SELECT
+                    pns.idPaisNegocioSistema,
+                    pns.idPais,
+                    pns.idNegocio,
+                    pns.idSistema,
+                    pns.estado,
+                    jt.Id_pns, 
+                    jt.tabla,
+                    jt.trans,
+                    jt.ip,
+                    jt.responsable
+                FROM ftc_pais_negocio_sistema pns
+                LEFT JOIN ftc_pnsjt jt ON pns.idPaisNegocioSistema = jt.idPaisNegocioSistema
+                WHERE pns.idPaisNegocioSistema = @idPaisNegocioSistema;";
+            return await db.QueryFirstOrDefaultAsync<CrucePNSViewModel>(sql, new { idPaisNegocioSistema });
+        }
+
+        public async Task<Pnsjt?> ObtenerPnsjtPorIdPaisNegocioSistema(int idPaisNegocioSistema)
+        {
+            using var db = new SqlConnection(connectionString);
+            var sql = "SELECT * FROM ftc_pnsjt WHERE idPaisNegocioSistema = @idPaisNegocioSistema";
+            return await db.QueryFirstOrDefaultAsync<Pnsjt>(sql, new { idPaisNegocioSistema });
+        }
+
+        public async Task<bool> ActualizarPaisNegocioSistema(PaisNegocioSistema pns)
+        {
+            using var db = new SqlConnection(connectionString);
+            var sql = @"
+                UPDATE ftc_pais_negocio_sistema
+                SET idSistema = @IdSistema,
+                    idNegocio = @IdNegocio,
+                    idPais = @IdPais
+                WHERE idPaisNegocioSistema = @IdPaisNegocioSistema;";
+            var affectedRows = await db.ExecuteAsync(sql, pns);
+            return affectedRows > 0;
+        }
+
+        public async Task<bool> ActualizarPnsjt(Pnsjt pnsjt)
+        {
+            using var db = new SqlConnection(connectionString);
+            var sql = @" 
+                UPDATE ftc_pnsjt
+                SET tabla = @Tabla,
+                    trans = @Trans,
+                    ip = @Ip,
+                    responsable = @Responsable
+                WHERE Id_pns = @Id_pns;";
+            var affectedRows = await db.ExecuteAsync(sql, pnsjt);
+            return affectedRows > 0;
+        }
+
+        public async Task<bool> ExisteCrucePNS(int idPais, int idNegocio, int idSistema, int? idPaisNegocioSistema = null)
+        {
+            using var db = new SqlConnection(connectionString);
+            var sqlBase = "SELECT COUNT(1) FROM ftc_pais_negocio_sistema WHERE idPais = @idPais AND idNegocio = @idNegocio AND idSistema = @idSistema";
+            var sql = idPaisNegocioSistema == null
+                ? sqlBase
+                : $"{sqlBase} AND idPaisNegocioSistema <> @idPaisNegocioSistema";
+            var count = await db.ExecuteScalarAsync<int>(sql, new { idPais, idNegocio, idSistema, idPaisNegocioSistema });
+            return count > 0;
+        }
+
+        public async Task<PaisNegocioSistema?> ObtenerPaisNegocioSistemaPorId(int idPaisNegocioSistema)
+        {
+            using var db = new SqlConnection(connectionString);
+            var sql = "SELECT * FROM ftc_pais_negocio_sistema WHERE idPaisNegocioSistema = @idPaisNegocioSistema";
+            return await db.QueryFirstOrDefaultAsync<PaisNegocioSistema>(sql, new { idPaisNegocioSistema });
         }
     }
 }
