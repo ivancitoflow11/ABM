@@ -512,5 +512,38 @@ namespace ABM.Controllers
             }
         }
 
+        [HttpPost]
+        [ValidateAntiForgeryToken] // Importante para la seguridad en operaciones POST
+        [Monitoreo("CrucePNS", "UPDATE_ESTADO", "deshabilitarCrucePNS")] 
+        public async Task<IActionResult> DeshabilitarCruce(int id) 
+        {
+            if (id <= 0)
+            {
+                TempData["ErrorMessage"] = "El ID del cruce proporcionado no es válido.";
+                return RedirectToAction(nameof(CrucesPNS));
+            }
+
+            try
+            {
+                bool deshabilitadoConExito = await _repo.DeshabilitarCrucePNS(id);
+
+                if (deshabilitadoConExito)
+                {
+                    TempData["MensajeExito"] = $"El Cruce PNS (ID: {id}) ha sido deshabilitado correctamente.";
+                }
+                else
+                {
+                    // Esto puede ocurrir si el cruce no existía, ya estaba deshabilitado, o hubo un error no esperado.
+                    TempData["ErrorMessage"] = $"No se pudo deshabilitar el Cruce PNS (ID: {id}). Es posible que ya estuviera deshabilitado o no se encontrara.";
+                }
+            }
+            catch (Exception ex)
+            {
+                TempData["ErrorMessage"] = "Ocurrió un error inesperado al intentar deshabilitar el cruce. Por favor, contacte a soporte.";
+            }
+
+            return RedirectToAction(nameof(CrucesPNS));
+        }
+
     }
 }

@@ -43,6 +43,7 @@ namespace ABM.Servicios
         Task<IEnumerable<CrucePNSViewModel>> ObtenerCrucesPNS(); // Para la vista de listado
         Task<bool> ExisteCrucePNS(int idPais, int idNegocio, int idSistema, int? idPaisNegocioSistema = null); // Para validación de unicidad
         Task<PaisNegocioSistema?> ObtenerPaisNegocioSistemaPorId(int idPaisNegocioSistema);
+        Task<bool> DeshabilitarCrucePNS(int idPaisNegocioSistema);
     }
 
     public class RepositorioConfiguracion : IRepositorioConfiguracion
@@ -279,6 +280,7 @@ namespace ABM.Servicios
         JOIN ftc_negocio n ON pns.idNegocio = n.idNegocio
         JOIN ftc_sistema s ON pns.idSistema = s.idSistema
         INNER JOIN ftc_pnsjt jt ON pns.idPaisNegocioSistema = jt.idPaisNegocioSistema 
+        WHERE pns.estado = '1'
         ORDER BY pns.idPaisNegocioSistema DESC;";
             return await db.QueryAsync<CrucePNSViewModel>(sql);
         }
@@ -341,10 +343,18 @@ namespace ABM.Servicios
         public async Task<bool> ExisteCrucePNS(int idPais, int idNegocio, int idSistema, int? idPaisNegocioSistema = null)
         {
             using var db = new SqlConnection(connectionString);
-            var sqlBase = "SELECT COUNT(1) FROM ftc_pais_negocio_sistema WHERE idPais = @idPais AND idNegocio = @idNegocio AND idSistema = @idSistema";
+            var sqlBase = @"
+        SELECT COUNT(1) 
+        FROM ftc_pais_negocio_sistema 
+        WHERE idPais = @idPais 
+          AND idNegocio = @idNegocio 
+          AND idSistema = @idSistema 
+          AND estado = '1'"; 
+
             var sql = idPaisNegocioSistema == null
-                ? sqlBase
-                : $"{sqlBase} AND idPaisNegocioSistema <> @idPaisNegocioSistema";
+                ? sqlBase 
+                : $"{sqlBase} AND idPaisNegocioSistema <> @idPaisNegocioSistema"; 
+
             var count = await db.ExecuteScalarAsync<int>(sql, new { idPais, idNegocio, idSistema, idPaisNegocioSistema });
             return count > 0;
         }
@@ -354,6 +364,18 @@ namespace ABM.Servicios
             using var db = new SqlConnection(connectionString);
             var sql = "SELECT * FROM ftc_pais_negocio_sistema WHERE idPaisNegocioSistema = @idPaisNegocioSistema";
             return await db.QueryFirstOrDefaultAsync<PaisNegocioSistema>(sql, new { idPaisNegocioSistema });
+        }
+
+        public async Task<bool> DeshabilitarCrucePNS(int idPaisNegocioSistema)
+        {
+            using var db = new SqlConnection(connectionString);
+            // Se actualiza el estado a '0' solo si actualmente es '1'.
+            var sql = @"
+        UPDATE ftc_pais_negocio_sistema
+        SET estado = '0'
+        WHERE idPaisNegocioSistema = @idPaisNegocioSistema AND estado = '1';";
+            var affectedRows = await db.ExecuteAsync(sql, new { idPaisNegocioSistema });
+            return affectedRows > 0; 
         }
     }
 }

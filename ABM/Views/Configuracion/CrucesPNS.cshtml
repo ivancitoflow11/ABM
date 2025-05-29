@@ -144,6 +144,20 @@
                                                 title="Editar Cruce PNS">
                                             <i class="fas fa-edit"></i>
                                         </button>
+                                        <form asp-controller="Configuracion"
+                                              asp-action="DeshabilitarCruce"
+                                              asp-route-id="@item.IdPaisNegocioSistema"
+                                              method="post"
+                                              style="display:inline;">
+
+                                            @Html.AntiForgeryToken()
+                                            <button type="button" 
+                                                    class="btn btn-sm btn-danger ms-1 btn-deshabilitar-swal" 
+                                                    data-idpaisnegociosistema="@item.IdPaisNegocioSistema" 
+                                                    title="Deshabilitar Cruce PNS">
+                                                <i class="fas fa-link-slash"></i>
+                                            </button>
+                                        </form>
                                     </td>
                                 </tr>
                             }
@@ -243,6 +257,7 @@
     <script src="/js/vendor.min.js"></script>
     <script src="/libs/datatables.net/js/jquery.dataTables.min.js"></script>
     <script src="/js/datatable/datatable-advanced.init.js" asp-append-version="true"></script>
+    <script src="~/js/sweetalert/sweetalert.min.js"></script>
 
 
     <script>
@@ -362,6 +377,40 @@
                             alert("Por favor corrija los siguientes errores:\n- " + generalErrorMessages.join('\n- '));
                         }
                     });
+            });
+
+            $('#tablaCrucesPNS').on('click', '.btn-deshabilitar-swal', function () {
+                var $button = $(this);
+                var form = $button.closest('form')[0]; // Obtiene el elemento DOM del formulario padre
+                var idPNS = $button.data('idpaisnegociosistema');
+
+                // Extraer información de la fila para un mensaje más descriptivo
+                var $row = $button.closest('tr');
+                var pais = $row.find('td:eq(0)').text(); // Asume que País es la primera columna (índice 0)
+                var negocio = $row.find('td:eq(1)').text(); // Asume que Negocio es la segunda
+                var sistema = $row.find('td:eq(2)').text(); // Asume que Sistema es la tercera
+
+                Swal.fire({
+                    title: '¿Está seguro?',
+                    html: `Desea deshabilitar el siguiente cruce:<br><br>
+                                   <div style="text-align: left; margin-left: 20px;">
+                                       <strong>País:</strong> ${pais}<br>
+                                       <strong>Negocio:</strong> ${negocio}<br>
+                                       <strong>Sistema:</strong> ${sistema}<br>
+                                       (ID: ${idPNS})
+                                   </div>`,
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#d33', // Rojo para la acción de "deshabilitar"
+                    cancelButtonColor: '#3085d6', // Azul estándar para cancelar
+                    confirmButtonText: 'Sí, deshabilitar',
+                    cancelButtonText: 'Cancelar'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        // Si el usuario confirma, envía el formulario
+                        form.submit();
+                    }
+                });
             });
         });
     </script>
