@@ -1,0 +1,666 @@
+﻿@model ABM.Models.GestionCorreosPageViewModel
+@{
+    ViewData["Title"] = "Gestión de Envío de Correos";
+}
+
+<link rel="stylesheet" href="~/lib/datatables.net-bs4/css/dataTables.bootstrap4.min.css" />
+@* <link rel="stylesheet" href="~/css/botones.css" asp-append-version="true" /> *@
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+
+<div class="pt-5">
+    <h4 class="mt-5">@ViewData["Title"]</h4>
+
+    @if (TempData["MensajeExito"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @TempData["MensajeExito"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            @TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    @* Para errores de validación generales del modelo anidado *@
+    @if (!ViewData.ModelState.IsValid && ViewData.ModelState.ContainsKey(string.Empty))
+    {
+        <div class="alert alert-danger">
+            <ul class="mb-0">
+                @foreach (var error in ViewData.ModelState[string.Empty].Errors)
+                {
+                    <li>@error.ErrorMessage</li>
+                }
+            </ul>
+        </div>
+    }
+
+
+    <div class="card mb-4">
+        <div class="card-header text-white" style="background-color:#b0d404;">
+            @* Color de ejemplo *@
+            Registrar Nueva Configuración de Correos
+        </div>
+        <div class="card-body">
+            <form asp-controller="Configuracion" asp-action="CrearEnvioCorreo" method="post">
+                @Html.AntiForgeryToken()
+
+                <h5>Datos Envío Correo</h5>
+                <div class="row g-3 mb-3">
+                    <div class="col-md-4">
+                        <label asp-for="CorreoParaCrear.IdPais" class="form-label"></label>
+                        <select asp-for="CorreoParaCrear.IdPais" asp-items="Model.CorreoParaCrear.Paises" class="form-select">
+                            <option value="">Seleccione País...</option>
+                        </select>
+                        <span asp-validation-for="CorreoParaCrear.IdPais" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-4">
+                        <label asp-for="CorreoParaCrear.IdNegocio" class="form-label"></label>
+                        <select asp-for="CorreoParaCrear.IdNegocio" asp-items="Model.CorreoParaCrear.Negocios" class="form-select">
+                            <option value="">Seleccione Negocio...</option>
+                        </select>
+                        <span asp-validation-for="CorreoParaCrear.IdNegocio" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-4">
+                        <label asp-for="CorreoParaCrear.IdSistema" class="form-label"></label>
+                        <select asp-for="CorreoParaCrear.IdSistema" asp-items="Model.CorreoParaCrear.Sistemas" class="form-select">
+                            <option value="">Seleccione Sistema...</option>
+                        </select>
+                        <span asp-validation-for="CorreoParaCrear.IdSistema" class="text-danger"></span>
+                    </div>
+                </div>
+                <hr />
+                <div class="row g-3 mb-2">
+                    <div class="col-md-6">
+                        <label asp-for="CorreoParaCrear.OSI" class="form-label"></label>
+                        <input asp-for="CorreoParaCrear.OSI" class="form-control" />
+                        <span asp-validation-for="CorreoParaCrear.OSI" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="CorreoParaCrear.Correo_OSI" class="form-label"></label>
+                        <input asp-for="CorreoParaCrear.Correo_OSI" class="form-control" type="email" />
+                        <span asp-validation-for="CorreoParaCrear.Correo_OSI" class="text-danger"></span>
+                    </div>
+                </div>
+                <div class="row g-3 mb-2">
+                    <div class="col-md-6">
+                        <label asp-for="CorreoParaCrear.Responsable" class="form-label"></label>
+                        <input asp-for="CorreoParaCrear.Responsable" class="form-control" />
+                        <span asp-validation-for="CorreoParaCrear.Responsable" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="CorreoParaCrear.Correo_Responsable" class="form-label"></label>
+                        <input asp-for="CorreoParaCrear.Correo_Responsable" class="form-control" type="email" />
+                        <span asp-validation-for="CorreoParaCrear.Correo_Responsable" class="text-danger"></span>
+                    </div>
+                </div>
+                <div class="row g-3 mb-2">
+                    <div class="col-md-6">
+                        <label asp-for="CorreoParaCrear.Gerente" class="form-label"></label>
+                        <input asp-for="CorreoParaCrear.Gerente" class="form-control" />
+                        <span asp-validation-for="CorreoParaCrear.Gerente" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="CorreoParaCrear.Correo_Gerente" class="form-label"></label>
+                        <input asp-for="CorreoParaCrear.Correo_Gerente" class="form-control" type="email" />
+                        <span asp-validation-for="CorreoParaCrear.Correo_Gerente" class="text-danger"></span>
+                    </div>
+                </div>
+                <div class="row g-3 mb-2">
+                    <div class="col-md-6">
+                        <label asp-for="CorreoParaCrear.Jefe" class="form-label"></label>
+                        <input asp-for="CorreoParaCrear.Jefe" class="form-control" />
+                        <span asp-validation-for="CorreoParaCrear.Jefe" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="CorreoParaCrear.Correo_Jefe" class="form-label"></label>
+                        <input asp-for="CorreoParaCrear.Correo_Jefe" class="form-control" type="email" />
+                        <span asp-validation-for="CorreoParaCrear.Correo_Jefe" class="text-danger"></span>
+                    </div>
+                </div>
+                <div class="row g-3 mb-3">
+                    <div class="col-md-12">
+                        <label asp-for="CorreoParaCrear.Otros_Correos" class="form-label"></label>
+                        <input asp-for="CorreoParaCrear.Otros_Correos" class="form-control" />
+                        <span asp-validation-for="CorreoParaCrear.Otros_Correos" class="text-danger"></span>
+                    </div>
+                </div>
+
+                <div class="row mt-3">
+                    <div class="col-md-12 text-end">
+                        <button type="submit" class="btn btn-success">Registrar Configuración</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-header text-white" style="background-color:#b0d404;">
+            @* Color de ejemplo *@
+            Listado de Configuraciones de Correo
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table id="file_export4" class="table table-striped table-bordered nowrap" style="width:100%; text-align:center;">
+                    <thead>
+                        <tr>
+                            <th>País</th>
+                            <th>Negocio</th>
+                            <th>Sistema</th>
+                            <th>OSI</th>
+                            <th>Correo OSI</th>
+                            <th>Responsable</th>
+                            <th>Correo Resp.</th>
+                            <th>Gerente</th>
+                            <th>Correo Ger.</th>
+                            <th>Jefe</th>
+                            <th>Correo Jefe</th>
+                            <th>Otros Correos</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model.ListaCorreos != null && Model.ListaCorreos.Any())
+                        {
+                            @foreach (var item in Model.ListaCorreos)
+                            {
+                                <tr data-id="@item.IdCorreos">
+                                    <td>@item.NombrePais</td>
+                                    <td>@item.NombreNegocio</td>
+                                    <td>@item.NombreSistema</td>
+                                    <td>@item.OSI</td>
+                                    <td>@item.Correo_OSI</td>
+                                    <td>@item.Responsable</td>
+                                    <td>@item.Correo_Responsable</td>
+                                    <td>@item.Gerente</td>
+                                    <td>@item.Correo_Gerente</td>
+                                    <td>@item.Jefe</td>
+                                    <td>@item.Correo_Jefe</td>
+                                    <td>@item.Otros_Correos</td>
+                                    <td>
+                                        @* Aquí irían botones de Editar/Eliminar en el futuro *@
+                                        <button type="button" class="btn btn-sm btn-info btn-edit-correo" data-id="@item.IdCorreos" title="Editar"><i class="fas fa-edit"></i></button>
+                                        <button type="button" class="btn btn-sm btn-danger btn-delete-correo" data-id="@item.IdCorreos" title="Eliminar"><i class="fas fa-trash"></i></button>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="13" class="text-center">No hay configuraciones de correo para mostrar.</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+@* MODAL PARA EDITAR CONFIGURACIÓN DE CORREO *@
+<div class="modal fade" id="editarCorreoModal" tabindex="-1" aria-labelledby="editarCorreoModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header" style="background-color:#b0d404;">
+                @* Mismo color que tu card-header *@
+                <h5 class="modal-title text-white" id="editarCorreoModalLabel">Editar Configuración de Correo</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="formEditarCorreo" method="post">
+                    @* La acción se seteará con JS *@
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="IdCorreos" id="edit-IdCorreos" />
+                    @* Este IdPaisNegocioSistema es el original; se actualizará si cambian P/N/S *@
+                    <input type="hidden" name="IdPaisNegocioSistemaOriginal" id="edit-IdPaisNegocioSistemaOriginal" />
+
+                    <h5>Datos Envío Correo</h5>
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-4">
+                            <label for="edit-IdPais" class="form-label">País</label>
+                            <select name="IdPais" id="edit-IdPais" class="form-select">
+                                @* Las opciones de País se pueden tomar del modelo principal o cargar vía JS si es necesario.
+                                Aquí asumimos que Model.CorreoParaCrear.Paises está disponible y es la lista completa. *@
+                                @if (Model.CorreoParaCrear.Paises != null)
+                                {
+                                    foreach (var pais in Model.CorreoParaCrear.Paises)
+                                    {
+                                        <option value="@pais.Value">@pais.Text</option>
+                                    }
+                                }
+                            </select>
+                            <span data-valmsg-for="IdPais" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="edit-IdNegocio" class="form-label">Negocio</label>
+                            <select name="IdNegocio" id="edit-IdNegocio" class="form-select">
+                                <option value="">Seleccione Negocio...</option>
+                            </select>
+                            <span data-valmsg-for="IdNegocio" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="edit-IdSistema" class="form-label">Sistema</label>
+                            <select name="IdSistema" id="edit-IdSistema" class="form-select">
+                                <option value="">Seleccione Sistema...</option>
+                            </select>
+                            <span data-valmsg-for="IdSistema" class="text-danger"></span>
+                        </div>
+                    </div>
+                    <hr />
+                    <div class="row g-3 mb-2">
+                        <div class="col-md-6">
+                            <label for="edit-OSI" class="form-label">OSI</label>
+                            <input type="text" name="OSI" id="edit-OSI" class="form-control" />
+                            <span data-valmsg-for="OSI" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="edit-Correo_OSI" class="form-label">Correo OSI</label>
+                            <input type="email" name="Correo_OSI" id="edit-Correo_OSI" class="form-control" />
+                            <span data-valmsg-for="Correo_OSI" class="text-danger"></span>
+                        </div>
+                    </div>
+                    <div class="row g-3 mb-2">
+                        <div class="col-md-6">
+                            <label for="edit-Responsable" class="form-label">Responsable</label>
+                            <input type="text" name="Responsable" id="edit-Responsable" class="form-control" />
+                            <span data-valmsg-for="Responsable" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="edit-Correo_Responsable" class="form-label">Correo Responsable</label>
+                            <input type="email" name="Correo_Responsable" id="edit-Correo_Responsable" class="form-control" />
+                            <span data-valmsg-for="Correo_Responsable" class="text-danger"></span>
+                        </div>
+                    </div>
+                    <div class="row g-3 mb-2">
+                        <div class="col-md-6">
+                            <label for="edit-Gerente" class="form-label">Gerente</label>
+                            <input type="text" name="Gerente" id="edit-Gerente" class="form-control" />
+                            <span data-valmsg-for="Gerente" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="edit-Correo_Gerente" class="form-label">Correo Gerente</label>
+                            <input type="email" name="Correo_Gerente" id="edit-Correo_Gerente" class="form-control" />
+                            <span data-valmsg-for="Correo_Gerente" class="text-danger"></span>
+                        </div>
+                    </div>
+                    <div class="row g-3 mb-2">
+                        <div class="col-md-6">
+                            <label for="edit-Jefe" class="form-label">Jefe</label>
+                            <input type="text" name="Jefe" id="edit-Jefe" class="form-control" />
+                            <span data-valmsg-for="Jefe" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="edit-Correo_Jefe" class="form-label">Correo Jefe</label>
+                            <input type="email" name="Correo_Jefe" id="edit-Correo_Jefe" class="form-control" />
+                            <span data-valmsg-for="Correo_Jefe" class="text-danger"></span>
+                        </div>
+                    </div>
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-12">
+                            <label for="edit-Otros_Correos" class="form-label">Otros Correos</label>
+                            <input type="text" name="Otros_Correos" id="edit-Otros_Correos" class="form-control" />
+                            <span data-valmsg-for="Otros_Correos" class="text-danger"></span>
+                        </div>
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script src="~/lib/datatables.net/js/jquery.dataTables.min.js"></script>
+    <script src="~/lib/datatables.net-bs4/js/dataTables.bootstrap4.min.js"></script>
+
+    <script>
+        $(function () {
+            var dtCorreos = $('#tablaCorreos').DataTable({
+                pageLength: 10,
+                dom: 'ltip',
+                language: { /* Tu configuración de idioma para DataTables */ }
+                // Puedes añadir aquí la configuración de 'columns' si es necesario
+            });
+
+            $('#searchCorreosInput').on('keyup', function () {
+                dtCorreos.search(this.value).draw();
+            });
+
+            // TODO: Implementar lógica para Editar y Eliminar (botones .btn-edit-correo, .btn-delete-correo)
+            // Esto implicaría crear modales y acciones de controlador GET/POST para editar y POST para eliminar,
+            // similar a lo que hicimos para CrucePNS.
+        });
+        $(function () {
+            // ... (tu código existente de DataTable, etc.) ...
+
+            var idPaisSelect = $('#CorreoParaCrear_IdPais'); // Asegúrate que el ID sea correcto
+            var idNegocioSelect = $('#CorreoParaCrear_IdNegocio');
+            var idSistemaSelect = $('#CorreoParaCrear_IdSistema');
+
+            function limpiarYRepoblarSelect(selectElement, data, placeholderText) {
+                selectElement.empty();
+                selectElement.append($('<option>', {
+                    value: '',
+                    text: placeholderText
+                }));
+                $.each(data, function (index, item) {
+                    selectElement.append($('<option>', {
+                        value: item.value,
+                        text: item.text
+                    }));
+                });
+                selectElement.prop('disabled', data.length === 0);
+            }
+
+            // Deshabilitar inicialmente Negocio y Sistema
+            idNegocioSelect.prop('disabled', true);
+            idSistemaSelect.prop('disabled', true);
+
+            idPaisSelect.on('change', function () {
+                var paisId = $(this).val();
+                idNegocioSelect.empty().append($('<option value="">Cargando Negocios...</option>')).prop('disabled', true);
+                idSistemaSelect.empty().append($('<option value="">Seleccione Sistema...</option>')).prop('disabled', true);
+
+                if (paisId) {
+                    $.getJSON('@Url.Action("GetNegociosPorPais", "Configuracion")', { idPais: paisId }) // Ajusta "Configuracion" si tu controlador es otro
+                        .done(function (data) {
+                            limpiarYRepoblarSelect(idNegocioSelect, data, 'Seleccione Negocio...');
+                            if (data && data.length > 0) {
+                                idNegocioSelect.prop('disabled', false);
+                            } else {
+                                idNegocioSelect.empty().append($('<option value="">No hay negocios para este país</option>')).prop('disabled', true);
+                            }
+                        })
+                        .fail(function () {
+                            alert("Error al cargar los negocios.");
+                            idNegocioSelect.empty().append($('<option value="">Error al cargar</option>')).prop('disabled', true);
+                        });
+                } else {
+                    // Si no se selecciona país, limpiar y deshabilitar los siguientes
+                    idNegocioSelect.empty().append($('<option value="">Seleccione Negocio...</option>')).prop('disabled', true);
+                    idSistemaSelect.empty().append($('<option value="">Seleccione Sistema...</option>')).prop('disabled', true);
+                }
+            });
+            // --- INICIO: LÓGICA PARA EL MODAL DE EDICIÓN DE CORREOS ---
+            $(function () { // Puedes añadir esto dentro de tu $(function() { ... }) existente o como uno nuevo.
+
+                var modalEditarCorreoInstance = new bootstrap.Modal(document.getElementById('editarCorreoModal'));
+                var $formEditarCorreo = $('#formEditarCorreo');
+
+                // Referencias a los desplegables del modal de edición
+                var editIdPaisSelect = $('#edit-IdPais');
+                var editIdNegocioSelect = $('#edit-IdNegocio');
+                var editIdSistemaSelect = $('#edit-IdSistema');
+
+                // ASUMO QUE YA TIENES ESTA FUNCIÓN DEFINIDA EN TU SCRIPT (la usas para el form de creación)
+                // function limpiarYRepoblarSelect(selectElement, data, placeholderText, esError = false) { ... }
+                // Si no, asegúrate de que esté accesible.
+
+                // Eventos change para desplegables en cascada DENTRO DEL MODAL DE EDICIÓN
+                editIdPaisSelect.on('change', async function () {
+                    var paisId = $(this).val();
+                    limpiarYRepoblarSelect(editIdNegocioSelect, [], 'Cargando Negocios...', false);
+                    editIdNegocioSelect.prop('disabled', true);
+                    limpiarYRepoblarSelect(editIdSistemaSelect, [], 'Seleccione Sistema...', true);
+
+                    if (paisId) {
+                        try {
+                            const negociosData = await $.getJSON('@Url.Action("GetNegociosPorPais", "Configuracion")', { idPais: paisId });
+                            limpiarYRepoblarSelect(editIdNegocioSelect, negociosData, (negociosData && negociosData.length > 0) ? 'Seleccione Negocio...' : 'No hay negocios para este país', !(negociosData && negociosData.length > 0));
+                        } catch (e) {
+                            console.error("Error al cargar negocios para edición:", e);
+                            limpiarYRepoblarSelect(editIdNegocioSelect, [], 'Error al cargar negocios', true);
+                        }
+                    }
+                });
+
+                editIdNegocioSelect.on('change', async function () {
+                    var paisId = editIdPaisSelect.val();
+                    var negocioId = $(this).val();
+                    limpiarYRepoblarSelect(editIdSistemaSelect, [], 'Cargando Sistemas...', false);
+                    editIdSistemaSelect.prop('disabled', true);
+
+                    if (paisId && negocioId) {
+                        try {
+                            const sistemasData = await $.getJSON('@Url.Action("GetSistemasPorPaisYNegocio", "Configuracion")', { idPais: paisId, idNegocio: negocioId });
+                            limpiarYRepoblarSelect(editIdSistemaSelect, sistemasData, (sistemasData && sistemasData.length > 0) ? 'Seleccione Sistema...' : 'No hay sistemas para esta combinación', !(sistemasData && sistemasData.length > 0));
+                        } catch (e) {
+                            console.error("Error al cargar sistemas para edición:", e);
+                            limpiarYRepoblarSelect(editIdSistemaSelect, [], 'Error al cargar sistemas', true);
+                        }
+                    }
+                });
+
+                async function configurarDesplegablesEdicion(data) {
+                    editIdPaisSelect.val(data.idPais);
+
+                    limpiarYRepoblarSelect(editIdNegocioSelect, [], 'Cargando Negocios...', false);
+                    editIdNegocioSelect.prop('disabled', true);
+                    limpiarYRepoblarSelect(editIdSistemaSelect, [], 'Seleccione Sistema...', true);
+
+                    if (data.idPais) {
+                        try {
+                            const negociosData = await $.getJSON('@Url.Action("GetNegociosPorPais", "Configuracion")', { idPais: data.idPais });
+                            limpiarYRepoblarSelect(editIdNegocioSelect, negociosData, (negociosData && negociosData.length > 0) ? 'Seleccione Negocio...' : 'No hay negocios para este país', !(negociosData && negociosData.length > 0));
+                            if (negociosData && negociosData.length > 0) editIdNegocioSelect.val(data.idNegocio);
+
+                            if (data.idNegocio) {
+                                const sistemasData = await $.getJSON('@Url.Action("GetSistemasPorPaisYNegocio", "Configuracion")', { idPais: data.idPais, idNegocio: data.idNegocio });
+                                limpiarYRepoblarSelect(editIdSistemaSelect, sistemasData, (sistemasData && sistemasData.length > 0) ? 'Seleccione Sistema...' : 'No hay sistemas para esta combinación', !(sistemasData && sistemasData.length > 0));
+                                if (sistemasData && sistemasData.length > 0) editIdSistemaSelect.val(data.idSistema);
+                            }
+                        } catch (e) {
+                            console.error("Error configurando desplegables de edición:", e);
+                            limpiarYRepoblarSelect(editIdNegocioSelect, [], 'Error al cargar Negocios', true);
+                            limpiarYRepoblarSelect(editIdSistemaSelect, [], 'Error al cargar Sistemas', true);
+                        }
+                    }
+                }
+
+                // Clic en botón Editar de la tabla (ID de tabla ajustado a #file_export4)
+                // Asegúrate que el ID de tu tabla sea realmente "file_export4" o cámbialo aquí.
+                $('#file_export4 tbody').on('click', '.btn-edit-correo', async function () {
+                    var correoId = $(this).data('id');
+                    // Asegúrate que "Configuracion" sea tu controlador correcto para estas acciones
+                    $formEditarCorreo.attr('action', '@Url.Action("EditarEnvioCorreo", "Configuracion")/' + correoId);
+
+                    $formEditarCorreo.find('.text-danger').text('');
+                    $formEditarCorreo.find('.is-invalid').removeClass('is-invalid');
+
+                    try {
+                        // Asegúrate que "Configuracion" sea tu controlador correcto
+                        const response = await $.getJSON('@Url.Action("GetDatosEnvioCorreo", "Configuracion")', { id: correoId });
+                        if (response.success && response.data) {
+                            var data = response.data;
+                            $('#edit-IdCorreos').val(data.idCorreos);
+                            $('#edit-IdPaisNegocioSistemaOriginal').val(data.idPaisNegocioSistema);
+
+                            $('#edit-OSI').val(data.osi);
+                            $('#edit-Correo_OSI').val(data.correo_OSI);
+                            $('#edit-Responsable').val(data.responsable);
+                            $('#edit-Correo_Responsable').val(data.correo_Responsable);
+                            $('#edit-Gerente').val(data.gerente);
+                            $('#edit-Correo_Gerente').val(data.correo_Gerente);
+                            $('#edit-Jefe').val(data.jefe);
+                            $('#edit-Correo_Jefe').val(data.correo_Jefe);
+                            $('#edit-Otros_Correos').val(data.otros_Correos);
+
+                            await configurarDesplegablesEdicion(data);
+
+                            modalEditarCorreoInstance.show();
+                        } else {
+                            alert(response.message || "Error al cargar los datos de la configuración.");
+                        }
+                    } catch (error) {
+                        console.error("Error en AJAX para GetDatosEnvioCorreo:", error);
+                        alert("Error de comunicación al intentar obtener los datos para editar.");
+                    }
+                });
+
+                // Envío del formulario de edición
+                $formEditarCorreo.on('submit', function (e) {
+                    e.preventDefault();
+                    var form = this;
+                    var $form = $(form);
+                    var formData = $form.serialize();
+
+                    $form.find('.text-danger').text('');
+                    $form.find('.is-invalid').removeClass('is-invalid');
+
+                    $.ajax({
+                        url: form.action,
+                        method: "POST",
+                        data: formData,
+                    })
+                        .done(function (response) {
+                            modalEditarCorreoInstance.hide();
+                            alert(response.Message || "Actualización exitosa.");
+                            location.reload();
+                        })
+                        .fail(function (xhr) {
+                            var generalErrorMessages = [];
+                            if (xhr.responseJSON) {
+                                var responseData = xhr.responseJSON;
+                                if (typeof responseData === 'string') {
+                                    generalErrorMessages.push(responseData);
+                                } else if (responseData.Message) {
+                                    generalErrorMessages.push(responseData.Message);
+                                } else {
+                                    $.each(responseData, function (fieldName, errorsForKey) {
+                                        if (errorsForKey && errorsForKey.length > 0) {
+                                            var $input = $form.find('[name="' + fieldName + '"]');
+                                            var $span = $form.find('[data-valmsg-for="' + fieldName + '"]');
+
+                                            if ($span.length) {
+                                                $span.text(errorsForKey[0]);
+                                                if ($input.length) $input.addClass('is-invalid');
+                                            } else {
+                                                var prefix = (fieldName && fieldName !== "") ? fieldName + ": " : "";
+                                                $.each(errorsForKey, function (i, errorText) { generalErrorMessages.push(prefix + errorText); });
+                                            }
+                                        }
+                                    });
+                                }
+                            } else {
+                                generalErrorMessages.push('Error desconocido al actualizar. Intente nuevamente.');
+                            }
+                            if (generalErrorMessages.length > 0) {
+                                alert("Por favor corrija los siguientes errores:\n- " + generalErrorMessages.join('\n- '));
+                            }
+                        });
+                });
+
+            }); // Fin del $(function () { para la lógica de edición
+            // --- FIN: LÓGICA PARA EL MODAL DE EDICIÓN DE CORREOS ---
+            $formEditarCorreo.on('submit', function (e) {
+                e.preventDefault();
+                var form = this;
+                var $form = $(form);
+                var formData = $form.serialize();
+
+                $form.find('.text-danger').text('');
+                $form.find('.is-invalid').removeClass('is-invalid');
+
+                $.ajax({
+                    url: form.action,
+                    method: "POST",
+                    data: formData,
+                })
+                    .done(function (response) {
+                        modalEditarCorreoInstance.hide();
+
+                        // --- INICIO DE MODIFICACIÓN: SWEETALERT2 PARA ÉXITO ---
+                        Swal.fire({
+                            title: '¡Actualizado!',
+                            text: response.Message || "Configuración de correo actualizada exitosamente.",
+                            icon: 'success',
+                            confirmButtonText: 'Aceptar'
+                        }).then((result) => {
+                            // Recargar la página después de que el usuario cierre el SweetAlert
+                            if (result.isConfirmed || result.isDismissed) {
+                                location.reload();
+                            }
+                        });
+                        // --- FIN DE MODIFICACIÓN ---
+                    })
+                    .fail(function (xhr) {
+                        var generalErrorMessages = [];
+                        if (xhr.responseJSON) {
+                            var responseData = xhr.responseJSON;
+                            if (typeof responseData === 'string') {
+                                generalErrorMessages.push(responseData);
+                            } else if (responseData.Message) {
+                                generalErrorMessages.push(responseData.Message);
+                            } else {
+                                $.each(responseData, function (fieldName, errorsForKey) {
+                                    if (errorsForKey && errorsForKey.length > 0) {
+                                        var $input = $form.find('[name="' + fieldName + '"]');
+                                        var $span = $form.find('[data-valmsg-for="' + fieldName + '"]');
+
+                                        if ($span.length) {
+                                            $span.text(errorsForKey[0]);
+                                            if ($input.length) $input.addClass('is-invalid');
+                                        } else {
+                                            var prefix = (fieldName && fieldName !== "") ? fieldName + ": " : "";
+                                            $.each(errorsForKey, function (i, errorText) { generalErrorMessages.push(prefix + errorText); });
+                                        }
+                                    }
+                                });
+                            }
+                        } else {
+                            generalErrorMessages.push('Error desconocido al actualizar. Intente nuevamente.');
+                        }
+                        if (generalErrorMessages.length > 0) {
+                            // Para los errores, mantenemos el alert simple, o puedes cambiarlos a Swal también si prefieres.
+                            alert("Por favor corrija los siguientes errores:\n- " + generalErrorMessages.join('\n- '));
+                        }
+                    });
+            });
+            idNegocioSelect.on('change', function () {
+                var paisId = idPaisSelect.val();
+                var negocioId = $(this).val();
+                idSistemaSelect.empty().append($('<option value="">Cargando Sistemas...</option>')).prop('disabled', true);
+
+                if (paisId && negocioId) {
+                    $.getJSON('@Url.Action("GetSistemasPorPaisYNegocio", "Configuracion")', { idPais: paisId, idNegocio: negocioId }) // Ajusta "Configuracion"
+                        .done(function (data) {
+                            limpiarYRepoblarSelect(idSistemaSelect, data, 'Seleccione Sistema...');
+                            if (data && data.length > 0) {
+                                idSistemaSelect.prop('disabled', false);
+                            } else {
+                                idSistemaSelect.empty().append($('<option value="">No hay sistemas para esta combinación</option>')).prop('disabled', true);
+                            }
+                        })
+                        .fail(function () {
+                            alert("Error al cargar los sistemas.");
+                            idSistemaSelect.empty().append($('<option value="">Error al cargar</option>')).prop('disabled', true);
+                        });
+                } else {
+                    idSistemaSelect.empty().append($('<option value="">Seleccione Sistema...</option>')).prop('disabled', true);
+                }
+            });
+        });
+    </script>
+    <!-- Scripts DataTables y dependencias -->
+    <script src="/js/vendor.min.js"></script>
+    <script src="/libs/datatables.net/js/jquery.dataTables.min.js"></script>
+    <script src="/js/dataTables.buttons.min.js"></script>
+    <script src="/js/jszip.min.js"></script>
+    <script src="/js/pdfmake.min.js"></script>
+    <script src="/js/vfs_fonts.js"></script>
+    <script src="/js/buttons.html5.min.js"></script>
+    <script src="/js/buttons.print.min.js"></script>
+    <script src="/js/datatable/datatable-advanced.init.js" asp-append-version="true"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.all.min.js"></script>
+
+}

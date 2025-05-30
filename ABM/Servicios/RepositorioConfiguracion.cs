@@ -44,6 +44,16 @@ namespace ABM.Servicios
         Task<bool> ExisteCrucePNS(int idPais, int idNegocio, int idSistema, int? idPaisNegocioSistema = null); // Para validación de unicidad
         Task<PaisNegocioSistema?> ObtenerPaisNegocioSistemaPorId(int idPaisNegocioSistema);
         Task<bool> DeshabilitarCrucePNS(int idPaisNegocioSistema);
+
+		// ENVIO CORREOOOOOOOOOOOOOS
+		Task<int?> ObtenerIdPaisNegocioSistemaActivoAsync(int idPais, int idNegocio, int idSistema);
+        Task<bool> CrearEnvioCorreoDetalleAsync(EnvioCorreoDetalle correoDetalle); // Nueva firma (devuelve bool)
+        Task<IEnumerable<EnvioCorreoDetalleViewModel>> ObtenerEnvioCorreoDetallesVMAsync();
+        Task<IEnumerable<Negocio>> ObtenerNegociosPorPaisAsync(int idPais);
+        Task<IEnumerable<Sistema>> ObtenerSistemasPorPaisYNegocioAsync(int idPais, int idNegocio);
+        Task<int> ObtenerSiguienteIdCorreosAsync();
+        Task<EnvioCorreoDetalleViewModel?> ObtenerEnvioCorreoDetalleVMPorIdAsync(int idCorreos);
+        Task<bool> ActualizarEnvioCorreoDetalleAsync(EnvioCorreoDetalle correoDetalle);
     }
 
     public class RepositorioConfiguracion : IRepositorioConfiguracion
@@ -53,6 +63,133 @@ namespace ABM.Servicios
         public RepositorioConfiguracion(IConfiguration configuration)
         {
             connectionString = configuration.GetConnectionString("CadenaSQL");
+        }
+
+        // ENVIO CORREOS
+        public async Task<EnvioCorreoDetalleViewModel?> ObtenerEnvioCorreoDetalleVMPorIdAsync(int idCorreos)
+        {
+            using var db = new SqlConnection(connectionString);
+            // Esta consulta obtiene los IDs de País, Negocio y Sistema además de los datos del correo
+            var sql = @"
+        SELECT
+            ecd.idCorreos,
+            ecd.idpaisnegociosistema,
+            pns.idPais,      -- Necesario para el dropdown de País
+            pns.idNegocio,   -- Necesario para el dropdown de Negocio
+            pns.idSistema,   -- Necesario para el dropdown de Sistema
+            ecd.OSI, ecd.Correo_OSI,
+            ecd.Responsable, ecd.Correo_Responsable,
+            ecd.Gerente, ecd.Correo_Gerente,
+            ecd.Jefe, ecd.Correo_Jefe,
+            ecd.Otros_Correos
+        FROM ftc_envio_correo_detalle ecd
+        JOIN ftc_pais_negocio_sistema pns ON ecd.idpaisnegociosistema = pns.idPaisNegocioSistema
+        WHERE ecd.idCorreos = @idCorreos;";
+            return await db.QuerySingleOrDefaultAsync<EnvioCorreoDetalleViewModel>(sql, new { idCorreos });
+        }
+
+        public async Task<bool> ActualizarEnvioCorreoDetalleAsync(EnvioCorreoDetalle correoDetalle)
+        {
+            using var db = new SqlConnection(connectionString);
+            var sql = @"
+        UPDATE ftc_envio_correo_detalle
+        SET idpaisnegociosistema = @IdPaisNegocioSistema,
+            OSI = @OSI,
+            Correo_OSI = @Correo_OSI,
+            Responsable = @Responsable,
+            Correo_Responsable = @Correo_Responsable,
+            Gerente = @Gerente,
+            Correo_Gerente = @Correo_Gerente,
+            Jefe = @Jefe,
+            Correo_Jefe = @Correo_Jefe,
+            Otros_Correos = @Otros_Correos
+        WHERE idCorreos = @IdCorreos;";
+            var affectedRows = await db.ExecuteAsync(sql, correoDetalle);
+            return affectedRows > 0;
+        }
+        public async Task<int> ObtenerSiguienteIdCorreosAsync()
+        {
+            using var db = new SqlConnection(connectionString);
+            // Obtiene el MAX(idCorreos) y le suma 1. Si la tabla está vacía, MAX devuelve NULL, por lo que ISNULL o COALESCE es importante.
+            var sql = "SELECT ISNULL(MAX(idCorreos), 0) + 1 FROM ftc_envio_correo_detalle;";
+            return await db.ExecuteScalarAsync<int>(sql);
+        }
+        public async Task<IEnumerable<Negocio>> ObtenerNegociosPorPaisAsync(int idPais)
+        {
+            using var db = new SqlConnection(connectionString);
+            // Obtiene solo los negocios distintos asociados al país y que estén en un cruce PNS activo
+            var sql = @"
+        SELECT DISTINCT n.idNegocio, n.negocio AS Nombre
+        FROM ftc_negocio n
+        JOIN ftc_pais_negocio_sistema pns ON n.idNegocio = pns.idNegocio
+        WHERE pns.idPais = @idPais AND pns.estado = '1'
+        ORDER BY n.negocio;";
+            return await db.QueryAsync<Negocio>(sql, new { idPais });
+        }
+
+        public async Task<IEnumerable<Sistema>> ObtenerSistemasPorPaisYNegocioAsync(int idPais, int idNegocio)
+        {
+            using var db = new SqlConnection(connectionString);
+            // Obtiene solo los sistemas distintos asociados al país y negocio, y que estén en un cruce PNS activo
+            var sql = @"
+        SELECT DISTINCT s.idSistema, s.sistema, s.codSistema, s.nriesgo 
+        FROM ftc_sistema s
+        JOIN ftc_pais_negocio_sistema pns ON s.idSistema = pns.idSistema
+        WHERE pns.idPais = @idPais AND pns.idNegocio = @idNegocio AND pns.estado = '1'
+        ORDER BY s.sistema;";
+            return await db.QueryAsync<Sistema>(sql, new { idPais, idNegocio });
+        }
+        public async Task<IEnumerable<EnvioCorreoDetalleViewModel>> ObtenerEnvioCorreoDetallesVMAsync()
+		{
+			using var db = new SqlConnection(connectionString);
+			var sql = @"
+        SELECT
+            ecd.idCorreos,
+            ecd.idpaisnegociosistema,
+            p.pais AS NombrePais,      -- Asegúrate que la columna se llame 'pais' en ftc_pais
+            n.negocio AS NombreNegocio,  -- Asegúrate que la columna se llame 'negocio' en ftc_negocio
+            s.sistema AS NombreSistema, -- Asegúrate que la columna se llame 'sistema' en ftc_sistema
+            ecd.OSI,
+            ecd.Correo_OSI,
+            ecd.Responsable,
+            ecd.Correo_Responsable,
+            ecd.Gerente,
+            ecd.Correo_Gerente,
+            ecd.Jefe,
+            ecd.Correo_Jefe,
+            ecd.Otros_Correos
+        FROM ftc_envio_correo_detalle ecd
+        JOIN ftc_pais_negocio_sistema pns ON ecd.idpaisnegociosistema = pns.idPaisNegocioSistema
+        JOIN ftc_pais p ON pns.idPais = p.idPais
+        JOIN ftc_negocio n ON pns.idNegocio = n.idNegocio
+        JOIN ftc_sistema s ON pns.idSistema = s.idSistema
+        ORDER BY ecd.idCorreos DESC;"; // O el orden que prefieras
+			return await db.QueryAsync<EnvioCorreoDetalleViewModel>(sql);
+		}
+		public async Task<int?> ObtenerIdPaisNegocioSistemaActivoAsync(int idPais, int idNegocio, int idSistema)
+		{
+			using var db = new SqlConnection(connectionString);
+			var sql = @"
+        SELECT idPaisNegocioSistema
+        FROM ftc_pais_negocio_sistema
+        WHERE idPais = @idPais
+          AND idNegocio = @idNegocio
+          AND idSistema = @idSistema
+          AND estado = '1';"; // Solo cruces activos
+			return await db.QuerySingleOrDefaultAsync<int?>(sql, new { idPais, idNegocio, idSistema });
+		}
+
+        public async Task<bool> CrearEnvioCorreoDetalleAsync(EnvioCorreoDetalle correoDetalle) // Devuelve bool
+        {
+            using var db = new SqlConnection(connectionString);
+            var sql = @"
+        INSERT INTO ftc_envio_correo_detalle
+            (idCorreos, idpaisnegociosistema, OSI, Correo_OSI, Responsable, Correo_Responsable, Gerente, Correo_Gerente, Jefe, Correo_Jefe, Otros_Correos)
+        VALUES
+            (@IdCorreos, @IdPaisNegocioSistema, @OSI, @Correo_OSI, @Responsable, @Correo_Responsable, @Gerente, @Correo_Gerente, @Jefe, @Correo_Jefe, @Otros_Correos);";
+            // ExecuteAsync devuelve el número de filas afectadas.
+            var affectedRows = await db.ExecuteAsync(sql, correoDetalle);
+            return affectedRows > 0; // Devuelve true si se insertó la fila.
         }
 
         // METODOS PAISES

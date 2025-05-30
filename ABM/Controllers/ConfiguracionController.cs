@@ -514,8 +514,8 @@ namespace ABM.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken] // Importante para la seguridad en operaciones POST
-        [Monitoreo("CrucePNS", "UPDATE_ESTADO", "deshabilitarCrucePNS")] 
-        public async Task<IActionResult> DeshabilitarCruce(int id) 
+        [Monitoreo("CrucePNS", "UPDATE_ESTADO", "deshabilitarCrucePNS")]
+        public async Task<IActionResult> DeshabilitarCruce(int id)
         {
             if (id <= 0)
             {
@@ -544,6 +544,225 @@ namespace ABM.Controllers
 
             return RedirectToAction(nameof(CrucesPNS));
         }
+
+        [HttpGet]
+        public async Task<JsonResult> GetNegociosPorPais(int idPais)
+        {
+            if (idPais <= 0)
+            {
+                // Devuelve una lista vacía si el idPais no es válido para evitar errores en el JS
+                return Json(new List<SelectListItem>());
+            }
+            var negocios = await _repo.ObtenerNegociosPorPaisAsync(idPais);
+            // Mapea la lista de Negocio a una lista de SelectListItem
+            // Asegúrate que las propiedades IdNegocio y Nombre existan en tu clase Negocio
+            var selectListItems = negocios
+                                    .Select(n => new SelectListItem { Value = n.IdNegocio.ToString(), Text = n.Nombre })
+                                    .ToList();
+            return Json(selectListItems);
+        }
+
+        [HttpGet]
+        public async Task<JsonResult> GetSistemasPorPaisYNegocio(int idPais, int idNegocio)
+        {
+            if (idPais <= 0 || idNegocio <= 0)
+            {
+                // Devuelve una lista vacía si los IDs no son válidos
+                return Json(new List<SelectListItem>());
+            }
+            var sistemas = await _repo.ObtenerSistemasPorPaisYNegocioAsync(idPais, idNegocio);
+            // Mapea la lista de Sistema a una lista de SelectListItem
+            // Asegúrate que las propiedades idSistema y sistema existan en tu clase Sistema
+            var selectListItems = sistemas
+                                    .Select(s => new SelectListItem { Value = s.idSistema.ToString(), Text = s.sistema })
+                                    .ToList();
+            return Json(selectListItems);
+        }
+
+
+        [HttpGet]
+        // [Monitoreo("GestionCorreos", "GET_EDIT_FORM_DATA", "obtenerDatosParaEditarCorreo")]
+        public async Task<IActionResult> GetDatosEnvioCorreo(int id) // Renombrado para claridad
+        {
+            if (id <= 0)
+            {
+                return Json(new { success = false, message = "ID no válido." });
+            }
+            var viewModel = await _repo.ObtenerEnvioCorreoDetalleVMPorIdAsync(id);
+            if (viewModel == null)
+            {
+                return Json(new { success = false, message = "Configuración de correo no encontrada." });
+            }
+            return Json(new { success = true, data = viewModel });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        // [Monitoreo("GestionCorreos", "UPDATE_AJAX", "ejecutarEdicionCorreoDetalle")]
+        public async Task<IActionResult> EditarEnvioCorreo(int id, EnvioCorreoDetalleViewModel modeloForm) // Recibe el ViewModel
+        {
+            if (modeloForm == null || id != modeloForm.IdCorreos)
+            {
+                return BadRequest(new { Message = "Datos inválidos o discrepancia de ID." });
+            }
+
+            // Validar si la combinación P/N/S es editable y obtener el nuevo idPNS
+            // Si País/Negocio/Sistema NO son editables en el modal, tomarías el IdPaisNegocioSistema original (guardado en un hidden field)
+            int? idPNSActualizado = await _repo.ObtenerIdPaisNegocioSistemaActivoAsync(modeloForm.IdPais, modeloForm.IdNegocio, modeloForm.IdSistema);
+
+            if (idPNSActualizado == null)
+            {
+                ModelState.AddModelError("IdSistema", "La combinación de País, Negocio y Sistema seleccionada para la actualización no existe o no está activa.");
+                // El nombre de la clave "IdSistema" es un ejemplo; ajústalo al campo del modal que corresponda.
+            }
+
+            // Revalida el modelo si es necesario
+            // if(string.IsNullOrWhiteSpace(modeloForm.OSI)) ModelState.AddModelError(nameof(modeloForm.OSI), "OSI es requerido.");
+            // ... más validaciones si tus DataAnnotations no son suficientes para la edición
+
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState); // Devuelve errores de validación
+            }
+
+            var entidadParaActualizar = new EnvioCorreoDetalle
+            {
+                IdCorreos = modeloForm.IdCorreos,
+                IdPaisNegocioSistema = idPNSActualizado.Value, // Usar el idPNS validado/actualizado
+                OSI = modeloForm.OSI,
+                Correo_OSI = modeloForm.Correo_OSI,
+                Responsable = modeloForm.Responsable,
+                Correo_Responsable = modeloForm.Correo_Responsable,
+                Gerente = modeloForm.Gerente,
+                Correo_Gerente = modeloForm.Correo_Gerente,
+                Jefe = modeloForm.Jefe,
+                Correo_Jefe = modeloForm.Correo_Jefe,
+                Otros_Correos = modeloForm.Otros_Correos
+            };
+
+            try
+            {
+                bool actualizado = await _repo.ActualizarEnvioCorreoDetalleAsync(entidadParaActualizar);
+                if (actualizado)
+                {
+                    return Ok(new { Message = "Configuración de correo actualizada exitosamente." });
+                }
+                else
+                {
+                    // Podría ser que no se encontrara el ID o que los datos fueran idénticos y no se afectaran filas.
+                    return Ok(new { Message = "No se realizaron cambios. Verifique los datos o el registro no fue encontrado para actualizar." });
+                }
+            }
+            catch (Exception ex)
+            {
+                // Log ex.ToString()
+                return StatusCode(500, new { Message = $"Error crítico al actualizar: {ex.Message}" });
+            }
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GestionCorreos()
+        {
+            var pageViewModel = new GestionCorreosPageViewModel();
+            pageViewModel.ListaCorreos = await _repo.ObtenerEnvioCorreoDetallesVMAsync() ?? new List<EnvioCorreoDetalleViewModel>();
+
+            var paises = await _repo.ObtenerPaises() ?? new List<Pais>();
+            pageViewModel.CorreoParaCrear.Paises = new SelectList(paises, nameof(Pais.IdPais), nameof(Pais.Nombre));
+
+            // Inicializar Negocios y Sistemas como listas vacías de SelectListItem
+            pageViewModel.CorreoParaCrear.Negocios = new List<SelectListItem> { new SelectListItem("Seleccione Negocio...", "") };
+            pageViewModel.CorreoParaCrear.Sistemas = new List<SelectListItem> { new SelectListItem("Seleccione Sistema...", "") };
+
+            return View(pageViewModel);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> CrearEnvioCorreo(GestionCorreosPageViewModel pageModel)
+        {
+            var modeloForm = pageModel?.CorreoParaCrear;
+
+            if (modeloForm == null) { /* ... manejo de error ... */ }
+
+            int? idPNS = await _repo.ObtenerIdPaisNegocioSistemaActivoAsync(modeloForm.IdPais, modeloForm.IdNegocio, modeloForm.IdSistema);
+            if (idPNS == null)
+            {
+                ModelState.AddModelError("CorreoParaCrear.IdSistema", "La combinación de País, Negocio y Sistema seleccionada no existe o no está activa.");
+            }
+
+            if (!ModelState.IsValid) { /* ... repopular y devolver vista con errores ... */ }
+
+            // Obtener el siguiente ID para idCorreos ANTES de crear el objeto
+            int nuevoIdCorreo = await _repo.ObtenerSiguienteIdCorreosAsync();
+
+            var nuevoEnvioCorreo = new EnvioCorreoDetalle
+            {
+                IdCorreos = nuevoIdCorreo,
+                IdPaisNegocioSistema = idPNS.Value, 
+
+                OSI = modeloForm.OSI,
+                Correo_OSI = modeloForm.Correo_OSI,             
+                Responsable = modeloForm.Responsable,           
+                Correo_Responsable = modeloForm.Correo_Responsable, 
+                Gerente = modeloForm.Gerente,                       
+                Correo_Gerente = modeloForm.Correo_Gerente,        
+                Jefe = modeloForm.Jefe,                           
+                Correo_Jefe = modeloForm.Correo_Jefe,
+                Otros_Correos = modeloForm.Otros_Correos
+            };
+
+            try
+            {
+                bool creacionExitosa = await _repo.CrearEnvioCorreoDetalleAsync(nuevoEnvioCorreo); // Ahora devuelve bool
+                if (creacionExitosa)
+                {
+                    TempData["MensajeExito"] = "Configuración de envío de correo registrada exitosamente con ID: " + nuevoIdCorreo;
+                    return RedirectToAction(nameof(GestionCorreos));
+                }
+                else
+                {
+                    TempData["ErrorMessage"] = "No se pudo registrar la configuración de correos (la operación en BD no afectó filas).";
+                }
+            }
+            catch (Exception ex)
+            {
+                // Log ex.ToString()
+                TempData["ErrorMessage"] = $"Error crítico al guardar: {ex.Message}";
+            }
+
+            // --- Fallback ---
+            // ... (código de fallback para repopular y devolver la vista) ...
+            pageModel.ListaCorreos = await _repo.ObtenerEnvioCorreoDetallesVMAsync() ?? new List<EnvioCorreoDetalleViewModel>();
+            var f_paises = await _repo.ObtenerPaises() ?? new List<Pais>();
+            var f_negocios = await _repo.ObtenerNegocios() ?? new List<Negocio>(); // Para repoblar el inicial, aunque ahora se carga por AJAX
+            var f_sistemas = await _repo.ObtenerSistemas() ?? new List<Sistema>(); // Para repoblar el inicial, aunque ahora se carga por AJAX
+
+            modeloForm.Paises = new SelectList(f_paises, nameof(Pais.IdPais), nameof(Pais.Nombre), modeloForm.IdPais);
+            // Los desplegables de negocio y sistema se cargarán dinámicamente,
+            // pero podrías querer recargar el de negocio si un país ya estaba seleccionado.
+            if (modeloForm.IdPais > 0)
+            {
+                var negociosFiltrados = await _repo.ObtenerNegociosPorPaisAsync(modeloForm.IdPais);
+                modeloForm.Negocios = new SelectList(negociosFiltrados, nameof(Negocio.IdNegocio), nameof(Negocio.Nombre), modeloForm.IdNegocio);
+            }
+            else
+            {
+                modeloForm.Negocios = new List<SelectListItem> { new SelectListItem("Seleccione Negocio...", "") };
+            }
+            if (modeloForm.IdPais > 0 && modeloForm.IdNegocio > 0)
+            {
+                var sistemasFiltrados = await _repo.ObtenerSistemasPorPaisYNegocioAsync(modeloForm.IdPais, modeloForm.IdNegocio);
+                modeloForm.Sistemas = new SelectList(sistemasFiltrados, "idSistema", "sistema", modeloForm.IdSistema);
+            }
+            else
+            {
+                modeloForm.Sistemas = new List<SelectListItem> { new SelectListItem("Seleccione Sistema...", "") };
+            }
+
+            return View("GestionCorreos", pageModel);
+        }
+
+
 
     }
 }
