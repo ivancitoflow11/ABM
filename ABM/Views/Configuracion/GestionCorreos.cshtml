@@ -124,6 +124,48 @@
                         <span asp-validation-for="CorreoParaCrear.Otros_Correos" class="text-danger"></span>
                     </div>
                 </div>
+                @* --- NUEVOS CHECKBOXES --- *@
+                <hr />
+                <h5>Frecuencia de Envío (Lista Adicional)</h5>
+                <div class="row g-3 mb-3">
+                    <div class="col-md-4">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" asp-for="CorreoParaCrear.CheckEnvioDiario">
+                            <label class="form-check-label" for="@Html.IdFor(m => m.CorreoParaCrear.CheckEnvioDiario)">Envío Diario</label>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" asp-for="CorreoParaCrear.CheckEnvioSemanal">
+                            <label class="form-check-label" for="@Html.IdFor(m => m.CorreoParaCrear.CheckEnvioSemanal)">Envío Semanal</label>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" asp-for="CorreoParaCrear.CheckEnvioGerente">
+                            <label class="form-check-label" for="@Html.IdFor(m => m.CorreoParaCrear.CheckEnvioGerente)">Envío Gerente</label>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mt-2">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" asp-for="CorreoParaCrear.CheckEnvioMensual">
+                            <label class="form-check-label" for="@Html.IdFor(m => m.CorreoParaCrear.CheckEnvioMensual)">Envío Mensual</label>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mt-2">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" asp-for="CorreoParaCrear.CheckEnvioQuincenal">
+                            <label class="form-check-label" for="@Html.IdFor(m => m.CorreoParaCrear.CheckEnvioQuincenal)">Envío Quincenal</label>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mt-2">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" asp-for="CorreoParaCrear.CheckEnvioJefe">
+                            <label class="form-check-label" for="@Html.IdFor(m => m.CorreoParaCrear.CheckEnvioJefe)">Envío Jefe</label>
+                        </div>
+                    </div>
+                </div>
+                @* --- FIN NUEVOS CHECKBOXES --- *@
                 <div class="row mt-3">
                     <div class="col-md-12 text-end">
                         <button type="submit" class="btn btn-success">Registrar Configuración</button>

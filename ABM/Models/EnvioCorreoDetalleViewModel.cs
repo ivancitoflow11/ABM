@@ -54,7 +54,14 @@ public class EnvioCorreoDetalleViewModel
 	[StringLength(100)]
 	public string? Jefe { get; set; }
 
-	[Display(Name = "Correo Jefe")]
+    public bool CheckEnvioDiario { get; set; }
+    public bool CheckEnvioSemanal { get; set; }
+    public bool CheckEnvioGerente { get; set; }
+    public bool CheckEnvioMensual { get; set; }
+    public bool CheckEnvioQuincenal { get; set; }
+    public bool CheckEnvioJefe { get; set; }
+
+    [Display(Name = "Correo Jefe")]
 	[StringLength(100)]
 	[EmailAddress(ErrorMessage = "El formato del correo del Jefe no es válido.")]
 	public string? Correo_Jefe { get; set; }

@@ -607,8 +607,7 @@ namespace ABM.Controllers
                 return BadRequest(new { Message = "Datos inválidos o discrepancia de ID." });
             }
 
-            // Validar si la combinación P/N/S es editable y obtener el nuevo idPNS
-            // Si País/Negocio/Sistema NO son editables en el modal, tomarías el IdPaisNegocioSistema original (guardado en un hidden field)
+
             int? idPNSActualizado = await _repo.ObtenerIdPaisNegocioSistemaActivoAsync(modeloForm.IdPais, modeloForm.IdNegocio, modeloForm.IdSistema);
 
             if (idPNSActualizado == null)
@@ -617,9 +616,6 @@ namespace ABM.Controllers
                 // El nombre de la clave "IdSistema" es un ejemplo; ajústalo al campo del modal que corresponda.
             }
 
-            // Revalida el modelo si es necesario
-            // if(string.IsNullOrWhiteSpace(modeloForm.OSI)) ModelState.AddModelError(nameof(modeloForm.OSI), "OSI es requerido.");
-            // ... más validaciones si tus DataAnnotations no son suficientes para la edición
 
             if (!ModelState.IsValid)
             {
@@ -721,46 +717,111 @@ namespace ABM.Controllers
         {
             var modeloForm = pageModel?.CorreoParaCrear;
 
-            if (modeloForm == null) { /* ... manejo de error ... */ }
-
-            int? idPNS = await _repo.ObtenerIdPaisNegocioSistemaActivoAsync(modeloForm.IdPais, modeloForm.IdNegocio, modeloForm.IdSistema);
-            if (idPNS == null)
+            if (modeloForm == null)
             {
-                ModelState.AddModelError("CorreoParaCrear.IdSistema", "La combinación de País, Negocio y Sistema seleccionada no existe o no está activa.");
+                TempData["ErrorMessage"] = "Datos del formulario no válidos.";
+                await RepopulateGestionCorreosViewModelForCreateError(pageModel ?? new GestionCorreosPageViewModel());
+                return View("GestionCorreos", pageModel ?? new GestionCorreosPageViewModel());
             }
 
-            if (!ModelState.IsValid) { /* ... repopular y devolver vista con errores ... */ }
+            // Validaciones básicas para los selects
+            if (modeloForm.IdPais == 0) ModelState.AddModelError("CorreoParaCrear.IdPais", "Debe seleccionar un País.");
+            if (modeloForm.IdNegocio == 0) ModelState.AddModelError("CorreoParaCrear.IdNegocio", "Debe seleccionar un Negocio.");
+            if (modeloForm.IdSistema == 0) ModelState.AddModelError("CorreoParaCrear.IdSistema", "Debe seleccionar un Sistema.");
 
-            // Obtener el siguiente ID para idCorreos ANTES de crear el objeto
+            int? idPNS = null;
+            string nombrePais = "N/A", nombreNegocio = "N/A", nombreSistema = "N/A";
+
+            if (modeloForm.IdPais > 0 && modeloForm.IdNegocio > 0 && modeloForm.IdSistema > 0)
+            {
+                idPNS = await _repo.ObtenerIdPaisNegocioSistemaActivoAsync(modeloForm.IdPais, modeloForm.IdNegocio, modeloForm.IdSistema);
+                if (idPNS == null)
+                {
+                    ModelState.AddModelError("CorreoParaCrear.IdSistema", "La combinación de País, Negocio y Sistema seleccionada no existe o no está activa.");
+                }
+                else
+                {
+                    // Obtener nombres para NombreLista
+                    var paisObj = (await _repo.ObtenerPaises()).FirstOrDefault(p => p.IdPais == modeloForm.IdPais);
+                    var negocioObj = (await _repo.ObtenerNegociosPorPaisAsync(modeloForm.IdPais)).FirstOrDefault(n => n.IdNegocio == modeloForm.IdNegocio); // Asume que ObtenerNegociosPorPaisAsync existe y es adecuado
+                    var sistemaObj = (await _repo.ObtenerSistemasPorPaisYNegocioAsync(modeloForm.IdPais, modeloForm.IdNegocio)).FirstOrDefault(s => s.idSistema == modeloForm.IdSistema); // Asume que ObtenerSistemasPorPaisYNegocioAsync existe
+
+                    nombrePais = paisObj?.Nombre ?? $"ID{modeloForm.IdPais}";
+                    nombreNegocio = negocioObj?.Nombre ?? $"ID{modeloForm.IdNegocio}";
+                    nombreSistema = sistemaObj?.sistema ?? $"ID{modeloForm.IdSistema}";
+                }
+            }
+
+            if (!ModelState.IsValid)
+            {
+                TempData["ErrorMessage"] = "Por favor corrija los errores indicados.";
+                await RepopulateGestionCorreosViewModelForCreateError(pageModel);
+                return View("GestionCorreos", pageModel);
+            }
+
             int nuevoIdCorreo = await _repo.ObtenerSiguienteIdCorreosAsync();
 
-            var nuevoEnvioCorreo = new EnvioCorreoDetalle
+            var nuevoEnvioCorreoDetalle = new EnvioCorreoDetalle
             {
                 IdCorreos = nuevoIdCorreo,
-                IdPaisNegocioSistema = idPNS.Value, 
-
+                IdPaisNegocioSistema = idPNS.Value, // Ya validado que no es null si ModelState es válido
                 OSI = modeloForm.OSI,
-                Correo_OSI = modeloForm.Correo_OSI,             
-                Responsable = modeloForm.Responsable,           
-                Correo_Responsable = modeloForm.Correo_Responsable, 
-                Gerente = modeloForm.Gerente,                       
-                Correo_Gerente = modeloForm.Correo_Gerente,        
-                Jefe = modeloForm.Jefe,                           
+                Correo_OSI = modeloForm.Correo_OSI,
+                Responsable = modeloForm.Responsable,
+                Correo_Responsable = modeloForm.Correo_Responsable,
+                Gerente = modeloForm.Gerente,
+                Correo_Gerente = modeloForm.Correo_Gerente,
+                Jefe = modeloForm.Jefe,
                 Correo_Jefe = modeloForm.Correo_Jefe,
                 Otros_Correos = modeloForm.Otros_Correos
             };
 
+            // Para ftc_Envio_Correo_lista
+            string nombreListaConcatenado = $"{nombrePais} - {nombreNegocio} - {nombreSistema}";
+            if (nombreListaConcatenado.Length > 100) nombreListaConcatenado = nombreListaConcatenado.Substring(0, 100);
+
+            var nuevoEnvioCorreoLista = new EnvioCorreoLista
+            {
+                // IdCorreos = nuevoIdCorreo, // NO ESTABLECER ESTO - Es IDENTITY
+                IdDetalleCorreo = nuevoIdCorreo, // ESTABLECER LA NUEVA FK
+
+                NombreLista = nombreListaConcatenado,
+                Envio_Diario = modeloForm.CheckEnvioDiario ? "si" : "no",
+                Envio_Semanal = modeloForm.CheckEnvioSemanal ? "si" : "no",
+                Envio_Gerente = modeloForm.CheckEnvioGerente ? "si" : "no",
+                Envio_Mensual = modeloForm.CheckEnvioMensual ? "si" : "no",
+                Envio_Quincenal = modeloForm.CheckEnvioQuincenal ? "si" : "no",
+                Envio_Jefe = modeloForm.CheckEnvioJefe ? "si" : "no",
+                Tipo_Carga = "AUTOMATICA",
+                Fecha_Ultima_Carga = DateTime.Now
+            };
+
+            // **Importante: Considerar Transacciones**
+            // Si una inserción falla, la otra debería revertirse.
+            // Dapper requiere manejo manual de transacciones.
+            // Por simplicidad, aquí se hacen secuenciales.
             try
             {
-                bool creacionExitosa = await _repo.CrearEnvioCorreoDetalleAsync(nuevoEnvioCorreo); // Ahora devuelve bool
-                if (creacionExitosa)
+                bool detalleCreado = await _repo.CrearEnvioCorreoDetalleAsync(nuevoEnvioCorreoDetalle);
+                if (detalleCreado)
                 {
-                    TempData["MensajeExito"] = "Configuración de envío de correo registrada exitosamente: " + nuevoIdCorreo;
-                    return RedirectToAction(nameof(GestionCorreos));
+                    bool listaCreada = await _repo.CrearEnvioCorreoListaAsync(nuevoEnvioCorreoLista);
+                    if (listaCreada)
+                    {
+                        TempData["MensajeExito"] = $"Gestion de correo y lista asociada creadas exitosamente.";
+                        return RedirectToAction(nameof(GestionCorreos));
+                    }
+                    else
+                    {
+                        // Detalle se creó, pero lista falló. ¡INCONSISTENCIA!
+                        // Aquí deberías idealmente revertir la creación del detalle.
+                        TempData["ErrorMessage"] = $"Se creó el detalle del correo (ID: {nuevoIdCorreo}) pero falló la creación de la lista de envío. Por favor, revise o contacte a soporte.";
+                        // Podrías intentar eliminar el detalle aquí o marcarlo para revisión.
+                    }
                 }
                 else
                 {
-                    TempData["ErrorMessage"] = "No se pudo registrar la configuración de correos (la operación en BD no afectó filas).";
+                    TempData["ErrorMessage"] = "No se pudo registrar el detalle de la configuración de correos.";
                 }
             }
             catch (Exception ex)
@@ -769,34 +830,41 @@ namespace ABM.Controllers
                 TempData["ErrorMessage"] = $"Error crítico al guardar: {ex.Message}";
             }
 
-            pageModel.ListaCorreos = await _repo.ObtenerEnvioCorreoDetallesVMAsync() ?? new List<EnvioCorreoDetalleViewModel>();
-            var f_paises = await _repo.ObtenerPaises() ?? new List<Pais>();
-            var f_negocios = await _repo.ObtenerNegocios() ?? new List<Negocio>(); // Para repoblar el inicial, aunque ahora se carga por AJAX
-            var f_sistemas = await _repo.ObtenerSistemas() ?? new List<Sistema>(); // Para repoblar el inicial, aunque ahora se carga por AJAX
-
-            modeloForm.Paises = new SelectList(f_paises, nameof(Pais.IdPais), nameof(Pais.Nombre), modeloForm.IdPais);
-            // Los desplegables de negocio y sistema se cargarán dinámicamente,
-            // pero podrías querer recargar el de negocio si un país ya estaba seleccionado.
-            if (modeloForm.IdPais > 0)
-            {
-                var negociosFiltrados = await _repo.ObtenerNegociosPorPaisAsync(modeloForm.IdPais);
-                modeloForm.Negocios = new SelectList(negociosFiltrados, nameof(Negocio.IdNegocio), nameof(Negocio.Nombre), modeloForm.IdNegocio);
-            }
-            else
-            {
-                modeloForm.Negocios = new List<SelectListItem> { new SelectListItem("Seleccione Negocio...", "") };
-            }
-            if (modeloForm.IdPais > 0 && modeloForm.IdNegocio > 0)
-            {
-                var sistemasFiltrados = await _repo.ObtenerSistemasPorPaisYNegocioAsync(modeloForm.IdPais, modeloForm.IdNegocio);
-                modeloForm.Sistemas = new SelectList(sistemasFiltrados, "idSistema", "sistema", modeloForm.IdSistema);
-            }
-            else
-            {
-                modeloForm.Sistemas = new List<SelectListItem> { new SelectListItem("Seleccione Sistema...", "") };
-            }
-
+            // Si algo falla, repopular y volver a la vista
+            await RepopulateGestionCorreosViewModelForCreateError(pageModel);
             return View("GestionCorreos", pageModel);
+        }
+
+        // Método helper para repopular el ViewModel en caso de error al crear
+        private async Task RepopulateGestionCorreosViewModelForCreateError(GestionCorreosPageViewModel pageModel)
+        {
+            pageModel.CorreoParaCrear = pageModel.CorreoParaCrear ?? new EnvioCorreoDetalleViewModel(); // Asegurar que no sea null
+
+            pageModel.ListaCorreos = await _repo.ObtenerEnvioCorreoDetallesVMAsync() ?? new List<EnvioCorreoDetalleViewModel>();
+            var paises = await _repo.ObtenerPaises() ?? new List<Pais>();
+            pageModel.CorreoParaCrear.Paises = new SelectList(paises, nameof(Pais.IdPais), nameof(Pais.Nombre), pageModel.CorreoParaCrear.IdPais);
+
+            // Repoblar Negocios y Sistemas basados en la selección actual, si existe
+            if (pageModel.CorreoParaCrear.IdPais > 0)
+            {
+                var negociosFiltrados = await _repo.ObtenerNegociosPorPaisAsync(pageModel.CorreoParaCrear.IdPais);
+                pageModel.CorreoParaCrear.Negocios = new SelectList(negociosFiltrados, nameof(Negocio.IdNegocio), nameof(Negocio.Nombre), pageModel.CorreoParaCrear.IdNegocio);
+
+                if (pageModel.CorreoParaCrear.IdNegocio > 0)
+                {
+                    var sistemasFiltrados = await _repo.ObtenerSistemasPorPaisYNegocioAsync(pageModel.CorreoParaCrear.IdPais, pageModel.CorreoParaCrear.IdNegocio);
+                    pageModel.CorreoParaCrear.Sistemas = new SelectList(sistemasFiltrados, "idSistema", "sistema", pageModel.CorreoParaCrear.IdSistema);
+                }
+                else
+                {
+                    pageModel.CorreoParaCrear.Sistemas = new List<SelectListItem> { new SelectListItem("Seleccione Sistema...", "") };
+                }
+            }
+            else
+            {
+                pageModel.CorreoParaCrear.Negocios = new List<SelectListItem> { new SelectListItem("Seleccione Negocio...", "") };
+                pageModel.CorreoParaCrear.Sistemas = new List<SelectListItem> { new SelectListItem("Seleccione Sistema...", "") };
+            }
         }
 
 
