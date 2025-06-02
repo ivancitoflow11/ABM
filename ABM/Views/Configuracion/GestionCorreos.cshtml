@@ -4,7 +4,6 @@
 }
 
 <link rel="stylesheet" href="~/lib/datatables.net-bs4/css/dataTables.bootstrap4.min.css" />
-@* <link rel="stylesheet" href="~/css/botones.css" asp-append-version="true" /> *@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
 
 <div class="pt-5">
@@ -325,166 +324,270 @@
 
     <script>
         $(function () {
-            var dtCorreos = $('#tablaCorreos').DataTable({
+            // ========== CONFIGURACIÓN INICIAL ==========
+
+            // Inicializar DataTable con verificación previa
+            var dtCorreos;
+            if ($.fn.DataTable.isDataTable('#file_export4')) {
+                $('#file_export4').DataTable().destroy();
+            }
+
+            dtCorreos = $('#file_export4').DataTable({
                 pageLength: 10,
                 dom: 'ltip',
-                language: { /* Tu configuración de idioma para DataTables */ }
-                // Puedes añadir aquí la configuración de 'columns' si es necesario
+                language: {
+                    url: '//cdn.datatables.net/plug-ins/1.13.4/i18n/es-ES.json'
+                },
+                columnDefs: [
+                    { targets: '_all', className: 'text-center' }
+                ],
+                responsive: true,
+                ordering: true,
+                searching: true,
+                paging: true,
+                info: true
             });
 
-            $('#searchCorreosInput').on('keyup', function () {
-                dtCorreos.search(this.value).draw();
-            });
-
-            // TODO: Implementar lógica para Editar y Eliminar (botones .btn-edit-correo, .btn-delete-correo)
-            // Esto implicaría crear modales y acciones de controlador GET/POST para editar y POST para eliminar,
-            // similar a lo que hicimos para CrucePNS.
-        });
-        $(function () {
-            // ... (tu código existente de DataTable, etc.) ...
-
-            var idPaisSelect = $('#CorreoParaCrear_IdPais'); // Asegúrate que el ID sea correcto
-            var idNegocioSelect = $('#CorreoParaCrear_IdNegocio');
-            var idSistemaSelect = $('#CorreoParaCrear_IdSistema');
-
-            function limpiarYRepoblarSelect(selectElement, data, placeholderText) {
+            // Función utilitaria para limpiar y repoblar selects
+            function limpiarYRepoblarSelect(selectElement, data, placeholderText, esError = false) {
                 selectElement.empty();
                 selectElement.append($('<option>', {
                     value: '',
                     text: placeholderText
                 }));
-                $.each(data, function (index, item) {
-                    selectElement.append($('<option>', {
-                        value: item.value,
-                        text: item.text
-                    }));
-                });
-                selectElement.prop('disabled', data.length === 0);
+
+                if (data && data.length > 0) {
+                    $.each(data, function (index, item) {
+                        selectElement.append($('<option>', {
+                            value: item.value || item.Value,
+                            text: item.text || item.Text
+                        }));
+                    });
+                }
+
+                selectElement.prop('disabled', esError || !data || data.length === 0);
             }
 
-            // Deshabilitar inicialmente Negocio y Sistema
-            idNegocioSelect.prop('disabled', true);
-            idSistemaSelect.prop('disabled', true);
+            // ========== FORMULARIO PRINCIPAL DE CREACIÓN ==========
 
-            idPaisSelect.on('change', function () {
+            // Obtener referencias a los dropdowns del formulario principal
+            var $paisSelect = $('select[name="CorreoParaCrear.IdPais"]');
+            var $negocioSelect = $('select[name="CorreoParaCrear.IdNegocio"]');
+            var $sistemaSelect = $('select[name="CorreoParaCrear.IdSistema"]');
+
+            // Deshabilitar inicialmente Negocio y Sistema
+            $negocioSelect.prop('disabled', true);
+            $sistemaSelect.prop('disabled', true);
+
+            // Evento: Cambio de País
+            $paisSelect.on('change', function () {
                 var paisId = $(this).val();
-                idNegocioSelect.empty().append($('<option value="">Cargando Negocios...</option>')).prop('disabled', true);
-                idSistemaSelect.empty().append($('<option value="">Seleccione Sistema...</option>')).prop('disabled', true);
+
+                // Limpiar y deshabilitar dropdowns dependientes
+                limpiarYRepoblarSelect($negocioSelect, [], 'Cargando Negocios...', false);
+                $negocioSelect.prop('disabled', true);
+                limpiarYRepoblarSelect($sistemaSelect, [], 'Seleccione Sistema...', true);
 
                 if (paisId) {
-                    $.getJSON('@Url.Action("GetNegociosPorPais", "Configuracion")', { idPais: paisId }) // Ajusta "Configuracion" si tu controlador es otro
+                    $.getJSON('@Url.Action("GetNegociosPorPais", "Configuracion")', { idPais: paisId })
                         .done(function (data) {
-                            limpiarYRepoblarSelect(idNegocioSelect, data, 'Seleccione Negocio...');
                             if (data && data.length > 0) {
-                                idNegocioSelect.prop('disabled', false);
+                                limpiarYRepoblarSelect($negocioSelect, data, 'Seleccione Negocio...', false);
+                                $negocioSelect.prop('disabled', false);
                             } else {
-                                idNegocioSelect.empty().append($('<option value="">No hay negocios para este país</option>')).prop('disabled', true);
+                                limpiarYRepoblarSelect($negocioSelect, [], 'No hay negocios para este país', true);
                             }
                         })
-                        .fail(function () {
-                            alert("Error al cargar los negocios.");
-                            idNegocioSelect.empty().append($('<option value="">Error al cargar</option>')).prop('disabled', true);
+                        .fail(function (xhr, status, error) {
+                            console.error("Error al cargar los negocios:", error);
+                            limpiarYRepoblarSelect($negocioSelect, [], 'Error al cargar negocios', true);
+                            if (typeof Swal !== 'undefined') {
+                                Swal.fire({
+                                    title: 'Error',
+                                    text: 'No se pudieron cargar los negocios. Intente nuevamente.',
+                                    icon: 'error',
+                                    confirmButtonText: 'Aceptar'
+                                });
+                            } else {
+                                alert('Error al cargar los negocios. Intente nuevamente.');
+                            }
                         });
-                } else {
-                    // Si no se selecciona país, limpiar y deshabilitar los siguientes
-                    idNegocioSelect.empty().append($('<option value="">Seleccione Negocio...</option>')).prop('disabled', true);
-                    idSistemaSelect.empty().append($('<option value="">Seleccione Sistema...</option>')).prop('disabled', true);
                 }
             });
-            // --- INICIO: LÓGICA PARA EL MODAL DE EDICIÓN DE CORREOS ---
-            $(function () { // Puedes añadir esto dentro de tu $(function() { ... }) existente o como uno nuevo.
 
-                var modalEditarCorreoInstance = new bootstrap.Modal(document.getElementById('editarCorreoModal'));
-                var $formEditarCorreo = $('#formEditarCorreo');
+            // Evento: Cambio de Negocio
+            $negocioSelect.on('change', function () {
+                var paisId = $paisSelect.val();
+                var negocioId = $(this).val();
 
-                // Referencias a los desplegables del modal de edición
-                var editIdPaisSelect = $('#edit-IdPais');
-                var editIdNegocioSelect = $('#edit-IdNegocio');
-                var editIdSistemaSelect = $('#edit-IdSistema');
+                // Limpiar dropdown de sistemas
+                limpiarYRepoblarSelect($sistemaSelect, [], 'Cargando Sistemas...', false);
+                $sistemaSelect.prop('disabled', true);
 
-                // ASUMO QUE YA TIENES ESTA FUNCIÓN DEFINIDA EN TU SCRIPT (la usas para el form de creación)
-                // function limpiarYRepoblarSelect(selectElement, data, placeholderText, esError = false) { ... }
-                // Si no, asegúrate de que esté accesible.
+                if (paisId && negocioId) {
+                    $.getJSON('@Url.Action("GetSistemasPorPaisYNegocio", "Configuracion")', {
+                        idPais: paisId,
+                        idNegocio: negocioId
+                    })
+                        .done(function (data) {
+                            if (data && data.length > 0) {
+                                limpiarYRepoblarSelect($sistemaSelect, data, 'Seleccione Sistema...', false);
+                                $sistemaSelect.prop('disabled', false);
+                            } else {
+                                limpiarYRepoblarSelect($sistemaSelect, [], 'No hay sistemas para esta combinación', true);
+                            }
+                        })
+                        .fail(function (xhr, status, error) {
+                            console.error("Error al cargar los sistemas:", error);
+                            limpiarYRepoblarSelect($sistemaSelect, [], 'Error al cargar sistemas', true);
+                            if (typeof Swal !== 'undefined') {
+                                Swal.fire({
+                                    title: 'Error',
+                                    text: 'No se pudieron cargar los sistemas. Intente nuevamente.',
+                                    icon: 'error',
+                                    confirmButtonText: 'Aceptar'
+                                });
+                            } else {
+                                alert('Error al cargar los sistemas. Intente nuevamente.');
+                            }
+                        });
+                }
+            });
 
-                // Eventos change para desplegables en cascada DENTRO DEL MODAL DE EDICIÓN
-                editIdPaisSelect.on('change', async function () {
-                    var paisId = $(this).val();
-                    limpiarYRepoblarSelect(editIdNegocioSelect, [], 'Cargando Negocios...', false);
-                    editIdNegocioSelect.prop('disabled', true);
-                    limpiarYRepoblarSelect(editIdSistemaSelect, [], 'Seleccione Sistema...', true);
+            // ========== MODAL DE EDICIÓN ==========
 
-                    if (paisId) {
-                        try {
-                            const negociosData = await $.getJSON('@Url.Action("GetNegociosPorPais", "Configuracion")', { idPais: paisId });
-                            limpiarYRepoblarSelect(editIdNegocioSelect, negociosData, (negociosData && negociosData.length > 0) ? 'Seleccione Negocio...' : 'No hay negocios para este país', !(negociosData && negociosData.length > 0));
-                        } catch (e) {
-                            console.error("Error al cargar negocios para edición:", e);
-                            limpiarYRepoblarSelect(editIdNegocioSelect, [], 'Error al cargar negocios', true);
-                        }
-                    }
-                });
+            var modalEditarCorreoInstance;
+            var $editarCorreoModal = $('#editarCorreoModal');
 
-                editIdNegocioSelect.on('change', async function () {
-                    var paisId = editIdPaisSelect.val();
-                    var negocioId = $(this).val();
-                    limpiarYRepoblarSelect(editIdSistemaSelect, [], 'Cargando Sistemas...', false);
-                    editIdSistemaSelect.prop('disabled', true);
+            // Verificar si Bootstrap 5 está disponible
+            if (typeof bootstrap !== 'undefined') {
+                modalEditarCorreoInstance = new bootstrap.Modal(document.getElementById('editarCorreoModal'));
+            } else {
+                // Fallback para Bootstrap 4
+                modalEditarCorreoInstance = {
+                    show: function () { $editarCorreoModal.modal('show'); },
+                    hide: function () { $editarCorreoModal.modal('hide'); }
+                };
+            }
 
-                    if (paisId && negocioId) {
-                        try {
-                            const sistemasData = await $.getJSON('@Url.Action("GetSistemasPorPaisYNegocio", "Configuracion")', { idPais: paisId, idNegocio: negocioId });
-                            limpiarYRepoblarSelect(editIdSistemaSelect, sistemasData, (sistemasData && sistemasData.length > 0) ? 'Seleccione Sistema...' : 'No hay sistemas para esta combinación', !(sistemasData && sistemasData.length > 0));
-                        } catch (e) {
-                            console.error("Error al cargar sistemas para edición:", e);
-                            limpiarYRepoblarSelect(editIdSistemaSelect, [], 'Error al cargar sistemas', true);
-                        }
-                    }
-                });
+            var $formEditarCorreo = $('#formEditarCorreo');
 
-                async function configurarDesplegablesEdicion(data) {
-                    editIdPaisSelect.val(data.idPais);
+            // Referencias a los dropdowns del modal de edición
+            var $editPaisSelect = $('#edit-IdPais');
+            var $editNegocioSelect = $('#edit-IdNegocio');
+            var $editSistemaSelect = $('#edit-IdSistema');
 
-                    limpiarYRepoblarSelect(editIdNegocioSelect, [], 'Cargando Negocios...', false);
-                    editIdNegocioSelect.prop('disabled', true);
-                    limpiarYRepoblarSelect(editIdSistemaSelect, [], 'Seleccione Sistema...', true);
+            // Eventos para dropdowns del modal de edición
+            $editPaisSelect.on('change', function () {
+                var paisId = $(this).val();
+                limpiarYRepoblarSelect($editNegocioSelect, [], 'Cargando Negocios...', false);
+                $editNegocioSelect.prop('disabled', true);
+                limpiarYRepoblarSelect($editSistemaSelect, [], 'Seleccione Sistema...', true);
+
+                if (paisId) {
+                    $.getJSON('@Url.Action("GetNegociosPorPais", "Configuracion")', { idPais: paisId })
+                        .done(function (data) {
+                            limpiarYRepoblarSelect($editNegocioSelect, data,
+                                (data && data.length > 0) ? 'Seleccione Negocio...' : 'No hay negocios para este país',
+                                !(data && data.length > 0));
+                        })
+                        .fail(function (xhr, status, error) {
+                            console.error("Error al cargar negocios para edición:", error);
+                            limpiarYRepoblarSelect($editNegocioSelect, [], 'Error al cargar negocios', true);
+                        });
+                }
+            });
+
+            $editNegocioSelect.on('change', function () {
+                var paisId = $editPaisSelect.val();
+                var negocioId = $(this).val();
+                limpiarYRepoblarSelect($editSistemaSelect, [], 'Cargando Sistemas...', false);
+                $editSistemaSelect.prop('disabled', true);
+
+                if (paisId && negocioId) {
+                    $.getJSON('@Url.Action("GetSistemasPorPaisYNegocio", "Configuracion")', {
+                        idPais: paisId,
+                        idNegocio: negocioId
+                    })
+                        .done(function (data) {
+                            limpiarYRepoblarSelect($editSistemaSelect, data,
+                                (data && data.length > 0) ? 'Seleccione Sistema...' : 'No hay sistemas para esta combinación',
+                                !(data && data.length > 0));
+                        })
+                        .fail(function (xhr, status, error) {
+                            console.error("Error al cargar sistemas para edición:", error);
+                            limpiarYRepoblarSelect($editSistemaSelect, [], 'Error al cargar sistemas', true);
+                        });
+                }
+            });
+
+            // Función para configurar dropdowns de edición
+            function configurarDesplegablesEdicion(data) {
+                return new Promise((resolve, reject) => {
+                    $editPaisSelect.val(data.idPais);
 
                     if (data.idPais) {
-                        try {
-                            const negociosData = await $.getJSON('@Url.Action("GetNegociosPorPais", "Configuracion")', { idPais: data.idPais });
-                            limpiarYRepoblarSelect(editIdNegocioSelect, negociosData, (negociosData && negociosData.length > 0) ? 'Seleccione Negocio...' : 'No hay negocios para este país', !(negociosData && negociosData.length > 0));
-                            if (negociosData && negociosData.length > 0) editIdNegocioSelect.val(data.idNegocio);
+                        $.getJSON('@Url.Action("GetNegociosPorPais", "Configuracion")', { idPais: data.idPais })
+                            .done(function (negociosData) {
+                                limpiarYRepoblarSelect($editNegocioSelect, negociosData, 'Seleccione Negocio...', false);
 
-                            if (data.idNegocio) {
-                                const sistemasData = await $.getJSON('@Url.Action("GetSistemasPorPaisYNegocio", "Configuracion")', { idPais: data.idPais, idNegocio: data.idNegocio });
-                                limpiarYRepoblarSelect(editIdSistemaSelect, sistemasData, (sistemasData && sistemasData.length > 0) ? 'Seleccione Sistema...' : 'No hay sistemas para esta combinación', !(sistemasData && sistemasData.length > 0));
-                                if (sistemasData && sistemasData.length > 0) editIdSistemaSelect.val(data.idSistema);
-                            }
-                        } catch (e) {
-                            console.error("Error configurando desplegables de edición:", e);
-                            limpiarYRepoblarSelect(editIdNegocioSelect, [], 'Error al cargar Negocios', true);
-                            limpiarYRepoblarSelect(editIdSistemaSelect, [], 'Error al cargar Sistemas', true);
-                        }
+                                if (negociosData && negociosData.length > 0) {
+                                    $editNegocioSelect.val(data.idNegocio);
+
+                                    if (data.idNegocio) {
+                                        $.getJSON('@Url.Action("GetSistemasPorPaisYNegocio", "Configuracion")', {
+                                            idPais: data.idPais,
+                                            idNegocio: data.idNegocio
+                                        })
+                                            .done(function (sistemasData) {
+                                                limpiarYRepoblarSelect($editSistemaSelect, sistemasData, 'Seleccione Sistema...', false);
+
+                                                if (sistemasData && sistemasData.length > 0) {
+                                                    $editSistemaSelect.val(data.idSistema);
+                                                }
+                                                resolve();
+                                            })
+                                            .fail(function (xhr, status, error) {
+                                                console.error("Error cargando sistemas:", error);
+                                                limpiarYRepoblarSelect($editSistemaSelect, [], 'Error al cargar Sistemas', true);
+                                                reject(error);
+                                            });
+                                    } else {
+                                        resolve();
+                                    }
+                                } else {
+                                    resolve();
+                                }
+                            })
+                            .fail(function (xhr, status, error) {
+                                console.error("Error cargando negocios:", error);
+                                limpiarYRepoblarSelect($editNegocioSelect, [], 'Error al cargar Negocios', true);
+                                limpiarYRepoblarSelect($editSistemaSelect, [], 'Error al cargar Sistemas', true);
+                                reject(error);
+                            });
+                    } else {
+                        resolve();
                     }
-                }
+                });
+            }
 
-                // Clic en botón Editar de la tabla (ID de tabla ajustado a #file_export4)
-                // Asegúrate que el ID de tu tabla sea realmente "file_export4" o cámbialo aquí.
-                $('#file_export4 tbody').on('click', '.btn-edit-correo', async function () {
-                    var correoId = $(this).data('id');
-                    // Asegúrate que "Configuracion" sea tu controlador correcto para estas acciones
-                    $formEditarCorreo.attr('action', '@Url.Action("EditarEnvioCorreo", "Configuracion")/' + correoId);
+            // Evento: Clic en botón Editar con delegación de eventos
+            $(document).on('click', '.btn-edit-correo', function () {
+                var correoId = $(this).data('id');
+                $formEditarCorreo.attr('action', '@Url.Action("EditarEnvioCorreo", "Configuracion")/' + correoId);
 
-                    $formEditarCorreo.find('.text-danger').text('');
-                    $formEditarCorreo.find('.is-invalid').removeClass('is-invalid');
+                // Limpiar errores de validación
+                $formEditarCorreo.find('.text-danger').text('');
+                $formEditarCorreo.find('.is-invalid').removeClass('is-invalid');
 
-                    try {
-                        // Asegúrate que "Configuracion" sea tu controlador correcto
-                        const response = await $.getJSON('@Url.Action("GetDatosEnvioCorreo", "Configuracion")', { id: correoId });
+                $.getJSON('@Url.Action("GetDatosEnvioCorreo", "Configuracion")', { id: correoId })
+                    .done(function (response) {
                         if (response.success && response.data) {
                             var data = response.data;
+
+                            // Llenar campos del formulario
                             $('#edit-IdCorreos').val(data.idCorreos);
                             $('#edit-IdPaisNegocioSistemaOriginal').val(data.idPaisNegocioSistema);
-
                             $('#edit-OSI').val(data.osi);
                             $('#edit-Correo_OSI').val(data.correo_OSI);
                             $('#edit-Responsable').val(data.responsable);
@@ -495,79 +598,52 @@
                             $('#edit-Correo_Jefe').val(data.correo_Jefe);
                             $('#edit-Otros_Correos').val(data.otros_Correos);
 
-                            await configurarDesplegablesEdicion(data);
-
-                            modalEditarCorreoInstance.show();
+                            configurarDesplegablesEdicion(data)
+                                .then(function () {
+                                    modalEditarCorreoInstance.show();
+                                })
+                                .catch(function (error) {
+                                    console.error("Error configurando dropdowns:", error);
+                                    modalEditarCorreoInstance.show(); // Mostrar modal aunque haya errores en dropdowns
+                                });
                         } else {
-                            alert(response.message || "Error al cargar los datos de la configuración.");
-                        }
-                    } catch (error) {
-                        console.error("Error en AJAX para GetDatosEnvioCorreo:", error);
-                        alert("Error de comunicación al intentar obtener los datos para editar.");
-                    }
-                });
-
-                // Envío del formulario de edición
-                $formEditarCorreo.on('submit', function (e) {
-                    e.preventDefault();
-                    var form = this;
-                    var $form = $(form);
-                    var formData = $form.serialize();
-
-                    $form.find('.text-danger').text('');
-                    $form.find('.is-invalid').removeClass('is-invalid');
-
-                    $.ajax({
-                        url: form.action,
-                        method: "POST",
-                        data: formData,
-                    })
-                        .done(function (response) {
-                            modalEditarCorreoInstance.hide();
-                            alert(response.Message || "Actualización exitosa.");
-                            location.reload();
-                        })
-                        .fail(function (xhr) {
-                            var generalErrorMessages = [];
-                            if (xhr.responseJSON) {
-                                var responseData = xhr.responseJSON;
-                                if (typeof responseData === 'string') {
-                                    generalErrorMessages.push(responseData);
-                                } else if (responseData.Message) {
-                                    generalErrorMessages.push(responseData.Message);
-                                } else {
-                                    $.each(responseData, function (fieldName, errorsForKey) {
-                                        if (errorsForKey && errorsForKey.length > 0) {
-                                            var $input = $form.find('[name="' + fieldName + '"]');
-                                            var $span = $form.find('[data-valmsg-for="' + fieldName + '"]');
-
-                                            if ($span.length) {
-                                                $span.text(errorsForKey[0]);
-                                                if ($input.length) $input.addClass('is-invalid');
-                                            } else {
-                                                var prefix = (fieldName && fieldName !== "") ? fieldName + ": " : "";
-                                                $.each(errorsForKey, function (i, errorText) { generalErrorMessages.push(prefix + errorText); });
-                                            }
-                                        }
-                                    });
-                                }
+                            var mensaje = response.message || "Error al cargar los datos de la configuración.";
+                            if (typeof Swal !== 'undefined') {
+                                Swal.fire({
+                                    title: 'Error',
+                                    text: mensaje,
+                                    icon: 'error',
+                                    confirmButtonText: 'Aceptar'
+                                });
                             } else {
-                                generalErrorMessages.push('Error desconocido al actualizar. Intente nuevamente.');
+                                alert(mensaje);
                             }
-                            if (generalErrorMessages.length > 0) {
-                                alert("Por favor corrija los siguientes errores:\n- " + generalErrorMessages.join('\n- '));
-                            }
-                        });
-                });
+                        }
+                    })
+                    .fail(function (xhr, status, error) {
+                        console.error("Error en AJAX para GetDatosEnvioCorreo:", error);
+                        var mensaje = "Error de comunicación al intentar obtener los datos para editar.";
+                        if (typeof Swal !== 'undefined') {
+                            Swal.fire({
+                                title: 'Error',
+                                text: mensaje,
+                                icon: 'error',
+                                confirmButtonText: 'Aceptar'
+                            });
+                        } else {
+                            alert(mensaje);
+                        }
+                    });
+            });
 
-            }); // Fin del $(function () { para la lógica de edición
-            // --- FIN: LÓGICA PARA EL MODAL DE EDICIÓN DE CORREOS ---
+            // Evento: Envío del formulario de edición
             $formEditarCorreo.on('submit', function (e) {
                 e.preventDefault();
                 var form = this;
                 var $form = $(form);
                 var formData = $form.serialize();
 
+                // Limpiar errores previos
                 $form.find('.text-danger').text('');
                 $form.find('.is-invalid').removeClass('is-invalid');
 
@@ -579,24 +655,29 @@
                     .done(function (response) {
                         modalEditarCorreoInstance.hide();
 
-                        // --- INICIO DE MODIFICACIÓN: SWEETALERT2 PARA ÉXITO ---
-                        Swal.fire({
-                            title: '¡Actualizado!',
-                            text: response.Message || "Configuración de correo actualizada exitosamente.",
-                            icon: 'success',
-                            confirmButtonText: 'Aceptar'
-                        }).then((result) => {
-                            // Recargar la página después de que el usuario cierre el SweetAlert
-                            if (result.isConfirmed || result.isDismissed) {
-                                location.reload();
-                            }
-                        });
-                        // --- FIN DE MODIFICACIÓN ---
+                        var mensaje = response.Message || "Configuración de correo actualizada exitosamente.";
+                        if (typeof Swal !== 'undefined') {
+                            Swal.fire({
+                                title: '¡Actualizado!',
+                                text: mensaje,
+                                icon: 'success',
+                                confirmButtonText: 'Aceptar'
+                            }).then((result) => {
+                                if (result.isConfirmed || result.isDismissed) {
+                                    location.reload();
+                                }
+                            });
+                        } else {
+                            alert(mensaje);
+                            location.reload();
+                        }
                     })
                     .fail(function (xhr) {
                         var generalErrorMessages = [];
+
                         if (xhr.responseJSON) {
                             var responseData = xhr.responseJSON;
+
                             if (typeof responseData === 'string') {
                                 generalErrorMessages.push(responseData);
                             } else if (responseData.Message) {
@@ -612,7 +693,9 @@
                                             if ($input.length) $input.addClass('is-invalid');
                                         } else {
                                             var prefix = (fieldName && fieldName !== "") ? fieldName + ": " : "";
-                                            $.each(errorsForKey, function (i, errorText) { generalErrorMessages.push(prefix + errorText); });
+                                            $.each(errorsForKey, function (i, errorText) {
+                                                generalErrorMessages.push(prefix + errorText);
+                                            });
                                         }
                                     }
                                 });
@@ -620,37 +703,54 @@
                         } else {
                             generalErrorMessages.push('Error desconocido al actualizar. Intente nuevamente.');
                         }
+
                         if (generalErrorMessages.length > 0) {
-                            // Para los errores, mantenemos el alert simple, o puedes cambiarlos a Swal también si prefieres.
-                            alert("Por favor corrija los siguientes errores:\n- " + generalErrorMessages.join('\n- '));
+                            if (typeof Swal !== 'undefined') {
+                                Swal.fire({
+                                    title: 'Errores de Validación',
+                                    html: "Por favor corrija los siguientes errores:<br><br>• " + generalErrorMessages.join('<br>• '),
+                                    icon: 'error',
+                                    confirmButtonText: 'Aceptar'
+                                });
+                            } else {
+                                alert("Errores de validación:\n\n• " + generalErrorMessages.join('\n• '));
+                            }
                         }
                     });
             });
-            idNegocioSelect.on('change', function () {
-                var paisId = idPaisSelect.val();
-                var negocioId = $(this).val();
-                idSistemaSelect.empty().append($('<option value="">Cargando Sistemas...</option>')).prop('disabled', true);
 
-                if (paisId && negocioId) {
-                    $.getJSON('@Url.Action("GetSistemasPorPaisYNegocio", "Configuracion")', { idPais: paisId, idNegocio: negocioId }) // Ajusta "Configuracion"
-                        .done(function (data) {
-                            limpiarYRepoblarSelect(idSistemaSelect, data, 'Seleccione Sistema...');
-                            if (data && data.length > 0) {
-                                idSistemaSelect.prop('disabled', false);
-                            } else {
-                                idSistemaSelect.empty().append($('<option value="">No hay sistemas para esta combinación</option>')).prop('disabled', true);
-                            }
-                        })
-                        .fail(function () {
-                            alert("Error al cargar los sistemas.");
-                            idSistemaSelect.empty().append($('<option value="">Error al cargar</option>')).prop('disabled', true);
-                        });
+            // Evento: Clic en botón Eliminar con delegación de eventos
+            $(document).on('click', '.btn-delete-correo', function () {
+                var correoId = $(this).data('id');
+
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({
+                        title: '¿Está seguro?',
+                        text: "Esta acción no se puede deshacer.",
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonColor: '#d33',
+                        cancelButtonColor: '#3085d6',
+                        confirmButtonText: 'Sí, eliminar',
+                        cancelButtonText: 'Cancelar'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            // Aquí implementarías la lógica de eliminación
+                            // $.post('@Url.Action("EliminarEnvioCorreo", "Configuracion")', { id: correoId })
+                            console.log('Eliminar correo ID:', correoId);
+                        }
+                    });
                 } else {
-                    idSistemaSelect.empty().append($('<option value="">Seleccione Sistema...</option>')).prop('disabled', true);
+                    if (confirm('¿Está seguro de que desea eliminar esta configuración de correo?')) {
+                        console.log('Eliminar correo ID:', correoId);
+                        // Implementar lógica de eliminación aquí
+                    }
                 }
             });
+
         });
     </script>
+
     <!-- Scripts DataTables y dependencias -->
     <script src="/js/vendor.min.js"></script>
     <script src="/libs/datatables.net/js/jquery.dataTables.min.js"></script>
@@ -662,5 +762,4 @@
     <script src="/js/buttons.print.min.js"></script>
     <script src="/js/datatable/datatable-advanced.init.js" asp-append-version="true"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.all.min.js"></script>
-
 }
