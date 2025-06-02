@@ -54,6 +54,7 @@ namespace ABM.Servicios
         Task<int> ObtenerSiguienteIdCorreosAsync();
         Task<EnvioCorreoDetalleViewModel?> ObtenerEnvioCorreoDetalleVMPorIdAsync(int idCorreos);
         Task<bool> ActualizarEnvioCorreoDetalleAsync(EnvioCorreoDetalle correoDetalle);
+        Task<bool> EliminarEnvioCorreoDetalleAsync(int idCorreos);
     }
 
     public class RepositorioConfiguracion : IRepositorioConfiguracion
@@ -66,6 +67,13 @@ namespace ABM.Servicios
         }
 
         // ENVIO CORREOS
+        public async Task<bool> EliminarEnvioCorreoDetalleAsync(int idCorreos) // <<< NUEVO MÉTODO IMPLEMENTADO
+        {
+            using var db = new SqlConnection(connectionString);
+            var sql = "DELETE FROM ftc_envio_correo_detalle WHERE idCorreos = @idCorreos;";
+            var affectedRows = await db.ExecuteAsync(sql, new { idCorreos });
+            return affectedRows > 0;
+        }
         public async Task<EnvioCorreoDetalleViewModel?> ObtenerEnvioCorreoDetalleVMPorIdAsync(int idCorreos)
         {
             using var db = new SqlConnection(connectionString);

@@ -8,6 +8,7 @@ using System.IO;
 using System.Linq;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using System.Threading.Tasks;
+using Microsoft.Data.SqlClient;
 
 namespace ABM.Controllers
 {
@@ -660,6 +661,44 @@ namespace ABM.Controllers
             }
         }
 
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+         [Monitoreo("GestionCorreos", "DELETE", "eliminarConfiguracionCorreo")] 
+        public async Task<IActionResult> EliminarEnvioCorreo(int id) 
+        {
+            if (id <= 0)
+            {
+                return Json(new { success = false, message = "El ID proporcionado no es válido." });
+            }
+
+            try
+            {
+
+                bool exito = await _repo.EliminarEnvioCorreoDetalleAsync(id);
+
+                if (exito)
+                {
+                    return Json(new { success = true, message = "Configuración de correo eliminada exitosamente." });
+                }
+                else
+                {
+                    // Esto puede ocurrir si el ID no se encontró o si la eliminación no afectó filas.
+                    return Json(new { success = false, message = "No se pudo eliminar la configuración de correo. Es posible que ya haya sido eliminada o no exista." });
+                }
+            }
+            catch (SqlException sqlEx) 
+            {
+
+                return Json(new { success = false, message = "Error de base de datos al intentar eliminar la configuración. Verifique si existen datos relacionados." });
+            }
+            catch (Exception ex)
+            {
+                // Loguear ex.ToString() para detalles.
+                return Json(new { success = false, message = "Ocurrió un error inesperado al procesar la solicitud de eliminación." });
+            }
+        }
+
+
         [HttpGet]
         public async Task<IActionResult> GestionCorreos()
         {
@@ -716,7 +755,7 @@ namespace ABM.Controllers
                 bool creacionExitosa = await _repo.CrearEnvioCorreoDetalleAsync(nuevoEnvioCorreo); // Ahora devuelve bool
                 if (creacionExitosa)
                 {
-                    TempData["MensajeExito"] = "Configuración de envío de correo registrada exitosamente con ID: " + nuevoIdCorreo;
+                    TempData["MensajeExito"] = "Configuración de envío de correo registrada exitosamente: " + nuevoIdCorreo;
                     return RedirectToAction(nameof(GestionCorreos));
                 }
                 else
@@ -730,8 +769,6 @@ namespace ABM.Controllers
                 TempData["ErrorMessage"] = $"Error crítico al guardar: {ex.Message}";
             }
 
-            // --- Fallback ---
-            // ... (código de fallback para repopular y devolver la vista) ...
             pageModel.ListaCorreos = await _repo.ObtenerEnvioCorreoDetallesVMAsync() ?? new List<EnvioCorreoDetalleViewModel>();
             var f_paises = await _repo.ObtenerPaises() ?? new List<Pais>();
             var f_negocios = await _repo.ObtenerNegocios() ?? new List<Negocio>(); // Para repoblar el inicial, aunque ahora se carga por AJAX
