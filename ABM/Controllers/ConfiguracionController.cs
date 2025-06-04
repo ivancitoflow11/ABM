@@ -338,7 +338,7 @@ namespace ABM.Controllers
             }
             catch (Exception ex)
             {
-                // Loggear ex para más detalles (ex.ToString() para stack trace completo)
+
                 ModelState.AddModelError(string.Empty, $"Error crítico al guardar el cruce principal: {ex.Message}. Revise los logs del servidor.");
             }
 
@@ -360,19 +360,16 @@ namespace ABM.Controllers
                 }
                 catch (Exception exPnsjt)
                 {
-                    // Loggear exPnsjt para más detalles
-                    // Considerar lógica de rollback para 'pns' si esta parte falla.
+
                     ModelState.AddModelError(string.Empty, $"Se creó el cruce principal, pero hubo un error al guardar los detalles (PNSJT): {exPnsjt.Message}. Contacte a soporte.");
                 }
             }
-            else if (ModelState.ErrorCount == 0) // Si no es > 0 Y NO se añadieron errores por excepción
+            else if (ModelState.ErrorCount == 0) 
             {
                 ModelState.AddModelError(string.Empty, "No se pudo obtener el ID del nuevo cruce principal (el repositorio devolvió un ID no válido).");
             }
 
-            // --- Fallback si algo falló después de la validación inicial ---
-            // ModelState ya debería contener los errores específicos.
-            // Repopulamos el PageViewModel completo para devolverlo a la vista.
+
             var fallbackListaCruces = await _repo.ObtenerCrucesPNS() ?? new List<CrucePNSViewModel>();
             var fallbackPaises = await _repo.ObtenerPaises() ?? new List<Pais>();
             var fallbackNegocios = await _repo.ObtenerNegocios() ?? new List<Negocio>();
@@ -385,7 +382,7 @@ namespace ABM.Controllers
             var fallbackPageViewModel = new CrucesPNSPageViewModel
             {
                 CrucesList = fallbackListaCruces,
-                CruceParaCrear = modeloForm // modeloForm contiene los valores ingresados y el estado de validación
+                CruceParaCrear = modeloForm 
             };
             TempData["ErrorMessage"] = "Ocurrió un error durante el proceso de creación. Revise los mensajes.";
             return View("CrucesPNS", fallbackPageViewModel);
@@ -422,7 +419,7 @@ namespace ABM.Controllers
                 return BadRequest(new { Message = "Discrepancia en el ID del Cruce PNS. No se puede procesar la solicitud." });
             }
 
-            // Validaciones explícitas adicionales a las DataAnnotations
+
             if (modelo.IdPais <= 0) ModelState.AddModelError(nameof(modelo.IdPais), "Debe seleccionar un País.");
             if (modelo.IdNegocio <= 0) ModelState.AddModelError(nameof(modelo.IdNegocio), "Debe seleccionar un Negocio.");
             if (modelo.IdSistema <= 0) ModelState.AddModelError(nameof(modelo.IdSistema), "Debe seleccionar un Sistema.");
@@ -450,7 +447,7 @@ namespace ABM.Controllers
                 return NotFound(new { Message = $"El registro base del cruce (ID: {modelo.IdPaisNegocioSistema}) no fue encontrado y no se puede actualizar." });
             }
 
-            // Actualizar campos permitidos, Estado se preserva desde pnsExistente.Estado
+
             pnsExistente.IdPais = modelo.IdPais;
             pnsExistente.IdNegocio = modelo.IdNegocio;
             pnsExistente.IdSistema = modelo.IdSistema;
@@ -462,7 +459,7 @@ namespace ABM.Controllers
             }
             catch (Exception exPns)
             {
-                // Log exPns
+
                 return StatusCode(500, new { Message = $"Error al actualizar el cruce principal: {exPns.Message}" });
             }
 
@@ -472,7 +469,7 @@ namespace ABM.Controllers
 
             try
             {
-                if (pnsjtExistente != null) // Si existe ftc_pnsjt, se actualiza
+                if (pnsjtExistente != null) 
                 {
                     pnsjtExistente.Tabla = modelo.Tabla;
                     pnsjtExistente.Trans = modelo.Trans;
@@ -480,7 +477,7 @@ namespace ABM.Controllers
                     pnsjtExistente.Responsable = modelo.Responsable;
                     pnsjtOperacionExitosa = await _repo.ActualizarPnsjt(pnsjtExistente);
                 }
-                else // Si no existe ftc_pnsjt, se crea
+                else 
                 {
                     var pnsjtToCreate = new Pnsjt
                     {
@@ -496,9 +493,7 @@ namespace ABM.Controllers
             }
             catch (Exception exPnsjt)
             {
-                // Log exPnsjt
-                // Si pnsActualizado fue true pero esto falla, el estado es inconsistente.
-                // Idealmente, usar transacciones en el repositorio para estas operaciones combinadas.
+
                 return StatusCode(500, new { Message = $"Error al actualizar/crear los detalles del cruce (PNSJT): {exPnsjt.Message}" });
             }
 
@@ -514,7 +509,7 @@ namespace ABM.Controllers
         }
 
         [HttpPost]
-        [ValidateAntiForgeryToken] // Importante para la seguridad en operaciones POST
+        [ValidateAntiForgeryToken]
         [Monitoreo("CrucePNS", "UPDATE_ESTADO", "deshabilitarCrucePNS")]
         public async Task<IActionResult> DeshabilitarCruce(int id)
         {
@@ -534,7 +529,7 @@ namespace ABM.Controllers
                 }
                 else
                 {
-                    // Esto puede ocurrir si el cruce no existía, ya estaba deshabilitado, o hubo un error no esperado.
+
                     TempData["ErrorMessage"] = $"No se pudo deshabilitar el Cruce PNS (ID: {id}). Es posible que ya estuviera deshabilitado o no se encontrara.";
                 }
             }
@@ -551,12 +546,11 @@ namespace ABM.Controllers
         {
             if (idPais <= 0)
             {
-                // Devuelve una lista vacía si el idPais no es válido para evitar errores en el JS
+
                 return Json(new List<SelectListItem>());
             }
             var negocios = await _repo.ObtenerNegociosPorPaisAsync(idPais);
-            // Mapea la lista de Negocio a una lista de SelectListItem
-            // Asegúrate que las propiedades IdNegocio y Nombre existan en tu clase Negocio
+
             var selectListItems = negocios
                                     .Select(n => new SelectListItem { Value = n.IdNegocio.ToString(), Text = n.Nombre })
                                     .ToList();
@@ -568,12 +562,11 @@ namespace ABM.Controllers
         {
             if (idPais <= 0 || idNegocio <= 0)
             {
-                // Devuelve una lista vacía si los IDs no son válidos
+
                 return Json(new List<SelectListItem>());
             }
             var sistemas = await _repo.ObtenerSistemasPorPaisYNegocioAsync(idPais, idNegocio);
-            // Mapea la lista de Sistema a una lista de SelectListItem
-            // Asegúrate que las propiedades idSistema y sistema existan en tu clase Sistema
+
             var selectListItems = sistemas
                                     .Select(s => new SelectListItem { Value = s.idSistema.ToString(), Text = s.sistema })
                                     .ToList();
@@ -582,8 +575,8 @@ namespace ABM.Controllers
 
 
         [HttpGet]
-        // [Monitoreo("GestionCorreos", "GET_EDIT_FORM_DATA", "obtenerDatosParaEditarCorreo")]
-        public async Task<IActionResult> GetDatosEnvioCorreo(int id) // Renombrado para claridad
+
+        public async Task<IActionResult> GetDatosEnvioCorreo(int id) 
         {
             if (id <= 0)
             {
@@ -599,8 +592,8 @@ namespace ABM.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        // [Monitoreo("GestionCorreos", "UPDATE_AJAX", "ejecutarEdicionCorreoDetalle")]
-        public async Task<IActionResult> EditarEnvioCorreo(int id, EnvioCorreoDetalleViewModel modeloForm) // Recibe el ViewModel
+
+        public async Task<IActionResult> EditarEnvioCorreo(int id, EnvioCorreoDetalleViewModel modeloForm) 
         {
             if (modeloForm == null || id != modeloForm.IdCorreos)
             {
@@ -613,19 +606,19 @@ namespace ABM.Controllers
             if (idPNSActualizado == null)
             {
                 ModelState.AddModelError("IdSistema", "La combinación de País, Negocio y Sistema seleccionada para la actualización no existe o no está activa.");
-                // El nombre de la clave "IdSistema" es un ejemplo; ajústalo al campo del modal que corresponda.
+
             }
 
 
             if (!ModelState.IsValid)
             {
-                return BadRequest(ModelState); // Devuelve errores de validación
+                return BadRequest(ModelState);
             }
 
             var entidadParaActualizar = new EnvioCorreoDetalle
             {
                 IdCorreos = modeloForm.IdCorreos,
-                IdPaisNegocioSistema = idPNSActualizado.Value, // Usar el idPNS validado/actualizado
+                IdPaisNegocioSistema = idPNSActualizado.Value, 
                 OSI = modeloForm.OSI,
                 Correo_OSI = modeloForm.Correo_OSI,
                 Responsable = modeloForm.Responsable,
@@ -646,13 +639,13 @@ namespace ABM.Controllers
                 }
                 else
                 {
-                    // Podría ser que no se encontrara el ID o que los datos fueran idénticos y no se afectaran filas.
+
                     return Ok(new { Message = "No se realizaron cambios. Verifique los datos o el registro no fue encontrado para actualizar." });
                 }
             }
             catch (Exception ex)
             {
-                // Log ex.ToString()
+
                 return StatusCode(500, new { Message = $"Error crítico al actualizar: {ex.Message}" });
             }
         }
@@ -678,7 +671,7 @@ namespace ABM.Controllers
                 }
                 else
                 {
-                    // Esto puede ocurrir si el ID no se encontró o si la eliminación no afectó filas.
+
                     return Json(new { success = false, message = "No se pudo eliminar la configuración de correo. Es posible que ya haya sido eliminada o no exista." });
                 }
             }
@@ -689,7 +682,7 @@ namespace ABM.Controllers
             }
             catch (Exception ex)
             {
-                // Loguear ex.ToString() para detalles.
+
                 return Json(new { success = false, message = "Ocurrió un error inesperado al procesar la solicitud de eliminación." });
             }
         }
@@ -704,7 +697,7 @@ namespace ABM.Controllers
             var paises = await _repo.ObtenerPaises() ?? new List<Pais>();
             pageViewModel.CorreoParaCrear.Paises = new SelectList(paises, nameof(Pais.IdPais), nameof(Pais.Nombre));
 
-            // Inicializar Negocios y Sistemas como listas vacías de SelectListItem
+
             pageViewModel.CorreoParaCrear.Negocios = new List<SelectListItem> { new SelectListItem("Seleccione Negocio...", "") };
             pageViewModel.CorreoParaCrear.Sistemas = new List<SelectListItem> { new SelectListItem("Seleccione Sistema...", "") };
 
@@ -724,7 +717,6 @@ namespace ABM.Controllers
                 return View("GestionCorreos", pageModel ?? new GestionCorreosPageViewModel());
             }
 
-            // Validaciones básicas para los selects
             if (modeloForm.IdPais == 0) ModelState.AddModelError("CorreoParaCrear.IdPais", "Debe seleccionar un País.");
             if (modeloForm.IdNegocio == 0) ModelState.AddModelError("CorreoParaCrear.IdNegocio", "Debe seleccionar un Negocio.");
             if (modeloForm.IdSistema == 0) ModelState.AddModelError("CorreoParaCrear.IdSistema", "Debe seleccionar un Sistema.");
@@ -741,10 +733,9 @@ namespace ABM.Controllers
                 }
                 else
                 {
-                    // Obtener nombres para NombreLista
                     var paisObj = (await _repo.ObtenerPaises()).FirstOrDefault(p => p.IdPais == modeloForm.IdPais);
-                    var negocioObj = (await _repo.ObtenerNegociosPorPaisAsync(modeloForm.IdPais)).FirstOrDefault(n => n.IdNegocio == modeloForm.IdNegocio); // Asume que ObtenerNegociosPorPaisAsync existe y es adecuado
-                    var sistemaObj = (await _repo.ObtenerSistemasPorPaisYNegocioAsync(modeloForm.IdPais, modeloForm.IdNegocio)).FirstOrDefault(s => s.idSistema == modeloForm.IdSistema); // Asume que ObtenerSistemasPorPaisYNegocioAsync existe
+                    var negocioObj = (await _repo.ObtenerNegociosPorPaisAsync(modeloForm.IdPais)).FirstOrDefault(n => n.IdNegocio == modeloForm.IdNegocio);
+                    var sistemaObj = (await _repo.ObtenerSistemasPorPaisYNegocioAsync(modeloForm.IdPais, modeloForm.IdNegocio)).FirstOrDefault(s => s.idSistema == modeloForm.IdSistema);
 
                     nombrePais = paisObj?.Nombre ?? $"ID{modeloForm.IdPais}";
                     nombreNegocio = negocioObj?.Nombre ?? $"ID{modeloForm.IdNegocio}";
@@ -759,31 +750,16 @@ namespace ABM.Controllers
                 return View("GestionCorreos", pageModel);
             }
 
-            int nuevoIdCorreo = await _repo.ObtenerSiguienteIdCorreosAsync();
 
-            var nuevoEnvioCorreoDetalle = new EnvioCorreoDetalle
-            {
-                IdCorreos = nuevoIdCorreo,
-                IdPaisNegocioSistema = idPNS.Value, // Ya validado que no es null si ModelState es válido
-                OSI = modeloForm.OSI,
-                Correo_OSI = modeloForm.Correo_OSI,
-                Responsable = modeloForm.Responsable,
-                Correo_Responsable = modeloForm.Correo_Responsable,
-                Gerente = modeloForm.Gerente,
-                Correo_Gerente = modeloForm.Correo_Gerente,
-                Jefe = modeloForm.Jefe,
-                Correo_Jefe = modeloForm.Correo_Jefe,
-                Otros_Correos = modeloForm.Otros_Correos
-            };
+            int nuevoIdCorreoLista = 0;
+            bool detalleCreado = false;
 
-            // Para ftc_Envio_Correo_lista
+
             string nombreListaConcatenado = $"{nombrePais} - {nombreNegocio} - {nombreSistema}";
             if (nombreListaConcatenado.Length > 100) nombreListaConcatenado = nombreListaConcatenado.Substring(0, 100);
 
             var nuevoEnvioCorreoLista = new EnvioCorreoLista
             {
-                // IdCorreos = nuevoIdCorreo, // NO ESTABLECER ESTO - Es IDENTITY
-                IdDetalleCorreo = nuevoIdCorreo, // ESTABLECER LA NUEVA FK
 
                 NombreLista = nombreListaConcatenado,
                 Envio_Diario = modeloForm.CheckEnvioDiario ? "si" : "no",
@@ -796,55 +772,75 @@ namespace ABM.Controllers
                 Fecha_Ultima_Carga = DateTime.Now
             };
 
-            // **Importante: Considerar Transacciones**
-            // Si una inserción falla, la otra debería revertirse.
-            // Dapper requiere manejo manual de transacciones.
-            // Por simplicidad, aquí se hacen secuenciales.
             try
             {
-                bool detalleCreado = await _repo.CrearEnvioCorreoDetalleAsync(nuevoEnvioCorreoDetalle);
-                if (detalleCreado)
+
+                nuevoIdCorreoLista = await _repo.CrearEnvioCorreoListaAsync(nuevoEnvioCorreoLista);
+
+                if (nuevoIdCorreoLista > 0)
                 {
-                    bool listaCreada = await _repo.CrearEnvioCorreoListaAsync(nuevoEnvioCorreoLista);
-                    if (listaCreada)
+
+                    var nuevoEnvioCorreoDetalle = new EnvioCorreoDetalle
                     {
-                        TempData["MensajeExito"] = $"Gestion de correo y lista asociada creadas exitosamente.";
+                        IdCorreos = nuevoIdCorreoLista, 
+                        IdPaisNegocioSistema = idPNS.Value,
+                        OSI = modeloForm.OSI,
+                        Correo_OSI = modeloForm.Correo_OSI,
+                        Responsable = modeloForm.Responsable,
+                        Correo_Responsable = modeloForm.Correo_Responsable,
+                        Gerente = modeloForm.Gerente,
+                        Correo_Gerente = modeloForm.Correo_Gerente,
+                        Jefe = modeloForm.Jefe,
+                        Correo_Jefe = modeloForm.Correo_Jefe,
+                        Otros_Correos = modeloForm.Otros_Correos
+                    };
+
+
+                    detalleCreado = await _repo.CrearEnvioCorreoDetalleAsync(nuevoEnvioCorreoDetalle);
+
+                    if (detalleCreado)
+                    {
+                        TempData["MensajeExito"] = $"Envío de correo creada exitosamente.";
                         return RedirectToAction(nameof(GestionCorreos));
                     }
                     else
                     {
-                        // Detalle se creó, pero lista falló. ¡INCONSISTENCIA!
-                        // Aquí deberías idealmente revertir la creación del detalle.
-                        TempData["ErrorMessage"] = $"Se creó el detalle del correo (ID: {nuevoIdCorreo}) pero falló la creación de la lista de envío. Por favor, revise o contacte a soporte.";
-                        // Podrías intentar eliminar el detalle aquí o marcarlo para revisión.
+
+                        TempData["ErrorMessage"] = $"Se creó la entrada en la lista de envío (ID: {nuevoIdCorreoLista}) pero falló el registro del detalle del correo. Por favor, revise o contacte a soporte.";
+
                     }
                 }
                 else
                 {
-                    TempData["ErrorMessage"] = "No se pudo registrar el detalle de la configuración de correos.";
+                    TempData["ErrorMessage"] = "No se pudo registrar la configuración en la lista de envío.";
                 }
+            }
+            catch (SqlException sqlEx)
+            {
+
+                TempData["ErrorMessage"] = $"Error de base de datos al guardar: {sqlEx.Message}. Número: {sqlEx.Number}";
             }
             catch (Exception ex)
             {
-                // Log ex.ToString()
+
                 TempData["ErrorMessage"] = $"Error crítico al guardar: {ex.Message}";
             }
 
-            // Si algo falla, repopular y volver a la vista
+
             await RepopulateGestionCorreosViewModelForCreateError(pageModel);
             return View("GestionCorreos", pageModel);
         }
 
-        // Método helper para repopular el ViewModel en caso de error al crear
+
         private async Task RepopulateGestionCorreosViewModelForCreateError(GestionCorreosPageViewModel pageModel)
         {
-            pageModel.CorreoParaCrear = pageModel.CorreoParaCrear ?? new EnvioCorreoDetalleViewModel(); // Asegurar que no sea null
+            pageModel.CorreoParaCrear = pageModel.CorreoParaCrear ?? new EnvioCorreoDetalleViewModel();
 
             pageModel.ListaCorreos = await _repo.ObtenerEnvioCorreoDetallesVMAsync() ?? new List<EnvioCorreoDetalleViewModel>();
             var paises = await _repo.ObtenerPaises() ?? new List<Pais>();
             pageModel.CorreoParaCrear.Paises = new SelectList(paises, nameof(Pais.IdPais), nameof(Pais.Nombre), pageModel.CorreoParaCrear.IdPais);
 
-            // Repoblar Negocios y Sistemas basados en la selección actual, si existe
+
             if (pageModel.CorreoParaCrear.IdPais > 0)
             {
                 var negociosFiltrados = await _repo.ObtenerNegociosPorPaisAsync(pageModel.CorreoParaCrear.IdPais);

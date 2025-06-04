@@ -51,11 +51,10 @@ namespace ABM.Servicios
         Task<IEnumerable<EnvioCorreoDetalleViewModel>> ObtenerEnvioCorreoDetallesVMAsync();
         Task<IEnumerable<Negocio>> ObtenerNegociosPorPaisAsync(int idPais);
         Task<IEnumerable<Sistema>> ObtenerSistemasPorPaisYNegocioAsync(int idPais, int idNegocio);
-        Task<int> ObtenerSiguienteIdCorreosAsync();
         Task<EnvioCorreoDetalleViewModel?> ObtenerEnvioCorreoDetalleVMPorIdAsync(int idCorreos);
         Task<bool> ActualizarEnvioCorreoDetalleAsync(EnvioCorreoDetalle correoDetalle);
         Task<bool> EliminarEnvioCorreoDetalleAsync(int idCorreos);
-        Task<bool> CrearEnvioCorreoListaAsync(EnvioCorreoLista envioLista);
+        Task<int> CrearEnvioCorreoListaAsync(EnvioCorreoLista envioLista);
     }
 
     public class RepositorioConfiguracion : IRepositorioConfiguracion
@@ -69,19 +68,23 @@ namespace ABM.Servicios
 
         // ENVIO CORREOS
 
-        public async Task<bool> CrearEnvioCorreoListaAsync(EnvioCorreoLista envioLista)
+        public async Task<int> CrearEnvioCorreoListaAsync(EnvioCorreoLista envioLista)
         {
             using var db = new SqlConnection(connectionString);
 
+            // Se quita IdDetalleCorreo del INSERT, ya que ftc_envio_correo_detalle.idCorreos
+            // ahora coincidirá con ftc_Envio_Correo_lista.idCorreos (esta última es IDENTITY)
             var sql = @"
     INSERT INTO ftc_Envio_Correo_lista 
-        (IdDetalleCorreo, NombreLista, Envio_Diario, Envio_Semanal, Envio_Gerente, Envio_Mensual, Envio_Quincenal, Envio_Jefe, Tipo_Carga, Fecha_Ultima_Carga)
+        (NombreLista, Envio_Diario, Envio_Semanal, Envio_Gerente, Envio_Mensual, Envio_Quincenal, Envio_Jefe, Tipo_Carga, Fecha_Ultima_Carga)
     VALUES 
-        (@IdDetalleCorreo, @NombreLista, @Envio_Diario, @Envio_Semanal, @Envio_Gerente, @Envio_Mensual, @Envio_Quincenal, @Envio_Jefe, @Tipo_Carga, @Fecha_Ultima_Carga);";
+        (@NombreLista, @Envio_Diario, @Envio_Semanal, @Envio_Gerente, @Envio_Mensual, @Envio_Quincenal, @Envio_Jefe, @Tipo_Carga, @Fecha_Ultima_Carga);
+    SELECT CAST(SCOPE_IDENTITY() AS int);"; 
 
-            var affectedRows = await db.ExecuteAsync(sql, envioLista);
-            return affectedRows > 0;
+            var newId = await db.ExecuteScalarAsync<int>(sql, envioLista);
+            return newId;
         }
+
         public async Task<bool> EliminarEnvioCorreoDetalleAsync(int idCorreos) // <<< NUEVO MÉTODO IMPLEMENTADO
         {
             using var db = new SqlConnection(connectionString);
@@ -130,13 +133,7 @@ namespace ABM.Servicios
             var affectedRows = await db.ExecuteAsync(sql, correoDetalle);
             return affectedRows > 0;
         }
-        public async Task<int> ObtenerSiguienteIdCorreosAsync()
-        {
-            using var db = new SqlConnection(connectionString);
-            // Obtiene el MAX(idCorreos) y le suma 1. Si la tabla está vacía, MAX devuelve NULL, por lo que ISNULL o COALESCE es importante.
-            var sql = "SELECT ISNULL(MAX(idCorreos), 0) + 1 FROM ftc_envio_correo_detalle;";
-            return await db.ExecuteScalarAsync<int>(sql);
-        }
+
         public async Task<IEnumerable<Negocio>> ObtenerNegociosPorPaisAsync(int idPais)
         {
             using var db = new SqlConnection(connectionString);
