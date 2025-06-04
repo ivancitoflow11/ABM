@@ -19,7 +19,7 @@ namespace ABM.Controllers
         public ConfiguracionController(IRepositorioConfiguracion repo)
             => _repo = repo;
 
-        // GET: /Configuracion/Paises
+
         [HttpGet]
         [Monitoreo("Paises", "SELECT", "verListadoPaises")]
         public async Task<IActionResult> Paises()
@@ -28,7 +28,6 @@ namespace ABM.Controllers
             return View("Paises", lista);
         }
 
-        // POST: /Configuracion/CrearPais
         [HttpPost]
         [Monitoreo("Paises", "INSERT", "crearPais")]
         public async Task<IActionResult> CrearPais(Pais modelo, IFormFile? BanderaFile)
@@ -58,7 +57,6 @@ namespace ABM.Controllers
             return RedirectToAction(nameof(Paises));
         }
 
-        // GET: /Configuracion/EditarPais?id=#
         [HttpGet]
         [Monitoreo("EditarPais", "SELECT", "obtenerPaisPorId")]
         public async Task<IActionResult> EditarPais(int id)
@@ -68,7 +66,6 @@ namespace ABM.Controllers
             return Json(pais);
         }
 
-        // POST: /Configuracion/EditarPais
         [HttpPost]
         [Monitoreo("EditarPais", "UPDATE", "editarPais")]
         public async Task<IActionResult> EditarPais(Pais modelo, IFormFile? BanderaFile)
@@ -79,7 +76,7 @@ namespace ABM.Controllers
             if (await _repo.ExistePaisNombre(modelo.Nombre, modelo.IdPais))
                 ModelState.AddModelError("Nombre", "El nombre ya existe.");
 
-            // 2) Si hay errores: devolvemos JSON con los mensajes para el modal
+            // 2) Si hay errores: devolver JSON con los mensajes para el modal
             if (!ModelState.IsValid)
             {
                 var errors = ModelState
@@ -107,9 +104,8 @@ namespace ABM.Controllers
             await _repo.ActualizarPais(modelo);
             return Ok();
         }
-        //-----------------------------CONTROLLER PARA LOS SISTEMAS ---------------------------------------------
+        //-----------------------------PARA LOS SISTEMAS ---------------------------------------------
 
-        // GET: /Configuracion/Sistemas
         [HttpGet]
         [Monitoreo("Sistemas", "SELECT", "verListadoSistemas")]
         public async Task<IActionResult> Sistemas()
@@ -118,7 +114,6 @@ namespace ABM.Controllers
             return View("Sistemas", lista);
         }
 
-        // POST: /Configuracion/CrearSistema
         [HttpPost]
         [Monitoreo("Sistemas", "INSERT", "crearSistema")]
         public async Task<IActionResult> CrearSistema(Sistema modelo)
@@ -135,7 +130,6 @@ namespace ABM.Controllers
             return RedirectToAction(nameof(Sistemas));
         }
 
-        // GET: /Configuracion/EditarSistema?id=#
         [HttpGet]
         [Monitoreo("EditarSistema", "SELECT", "obtenerSistemaPorId")]
         public async Task<IActionResult> EditarSistema(int id)
@@ -145,7 +139,6 @@ namespace ABM.Controllers
             return Json(sis);
         }
 
-        // POST: /Configuracion/EditarSistema
         [HttpPost]
         [Monitoreo("EditarSistema", "UPDATE", "editarSistema")]
         public async Task<IActionResult> EditarSistema(Sistema modelo)
@@ -170,9 +163,8 @@ namespace ABM.Controllers
             return Ok();
         }
 
-        //-----------------------------CONTROLLER PARA LOS NEGOCIOS ---------------------------------------------
+        //-----------------------------PARA LOS NEGOCIOS ---------------------------------------------
 
-        // GET: /Configuracion/Negocios
         [HttpGet]
         [Monitoreo("Negocios", "SELECT", "verListadoNegocios")]
         public async Task<IActionResult> Negocios()
@@ -181,13 +173,12 @@ namespace ABM.Controllers
             return View("Negocios", lista);
         }
 
-        // POST: /Configuracion/CrearNegocio
         [HttpPost]
         [Monitoreo("Negocios", "INSERT", "crearNegocio")]
-        public async Task<IActionResult> CrearNegocio(Negocio modelo) // El modelo es Negocio
+        public async Task<IActionResult> CrearNegocio(Negocio modelo) 
         {
-            // Solo validamos por nombre para Negocio
-            if (await _repo.ExisteNegocioNombre(modelo.Nombre)) // Usar modelo.Nombre
+            // validar por nombre para el Negocio
+            if (await _repo.ExisteNegocioNombre(modelo.Nombre)) 
                 ModelState.AddModelError(nameof(modelo.Nombre), "El nombre del negocio ya existe.");
 
             if (!ModelState.IsValid)
@@ -201,22 +192,20 @@ namespace ABM.Controllers
             return RedirectToAction(nameof(Negocios));
         }
 
-        // GET: /Configuracion/EditarNegocio?id=#
         [HttpGet]
         [Monitoreo("EditarNegocio", "SELECT", "obtenerNegocioPorId")]
-        public async Task<IActionResult> EditarNegocio(int id) // Recibe id
+        public async Task<IActionResult> EditarNegocio(int id) 
         {
             var negocio = await _repo.ObtenerNegocioPorId(id);
             if (negocio == null) return NotFound();
-            return Json(negocio); // Devuelve el objeto Negocio
+            return Json(negocio); 
         }
 
-        // POST: /Configuracion/EditarNegocio
         [HttpPost]
         [Monitoreo("EditarNegocio", "UPDATE", "editarNegocio")]
-        public async Task<IActionResult> EditarNegocio(Negocio modelo) // Recibe el modelo Negocio
+        public async Task<IActionResult> EditarNegocio(Negocio modelo) 
         {
-            // Validamos por nombre, excluyendo el ID actual
+            // Validar por nombre, excluyendo el ID actual
             if (await _repo.ExisteNegocioNombre(modelo.Nombre, modelo.IdNegocio))
                 ModelState.AddModelError(nameof(modelo.Nombre), "El nombre del negocio ya existe.");
 
@@ -269,15 +258,13 @@ namespace ABM.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Monitoreo("CrucePNS", "INSERT", "ejecutarCreacionCrucePNS")]
-        public async Task<IActionResult> CrearCrucePNS(CrucesPNSPageViewModel pageModel) // Cambiado el parámetro
+        public async Task<IActionResult> CrearCrucePNS(CrucesPNSPageViewModel pageModel) 
         {
-            // Extraer el modelo del cruce desde el pageModel
             var modeloForm = pageModel?.CruceParaCrear;
 
             if (modeloForm == null)
             {
                 TempData["ErrorMessage"] = "No se recibieron datos válidos para procesar el formulario.";
-                // Redirigir o preparar un PageViewModel vacío para la vista es mejor que null
                 var emptyPageViewModel = new CrucesPNSPageViewModel
                 {
                     CrucesList = await _repo.ObtenerCrucesPNS() ?? new List<CrucePNSViewModel>(),
@@ -298,11 +285,9 @@ namespace ABM.Controllers
             }
 
             // ModelState.IsValid ahora se evalúa sobre el 'pageModel' completo.
-            // Si las DataAnnotations están en CrucePNSViewModel, los errores estarán anidados bajo "CruceParaCrear.Propiedad".
             if (!ModelState.IsValid)
             {
                 // El modeloForm ya tiene los valores enviados por el usuario.
-                // Solo necesitamos repoblar las listas de selección y la lista de cruces.
                 var listaCruces = await _repo.ObtenerCrucesPNS() ?? new List<CrucePNSViewModel>();
                 var paises = await _repo.ObtenerPaises() ?? new List<Pais>();
                 var negocios = await _repo.ObtenerNegocios() ?? new List<Negocio>();
@@ -312,17 +297,17 @@ namespace ABM.Controllers
                 modeloForm.Negocios = new SelectList(negocios, nameof(Negocio.IdNegocio), nameof(Negocio.Nombre), modeloForm.IdNegocio);
                 modeloForm.Sistemas = new SelectList(sistemas, "idSistema", "sistema", modeloForm.IdSistema);
 
-                // Reconstruimos el pageModel para la vista, manteniendo el modeloForm con los errores.
+                // se reconstruye el pageModel para la vista, manteniendo el modeloForm con los errores.
                 var viewModelParaVista = new CrucesPNSPageViewModel
                 {
                     CrucesList = listaCruces,
-                    CruceParaCrear = modeloForm // modeloForm ya es parte de pageModel, pero lo asignamos explícitamente para claridad
+                    CruceParaCrear = modeloForm 
                 };
                 TempData["ErrorMessage"] = "No se pudo crear el Cruce PNS. Por favor, corrija los errores e intente nuevamente.";
                 return View("CrucesPNS", viewModelParaVista);
             }
 
-            // Si ModelState.IsValid es true, procedemos con la creación.
+            // Si ModelState.IsValid es true, se hace la creación.
             var pns = new PaisNegocioSistema
             {
                 IdPais = modeloForm.IdPais,
