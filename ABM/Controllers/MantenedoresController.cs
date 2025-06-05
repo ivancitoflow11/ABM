@@ -21,13 +21,18 @@ namespace ABM.Controllers
         private readonly IRepositorioUsuarios _repositorioUsuarios;
         private readonly IRepositorioRoles _repositorioRoles;
         private readonly IRepositorioListaBlanca _repositorioListaBlanca;
+        private readonly IRepositorioConfiguracion _repositorioConfiguracion;
+        private readonly IRepositorioGlosaNegocios _repositorioGlosaNegocios;
         private readonly IConfiguration _configuration;
 
-        public MantenedoresController(IRepositorioUsuarios repositorioUsuarios, IRepositorioRoles repositorioRoles, IRepositorioListaBlanca repositorioListaBlanca, IConfiguration configuration)
+        private IEnumerable<PaisNegocioSistemaModel> _cachedPnsList;
+        public MantenedoresController(IRepositorioUsuarios repositorioUsuarios, IRepositorioRoles repositorioRoles, IRepositorioListaBlanca repositorioListaBlanca, IRepositorioConfiguracion repositorioConfiguracion, IRepositorioGlosaNegocios repositorioGlosaNegocios, IConfiguration configuration)
         {
             _repositorioUsuarios = repositorioUsuarios;
             _repositorioRoles = repositorioRoles;
             _repositorioListaBlanca = repositorioListaBlanca;
+            _repositorioConfiguracion = repositorioConfiguracion;
+            _repositorioGlosaNegocios = repositorioGlosaNegocios;
             _configuration = configuration;
         }
 
@@ -630,6 +635,311 @@ namespace ABM.Controllers
             }
             return RedirectToAction("ListarEntradasListaBlanca");
         }
-    }
 
+
+        // PARA GLOSA NEGOCIOS
+
+        private async Task<IEnumerable<PaisNegocioSistemaModel>> GetPnsListAsync()
+        {
+            if (_cachedPnsList == null)
+            {
+                _cachedPnsList = await _repositorioRoles.ObtenerPaisNegocioSistemasActivos();
+            }
+            return _cachedPnsList;
+        }
+
+        private async Task PopulateDropdownsForCreateAsync(GlosaNegociosViewModel model)
+        {
+            var pnsList = await GetPnsListAsync();
+            model.PaisesDisponibles = pnsList
+                .Where(pns => !string.IsNullOrEmpty(pns.Pais) && pns.IdPais != 0)
+                .GroupBy(pns => pns.IdPais)
+                .Select(g => g.First())
+                .OrderBy(pns => pns.Pais)
+                .Select(pns => new SelectListItem
+                {
+                    Text = pns.Pais,
+                    Value = pns.IdPais.ToString(),
+                    Selected = model.PaisIdSeleccionado == pns.IdPais.ToString()
+                })
+                .ToList();
+
+            if (!string.IsNullOrEmpty(model.PaisIdSeleccionado) && int.TryParse(model.PaisIdSeleccionado, out int selectedPaisId) && selectedPaisId != 0)
+            {
+                var negocios = await _repositorioConfiguracion.ObtenerNegociosPorPaisAsync(selectedPaisId);
+                model.NegociosDisponibles = negocios
+                    .OrderBy(n => n.Nombre)
+                    .Select(n => new SelectListItem
+                    {
+                        Text = n.Nombre,
+                        Value = n.Nombre, // Guardamos el NOMBRE del negocio
+                        Selected = model.NegocioNombreSeleccionado == n.Nombre
+                    })
+                    .ToList();
+            }
+            else
+            {
+                model.NegociosDisponibles = new List<SelectListItem> { new SelectListItem { Text = "Seleccione un país primero", Value = "" } };
+            }
+        }
+
+        private async Task PopulateDropdownsForEditAsync(GlosaNegocioEditViewModel model)
+        {
+            var pnsList = await GetPnsListAsync();
+            model.PaisesDisponibles = pnsList
+                .Where(pns => !string.IsNullOrEmpty(pns.Pais) && pns.IdPais != 0)
+                .GroupBy(pns => pns.IdPais)
+                .Select(g => g.First())
+                .OrderBy(pns => pns.Pais)
+                .Select(pns => new SelectListItem
+                {
+                    Text = pns.Pais,
+                    Value = pns.IdPais.ToString(),
+                    Selected = model.PaisIdSeleccionado == pns.IdPais.ToString()
+                })
+                .ToList();
+
+            if (!string.IsNullOrEmpty(model.PaisIdSeleccionado) && int.TryParse(model.PaisIdSeleccionado, out int selectedPaisId) && selectedPaisId != 0)
+            {
+                var negocios = await _repositorioConfiguracion.ObtenerNegociosPorPaisAsync(selectedPaisId);
+                model.NegociosDisponibles = negocios
+                    .OrderBy(n => n.Nombre)
+                    .Select(n => new SelectListItem
+                    {
+                        Text = n.Nombre,
+                        Value = n.Nombre, // Guardamos el NOMBRE del negocio
+                        Selected = model.NegocioNombreSeleccionado == n.Nombre
+                    })
+                    .ToList();
+                if (!model.NegociosDisponibles.Any() && selectedPaisId != 0) // Si no hay negocios y se seleccionó un país
+                {
+                    model.NegociosDisponibles.Insert(0, new SelectListItem { Text = "No hay negocios para este país", Value = "" });
+                }
+            }
+            else
+            {
+                model.NegociosDisponibles = new List<SelectListItem> { new SelectListItem { Text = "Seleccione un país", Value = "" } };
+            }
+        }
+
+
+        [HttpGet]
+        [Monitoreo("GlosaNegocios", "SELECT", "verFormularioYListadoGlosas")]
+        public async Task<IActionResult> GlosaNegocios()
+        {
+            var viewModel = new GlosaNegociosViewModel();
+            await PopulateDropdownsForCreateAsync(viewModel);
+            viewModel.ListadoGlosas = await _repositorioGlosaNegocios.ObtenerTodosAsync();
+            return View(viewModel);
+        }
+
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [Monitoreo("GlosaNegocios", "INSERT", "crearGlosaNegocio")]
+        public async Task<IActionResult> GlosaNegocios(GlosaNegociosViewModel viewModel)
+        {
+            if (string.IsNullOrWhiteSpace(viewModel.GlosaParaCrear))
+            {
+                ModelState.AddModelError(nameof(viewModel.GlosaParaCrear), "La glosa es obligatoria.");
+            } // ... (otras validaciones para GlosaParaCrear)
+
+            if (ModelState.IsValid)
+            {
+                var glosaExistente = await _repositorioGlosaNegocios.ObtenerPorGlosaAsync(viewModel.GlosaParaCrear);
+                if (glosaExistente != null)
+                {
+                    ModelState.AddModelError(nameof(viewModel.GlosaParaCrear), "La glosa '" + viewModel.GlosaParaCrear + "' ya existe.");
+                }
+                else
+                {
+                    string nombrePais = null;
+                    if (!string.IsNullOrEmpty(viewModel.PaisIdSeleccionado) && int.TryParse(viewModel.PaisIdSeleccionado, out int idPais) && idPais != 0)
+                    {
+                        var pnsList = await GetPnsListAsync();
+                        nombrePais = pnsList.FirstOrDefault(p => p.IdPais == idPais)?.Pais;
+                    }
+
+                    var nuevaGlosa = new GlosaNegocioModel
+                    {
+                        GLOSA = viewModel.GlosaParaCrear,
+                        NEGOCIO = string.IsNullOrWhiteSpace(viewModel.NegocioNombreSeleccionado) ? null : viewModel.NegocioNombreSeleccionado,
+                        PAIS = nombrePais
+                    };
+                    await _repositorioGlosaNegocios.CrearAsync(nuevaGlosa);
+                    TempData["MensajeExito"] = "Glosa creada exitosamente.";
+                    return RedirectToAction(nameof(GlosaNegocios));
+                }
+            }
+
+            // Si hay errores, repopular dropdowns y lista
+            await PopulateDropdownsForCreateAsync(viewModel);
+            viewModel.ListadoGlosas = await _repositorioGlosaNegocios.ObtenerTodosAsync();
+            return View(viewModel);
+        }
+
+        [HttpGet]
+        [Monitoreo("CargarFormularioEditarGlosaModal", "SELECT", "cargarFormEditarGlosaModal")]
+        public async Task<IActionResult> CargarFormularioEditarGlosaModal(string glosa)
+        {
+            if (string.IsNullOrEmpty(glosa))
+            {
+                return BadRequest("La glosa no puede ser nula o vacía.");
+            }
+
+            var glosaModel = await _repositorioGlosaNegocios.ObtenerPorGlosaAsync(glosa);
+            if (glosaModel == null)
+            {
+                return NotFound($"No se encontró la glosa: {glosa}");
+            }
+
+            var viewModel = new GlosaNegocioEditViewModel
+            {
+                GlosaOriginal = glosaModel.GLOSA,
+                Glosa = glosaModel.GLOSA,
+                NegocioNombreSeleccionado = glosaModel.NEGOCIO,
+            };
+
+            var pnsList = await GetPnsListAsync();
+            var paisEncontrado = pnsList.FirstOrDefault(p => p.Pais == glosaModel.PAIS && p.IdPais != 0);
+            if (paisEncontrado != null)
+            {
+                viewModel.PaisIdSeleccionado = paisEncontrado.IdPais.ToString();
+            }
+
+            await PopulateDropdownsForEditAsync(viewModel);
+
+            return PartialView("_EditarGlosaNegociosModalPartial", viewModel);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [Monitoreo("EditarGlosaNegociosModal", "UPDATE", "editarGlosaNegocioModal")]
+        public async Task<IActionResult> EditarGlosaNegociosModal(GlosaNegocioEditViewModel viewModel)
+        {
+            if (string.IsNullOrWhiteSpace(viewModel.GlosaOriginal))
+            {
+                return Json(new { success = false, errors = new { GlosaOriginal = new[] { "La glosa original es requerida para la actualización." } } });
+            }
+            if (string.IsNullOrWhiteSpace(viewModel.Glosa))
+            {
+                ModelState.AddModelError(nameof(viewModel.Glosa), "La glosa es obligatoria.");
+            }
+
+            var glosaExistenteConNuevaDefinicion = await _repositorioGlosaNegocios.ObtenerPorGlosaAsync(viewModel.Glosa);
+            if (glosaExistenteConNuevaDefinicion != null && !viewModel.Glosa.Equals(viewModel.GlosaOriginal, StringComparison.OrdinalIgnoreCase))
+            {
+                ModelState.AddModelError(nameof(viewModel.Glosa), $"La glosa '{viewModel.Glosa}' ya existe.");
+            }
+
+            if (!ModelState.IsValid)
+            {
+                await PopulateDropdownsForEditAsync(viewModel);
+                var errorList = ModelState.ToDictionary(
+                    kvp => kvp.Key,
+                    kvp => kvp.Value.Errors.Select(e => e.ErrorMessage).ToArray()
+                );
+                return Json(new { success = false, errors = errorList });
+            }
+
+            try
+            {
+                string nombrePais = null;
+                if (!string.IsNullOrEmpty(viewModel.PaisIdSeleccionado) && int.TryParse(viewModel.PaisIdSeleccionado, out int idPais) && idPais != 0)
+                {
+                    var pnsList = await GetPnsListAsync();
+                    nombrePais = pnsList.FirstOrDefault(p => p.IdPais == idPais)?.Pais;
+                }
+
+                var glosaActualizar = new GlosaNegocioModel
+                {
+                    GLOSA = viewModel.Glosa,
+                    NEGOCIO = string.IsNullOrWhiteSpace(viewModel.NegocioNombreSeleccionado) ? null : viewModel.NegocioNombreSeleccionado,
+                    PAIS = nombrePais
+                };
+
+                bool actualizado = await _repositorioGlosaNegocios.ActualizarAsync(viewModel.GlosaOriginal, glosaActualizar);
+
+                if (actualizado)
+                {
+                    return Json(new { success = true, message = "Glosa actualizada exitosamente." });
+                }
+                else
+                {
+                    return Json(new { success = false, errors = new { _General_ = new[] { "No se pudo actualizar la glosa." } } });
+                }
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, errors = new { _General_ = new[] { $"Error al actualizar la glosa: {ex.Message}" } } });
+            }
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [Monitoreo("EliminarGlosaNegocios", "DELETE", "eliminarGlosaNegocio")]
+        public async Task<IActionResult> EliminarGlosaNegocios(string glosa)
+        {
+            if (string.IsNullOrEmpty(glosa))
+            {
+                TempData["MensajeError"] = "No se proporcionó la glosa a eliminar.";
+                return RedirectToAction(nameof(GlosaNegocios));
+            }
+
+            try
+            {
+                var glosaExistente = await _repositorioGlosaNegocios.ObtenerPorGlosaAsync(glosa);
+                if (glosaExistente == null)
+                {
+                    TempData["MensajeError"] = "La glosa que intenta eliminar no existe.";
+                    return RedirectToAction(nameof(GlosaNegocios));
+                }
+
+                bool eliminado = await _repositorioGlosaNegocios.EliminarAsync(glosa);
+                if (eliminado)
+                {
+                    TempData["MensajeExito"] = $"Glosa \"{glosa}\" eliminada exitosamente.";
+                }
+                else
+                {
+                    TempData["MensajeError"] = $"Error al eliminar la glosa \"{glosa}\".";
+                }
+            }
+            catch (Exception ex)
+            {
+                TempData["MensajeError"] = $"Error al procesar la solicitud de eliminación: {ex.Message}";
+            }
+            return RedirectToAction(nameof(GlosaNegocios));
+        }
+
+        [HttpGet]
+        public async Task<JsonResult> ObtenerNegociosFiltradosPorPais(int idPais)
+        {
+            if (idPais == 0)
+            {
+                return Json(new List<SelectListItem> { new SelectListItem { Text = "Seleccione un país primero", Value = "" } });
+            }
+
+            var negocios = await _repositorioConfiguracion.ObtenerNegociosPorPaisAsync(idPais);
+            var selectList = negocios
+                .OrderBy(n => n.Nombre)
+                .Select(n => new SelectListItem
+                {
+                    Text = n.Nombre,
+                    Value = n.Nombre // El valor es el nombre del negocio
+                }).ToList();
+
+            if (!selectList.Any())
+            {
+                selectList.Insert(0, new SelectListItem { Text = "No hay negocios para este país", Value = "" });
+            }
+            else
+            {
+                selectList.Insert(0, new SelectListItem { Text = "Seleccione Negocio (Opcional)", Value = "" });
+            }
+
+
+            return Json(selectList);
+        }
+    }
 }
