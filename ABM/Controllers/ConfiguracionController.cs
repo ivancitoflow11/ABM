@@ -702,29 +702,18 @@ namespace ABM.Controllers
                 return View("GestionCorreos", pageModel ?? new GestionCorreosPageViewModel());
             }
 
+            // Validaciones iniciales de los dropdowns
             if (modeloForm.IdPais == 0) ModelState.AddModelError("CorreoParaCrear.IdPais", "Debe seleccionar un País.");
             if (modeloForm.IdNegocio == 0) ModelState.AddModelError("CorreoParaCrear.IdNegocio", "Debe seleccionar un Negocio.");
             if (modeloForm.IdSistema == 0) ModelState.AddModelError("CorreoParaCrear.IdSistema", "Debe seleccionar un Sistema.");
 
             int? idPNS = null;
-            string nombrePais = "N/A", nombreNegocio = "N/A", nombreSistema = "N/A";
-
             if (modeloForm.IdPais > 0 && modeloForm.IdNegocio > 0 && modeloForm.IdSistema > 0)
             {
                 idPNS = await _repo.ObtenerIdPaisNegocioSistemaActivoAsync(modeloForm.IdPais, modeloForm.IdNegocio, modeloForm.IdSistema);
                 if (idPNS == null)
                 {
                     ModelState.AddModelError("CorreoParaCrear.IdSistema", "La combinación de País, Negocio y Sistema seleccionada no existe o no está activa.");
-                }
-                else
-                {
-                    var paisObj = (await _repo.ObtenerPaises()).FirstOrDefault(p => p.IdPais == modeloForm.IdPais);
-                    var negocioObj = (await _repo.ObtenerNegociosPorPaisAsync(modeloForm.IdPais)).FirstOrDefault(n => n.IdNegocio == modeloForm.IdNegocio);
-                    var sistemaObj = (await _repo.ObtenerSistemasPorPaisYNegocioAsync(modeloForm.IdPais, modeloForm.IdNegocio)).FirstOrDefault(s => s.idSistema == modeloForm.IdSistema);
-
-                    nombrePais = paisObj?.Nombre ?? $"ID{modeloForm.IdPais}";
-                    nombreNegocio = negocioObj?.Nombre ?? $"ID{modeloForm.IdNegocio}";
-                    nombreSistema = sistemaObj?.sistema ?? $"ID{modeloForm.IdSistema}";
                 }
             }
 
@@ -735,39 +724,60 @@ namespace ABM.Controllers
                 return View("GestionCorreos", pageModel);
             }
 
-
-            int nuevoIdCorreoLista = 0;
-            bool detalleCreado = false;
-
-
-            string nombreListaConcatenado = $"{nombrePais} - {nombreNegocio} - {nombreSistema}";
-            if (nombreListaConcatenado.Length > 100) nombreListaConcatenado = nombreListaConcatenado.Substring(0, 100);
-
-            var nuevoEnvioCorreoLista = new EnvioCorreoLista
-            {
-
-                NombreLista = nombreListaConcatenado,
-                Envio_Diario = modeloForm.CheckEnvioDiario ? "si" : "no",
-                Envio_Semanal = modeloForm.CheckEnvioSemanal ? "si" : "no",
-                Envio_Gerente = modeloForm.CheckEnvioGerente ? "si" : "no",
-                Envio_Mensual = modeloForm.CheckEnvioMensual ? "si" : "no",
-                Envio_Quincenal = modeloForm.CheckEnvioQuincenal ? "si" : "no",
-                Envio_Jefe = modeloForm.CheckEnvioJefe ? "si" : "no",
-                Tipo_Carga = "AUTOMATICA",
-                Fecha_Ultima_Carga = DateTime.Now
-            };
+            // --- INICIO DE LA NUEVA LÓGICA ---
 
             try
             {
+                int idCorreoListaParaDetalle;
 
-                nuevoIdCorreoLista = await _repo.CrearEnvioCorreoListaAsync(nuevoEnvioCorreoLista);
+                // 1. Verificar si ya existe una lista para esta combinación PNS
+                int? idExistente = await _repo.ObtenerIdCorreoListaPorPNSAsync(idPNS.Value);
 
-                if (nuevoIdCorreoLista > 0)
+                var envioLista = new EnvioCorreoLista
                 {
+                    // Los campos de frecuencia siempre vienen del formulario
+                    Envio_Diario = modeloForm.CheckEnvioDiario ? "si" : "no",
+                    Envio_Semanal = modeloForm.CheckEnvioSemanal ? "si" : "no",
+                    Envio_Gerente = modeloForm.CheckEnvioGerente ? "si" : "no",
+                    Envio_Mensual = modeloForm.CheckEnvioMensual ? "si" : "no",
+                    Envio_Quincenal = modeloForm.CheckEnvioQuincenal ? "si" : "no",
+                    Envio_Jefe = modeloForm.CheckEnvioJefe ? "si" : "no",
+                    Fecha_Ultima_Carga = DateTime.Now
+                };
 
+                if (idExistente.HasValue)
+                {
+                    // 2.A. SI EXISTE: Usamos el ID existente y actualizamos la lista
+                    idCorreoListaParaDetalle = idExistente.Value;
+                    envioLista.IdCorreos = idCorreoListaParaDetalle;
+
+                    await _repo.ActualizarEnvioCorreoListaAsync(envioLista);
+
+                    // Mensaje para el usuario
+                    TempData["MensajeExito"] = $"La selección ya existe de P-N-S. Se ha añadido el nuevo detalle y actualizado la lista de envío.";
+                }
+                else
+                {
+                    // 2.B. SI NO EXISTE: Creamos una nueva lista
+                    var paisObj = (await _repo.ObtenerPaises()).FirstOrDefault(p => p.IdPais == modeloForm.IdPais);
+                    var negocioObj = (await _repo.ObtenerNegociosPorPaisAsync(modeloForm.IdPais)).FirstOrDefault(n => n.IdNegocio == modeloForm.IdNegocio);
+                    var sistemaObj = (await _repo.ObtenerSistemasPorPaisYNegocioAsync(modeloForm.IdPais, modeloForm.IdNegocio)).FirstOrDefault(s => s.idSistema == modeloForm.IdSistema);
+
+                    string nombreListaConcatenado = $"{paisObj?.Nombre ?? ""} - {negocioObj?.Nombre ?? ""} - {sistemaObj?.sistema ?? ""}".Trim();
+                    if (nombreListaConcatenado.Length > 100) nombreListaConcatenado = nombreListaConcatenado.Substring(0, 100);
+
+                    envioLista.NombreLista = nombreListaConcatenado;
+                    envioLista.Tipo_Carga = "AUTOMATICA";
+
+                    idCorreoListaParaDetalle = await _repo.CrearEnvioCorreoListaAsync(envioLista);
+                }
+
+                // 3. Crear siempre el registro de DETALLE con el ID de lista correspondiente (nuevo o existente)
+                if (idCorreoListaParaDetalle > 0)
+                {
                     var nuevoEnvioCorreoDetalle = new EnvioCorreoDetalle
                     {
-                        IdCorreos = nuevoIdCorreoLista, 
+                        IdCorreos = idCorreoListaParaDetalle, // Usamos el ID correcto
                         IdPaisNegocioSistema = idPNS.Value,
                         OSI = modeloForm.OSI,
                         Correo_OSI = modeloForm.Correo_OSI,
@@ -780,38 +790,34 @@ namespace ABM.Controllers
                         Otros_Correos = modeloForm.Otros_Correos
                     };
 
-
-                    detalleCreado = await _repo.CrearEnvioCorreoDetalleAsync(nuevoEnvioCorreoDetalle);
+                    bool detalleCreado = await _repo.CrearEnvioCorreoDetalleAsync(nuevoEnvioCorreoDetalle);
 
                     if (detalleCreado)
                     {
-                        TempData["MensajeExito"] = $"Envío de correo creada exitosamente.";
+                        if (!idExistente.HasValue) // Si no existia, es un exito de creacion total.
+                        {
+                            TempData["MensajeExito"] = "Nueva gestión de correo creada exitosamente.";
+                        }
                         return RedirectToAction(nameof(GestionCorreos));
                     }
                     else
                     {
-
-                        TempData["ErrorMessage"] = $"Se creó la entrada en la lista de envío (ID: {nuevoIdCorreoLista}) pero falló el registro del detalle del correo. Por favor, revise o contacte a soporte.";
-
+                        TempData["ErrorMessage"] = "Se procesó la lista de envío pero falló el registro del detalle del correo. Contacte a soporte.";
                     }
                 }
                 else
                 {
-                    TempData["ErrorMessage"] = "No se pudo registrar la configuración en la lista de envío.";
+                    TempData["ErrorMessage"] = "No se pudo crear o encontrar un ID de lista de envío válido.";
                 }
-            }
-            catch (SqlException sqlEx)
-            {
-
-                TempData["ErrorMessage"] = $"Error de base de datos al guardar: {sqlEx.Message}. Número: {sqlEx.Number}";
             }
             catch (Exception ex)
             {
-
                 TempData["ErrorMessage"] = $"Error crítico al guardar: {ex.Message}";
             }
 
+            // --- FIN DE LA NUEVA LÓGICA ---
 
+            // Si algo falló después de la validación inicial, volvemos a la vista con los datos
             await RepopulateGestionCorreosViewModelForCreateError(pageModel);
             return View("GestionCorreos", pageModel);
         }

@@ -45,8 +45,10 @@ namespace ABM.Servicios
         Task<PaisNegocioSistema?> ObtenerPaisNegocioSistemaPorId(int idPaisNegocioSistema);
         Task<bool> DeshabilitarCrucePNS(int idPaisNegocioSistema);
 
-		// ENVIO CORREOOOOOOOOOOOOOS
-		Task<int?> ObtenerIdPaisNegocioSistemaActivoAsync(int idPais, int idNegocio, int idSistema);
+        // ENVIO CORREOOOOOOOOOOOOOS
+        Task<int?> ObtenerIdCorreoListaPorPNSAsync(int idPaisNegocioSistema);
+        Task<bool> ActualizarEnvioCorreoListaAsync(EnvioCorreoLista envioLista);
+        Task<int?> ObtenerIdPaisNegocioSistemaActivoAsync(int idPais, int idNegocio, int idSistema);
         Task<bool> CrearEnvioCorreoDetalleAsync(EnvioCorreoDetalle correoDetalle); // Nueva firma (devuelve bool)
         Task<IEnumerable<EnvioCorreoDetalleViewModel>> ObtenerEnvioCorreoDetallesVMAsync();
         Task<IEnumerable<Negocio>> ObtenerNegociosPorPaisAsync(int idPais);
@@ -67,7 +69,35 @@ namespace ABM.Servicios
         }
 
         // ENVIO CORREOS
+        public async Task<int?> ObtenerIdCorreoListaPorPNSAsync(int idPaisNegocioSistema)
+        {
+            using var db = new SqlConnection(connectionString);
+            // Buscamos en la tabla de detalle si ya existe un registro para este cruce PNS.
+            // Como todos los detalles para una misma lista comparten el mismo IdCorreos,
+            // con obtener el primero es suficiente.
+            var sql = @"
+            SELECT TOP 1 idCorreos
+            FROM ftc_envio_correo_detalle
+            WHERE idpaisnegociosistema = @idPaisNegocioSistema;";
+            return await db.QuerySingleOrDefaultAsync<int?>(sql, new { idPaisNegocioSistema });
+        }
 
+        public async Task<bool> ActualizarEnvioCorreoListaAsync(EnvioCorreoLista envioLista)
+        {
+            using var db = new SqlConnection(connectionString);
+            var sql = @"
+            UPDATE ftc_Envio_Correo_lista
+            SET Envio_Diario = @Envio_Diario,
+                Envio_Semanal = @Envio_Semanal,
+                Envio_Gerente = @Envio_Gerente,
+                Envio_Mensual = @Envio_Mensual,
+                Envio_Quincenal = @Envio_Quincenal,
+                Envio_Jefe = @Envio_Jefe,
+                Fecha_Ultima_Carga = @Fecha_Ultima_Carga
+            WHERE idCorreos = @IdCorreos;";
+            var affectedRows = await db.ExecuteAsync(sql, envioLista);
+            return affectedRows > 0;
+        }
         public async Task<int> CrearEnvioCorreoListaAsync(EnvioCorreoLista envioLista)
         {
             using var db = new SqlConnection(connectionString);
