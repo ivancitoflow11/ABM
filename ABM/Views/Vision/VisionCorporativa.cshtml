@@ -85,7 +85,14 @@
             <div class="col-md-6">
                 <div class="card">
                     <div class="card-body">
-                        <h4 class="card-title text-center mb-3">Seleccione un País</h4>
+                        <div class="selected-country" id="selectedCountryJvm">
+                            País seleccionado:
+                            @{
+                                var selPaisJvm = Model.ListaPaises.FirstOrDefault(x => x.IdPais == Model.SelectedPais);
+                                @((selPaisJvm?.NombrePais) ?? "Ninguno")
+                                ;
+                            }
+                        </div>
                         
                         <!-- Indicador de colores -->
                         <div class="color-legend">
@@ -108,14 +115,6 @@
                             <i id="locationMarker" class="fas fa-location-dot location-marker" style="display: none;"></i>
                         </div>
                         
-                        <div class="selected-country" id="selectedCountryJvm">
-                            País seleccionado:
-                            @{
-                                var selPaisJvm = Model.ListaPaises.FirstOrDefault(x => x.IdPais == Model.SelectedPais);
-                                @((selPaisJvm?.NombrePais) ?? "Ninguno")
-                                ;
-                            }
-                        </div>
                         
                         <form asp-action="VisionCorporativa" method="get" id="countryFormJvm" style="display: none;">
                             <input type="hidden" id="idPaisJvm" name="idPais" value="@Model.SelectedPais" />
@@ -433,10 +432,11 @@
                             { cursor: 'default' },
                         selected: { 
                             fillOpacity: 1, 
-                            'stroke-width': 2, 
+                            'stroke-width': 1.5, 
                             stroke: "#333" 
                         },
-                        selectedHover: {}
+                        selectedHover: {
+                        }
                     },
                     series: {
                         regions: [{
