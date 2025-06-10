@@ -141,7 +141,7 @@ namespace ABM.Servicios
         FROM ftc_envio_correo_detalle ecd
         JOIN ftc_pais_negocio_sistema pns ON ecd.idpaisnegociosistema = pns.idPaisNegocioSistema
         WHERE ecd.idCorreos = @idCorreos;";
-            return await db.QuerySingleOrDefaultAsync<EnvioCorreoDetalleViewModel>(sql, new { idCorreos });
+            return await db.QueryFirstOrDefaultAsync<EnvioCorreoDetalleViewModel>(sql, new { idCorreos });
         }
 
         public async Task<bool> ActualizarEnvioCorreoDetalleAsync(EnvioCorreoDetalle correoDetalle)
