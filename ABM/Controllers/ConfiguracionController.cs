@@ -580,7 +580,7 @@ namespace ABM.Controllers
 
         public async Task<IActionResult> EditarEnvioCorreo(int id, EnvioCorreoDetalleViewModel modeloForm) 
         {
-            if (modeloForm == null || id != modeloForm.IdCorreos)
+            if (modeloForm == null || id != modeloForm.idDetalle)
             {
                 return BadRequest(new { Message = "Datos inválidos o discrepancia de ID." });
             }
@@ -602,6 +602,7 @@ namespace ABM.Controllers
 
             var entidadParaActualizar = new EnvioCorreoDetalle
             {
+                idDetalle = modeloForm.idDetalle,
                 IdCorreos = modeloForm.IdCorreos,
                 IdPaisNegocioSistema = idPNSActualizado.Value, 
                 OSI = modeloForm.OSI,

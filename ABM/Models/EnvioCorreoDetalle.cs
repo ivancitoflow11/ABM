@@ -4,7 +4,9 @@ namespace ABM.Models
 {
 	public class EnvioCorreoDetalle
 	{
-		public int IdCorreos { get; set; } // Primary Key, Identity
+        [Key] 
+        public int idDetalle { get; set; }
+        public int IdCorreos { get; set; } 
 		public int IdPaisNegocioSistema { get; set; } // Foreign Key
 
 		[StringLength(100)]
@@ -35,7 +37,7 @@ namespace ABM.Models
 		[EmailAddress(ErrorMessage = "El formato del correo del Jefe no es válido.")]
 		public string? Correo_Jefe { get; set; }
 
-		[StringLength(100)] // O podría ser más largo si "Otros_Correos" puede contener múltiples correos.
-		public string? Otros_Correos { get; set; } // Considera si necesitas validación de email aquí si es un solo correo.
+		[StringLength(100)] 
+		public string? Otros_Correos { get; set; } 
 	}
 }

@@ -53,9 +53,9 @@ namespace ABM.Servicios
         Task<IEnumerable<EnvioCorreoDetalleViewModel>> ObtenerEnvioCorreoDetallesVMAsync();
         Task<IEnumerable<Negocio>> ObtenerNegociosPorPaisAsync(int idPais);
         Task<IEnumerable<Sistema>> ObtenerSistemasPorPaisYNegocioAsync(int idPais, int idNegocio);
-        Task<EnvioCorreoDetalleViewModel?> ObtenerEnvioCorreoDetalleVMPorIdAsync(int idCorreos);
+        Task<EnvioCorreoDetalleViewModel?> ObtenerEnvioCorreoDetalleVMPorIdAsync(int idDetalle);
         Task<bool> ActualizarEnvioCorreoDetalleAsync(EnvioCorreoDetalle correoDetalle);
-        Task<bool> EliminarEnvioCorreoDetalleAsync(int idCorreos);
+        Task<bool> EliminarEnvioCorreoDetalleAsync(int idDetalle);
         Task<int> CrearEnvioCorreoListaAsync(EnvioCorreoLista envioLista);
     }
 
@@ -115,51 +115,46 @@ namespace ABM.Servicios
             return newId;
         }
 
-        public async Task<bool> EliminarEnvioCorreoDetalleAsync(int idCorreos) // <<< NUEVO MÉTODO IMPLEMENTADO
+        public async Task<bool> EliminarEnvioCorreoDetalleAsync(int idDetalle) 
         {
             using var db = new SqlConnection(connectionString);
-            var sql = "DELETE FROM ftc_envio_correo_detalle WHERE idCorreos = @idCorreos;";
-            var affectedRows = await db.ExecuteAsync(sql, new { idCorreos });
+            var sql = "DELETE FROM ftc_envio_correo_detalle WHERE idDetalle = @idDetalle;"; 
+            var affectedRows = await db.ExecuteAsync(sql, new { idDetalle });
             return affectedRows > 0;
         }
-        public async Task<EnvioCorreoDetalleViewModel?> ObtenerEnvioCorreoDetalleVMPorIdAsync(int idCorreos)
+
+        public async Task<EnvioCorreoDetalleViewModel?> ObtenerEnvioCorreoDetalleVMPorIdAsync(int idDetalle) 
         {
             using var db = new SqlConnection(connectionString);
-            // Esta consulta obtiene los IDs de País, Negocio y Sistema además de los datos del correo
             var sql = @"
-        SELECT
-            ecd.idCorreos,
-            ecd.idpaisnegociosistema,
-            pns.idPais,      -- Necesario para el dropdown de País
-            pns.idNegocio,   -- Necesario para el dropdown de Negocio
-            pns.idSistema,   -- Necesario para el dropdown de Sistema
-            ecd.OSI, ecd.Correo_OSI,
-            ecd.Responsable, ecd.Correo_Responsable,
-            ecd.Gerente, ecd.Correo_Gerente,
-            ecd.Jefe, ecd.Correo_Jefe,
-            ecd.Otros_Correos
-        FROM ftc_envio_correo_detalle ecd
-        JOIN ftc_pais_negocio_sistema pns ON ecd.idpaisnegociosistema = pns.idPaisNegocioSistema
-        WHERE ecd.idCorreos = @idCorreos;";
-            return await db.QueryFirstOrDefaultAsync<EnvioCorreoDetalleViewModel>(sql, new { idCorreos });
+            SELECT
+                ecd.idDetalle,          
+                ecd.idCorreos,
+                ecd.idpaisnegociosistema,
+                pns.idPais, pns.idNegocio, pns.idSistema,
+                ecd.OSI, ecd.Correo_OSI,
+                ecd.Responsable, ecd.Correo_Responsable,
+                ecd.Gerente, ecd.Correo_Gerente,
+                ecd.Jefe, ecd.Correo_Jefe,
+                ecd.Otros_Correos
+            FROM ftc_envio_correo_detalle ecd
+            JOIN ftc_pais_negocio_sistema pns ON ecd.idpaisnegociosistema = pns.idPaisNegocioSistema
+            WHERE ecd.idDetalle = @idDetalle;"; 
+            return await db.QuerySingleOrDefaultAsync<EnvioCorreoDetalleViewModel>(sql, new { idDetalle });
         }
 
         public async Task<bool> ActualizarEnvioCorreoDetalleAsync(EnvioCorreoDetalle correoDetalle)
         {
             using var db = new SqlConnection(connectionString);
             var sql = @"
-        UPDATE ftc_envio_correo_detalle
-        SET idpaisnegociosistema = @IdPaisNegocioSistema,
-            OSI = @OSI,
-            Correo_OSI = @Correo_OSI,
-            Responsable = @Responsable,
-            Correo_Responsable = @Correo_Responsable,
-            Gerente = @Gerente,
-            Correo_Gerente = @Correo_Gerente,
-            Jefe = @Jefe,
-            Correo_Jefe = @Correo_Jefe,
-            Otros_Correos = @Otros_Correos
-        WHERE idCorreos = @IdCorreos;";
+            UPDATE ftc_envio_correo_detalle
+            SET idpaisnegociosistema = @IdPaisNegocioSistema,
+                OSI = @OSI, Correo_OSI = @Correo_OSI,
+                Responsable = @Responsable, Correo_Responsable = @Correo_Responsable,
+                Gerente = @Gerente, Correo_Gerente = @Correo_Gerente,
+                Jefe = @Jefe, Correo_Jefe = @Correo_Jefe,
+                Otros_Correos = @Otros_Correos
+            WHERE idDetalle = @idDetalle;"; 
             var affectedRows = await db.ExecuteAsync(sql, correoDetalle);
             return affectedRows > 0;
         }
@@ -194,6 +189,7 @@ namespace ABM.Servicios
 			using var db = new SqlConnection(connectionString);
 			var sql = @"
         SELECT
+            ecd.idDetalle,
             ecd.idCorreos,
             ecd.idpaisnegociosistema,
             p.pais AS NombrePais,      -- Asegúrate que la columna se llame 'pais' en ftc_pais

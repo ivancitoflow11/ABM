@@ -5,7 +5,8 @@ using System.ComponentModel.DataAnnotations;
 
 public class EnvioCorreoDetalleViewModel
 {
-	public int IdCorreos { get; set; }
+    public int idDetalle { get; set; }
+    public int IdCorreos { get; set; }
 
 	// Campos para los Desplegables
 	[Required(ErrorMessage = "Debe seleccionar un País.")]
@@ -67,7 +68,7 @@ public class EnvioCorreoDetalleViewModel
 	public string? Correo_Jefe { get; set; }
 
 	[Display(Name = "Otros Correos")]
-	[StringLength(100)] // Ajustar si es necesario
+	[StringLength(100)] 
 	public string? Otros_Correos { get; set; }
 
 	// Para llenar los desplegables en la vista

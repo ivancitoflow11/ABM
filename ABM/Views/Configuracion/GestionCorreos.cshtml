@@ -206,7 +206,7 @@
                         {
                             @foreach (var item in Model.ListaCorreos)
                             {
-                                <tr data-id="@item.IdCorreos">
+                                <tr data-id="@item.idDetalle">
                                     <td>@item.NombrePais</td>
                                     <td>@item.NombreNegocio</td>
                                     <td>@item.NombreSistema</td>
@@ -220,8 +220,8 @@
                                     <td>@item.Correo_Jefe</td>
                                     <td>@item.Otros_Correos</td>
                                     <td>
-                                        <button type="button" class="btn btn-sm btn-info btn-edit-correo" data-id="@item.IdCorreos" title="Editar"><i class="fas fa-edit"></i></button>
-                                        <button type="button" class="btn btn-sm btn-danger btn-delete-correo" data-id="@item.IdCorreos" title="Eliminar"><i class="fas fa-trash"></i></button>
+                                        <button type="button" class="btn btn-sm btn-info btn-edit-correo" data-id="@item.idDetalle" title="Editar"><i class="fas fa-edit"></i></button>
+                                        <button type="button" class="btn btn-sm btn-danger btn-delete-correo" data-id="@item.idDetalle" title="Eliminar"><i class="fas fa-trash"></i></button>
                                     </td>
                                 </tr>
                             }
@@ -250,6 +250,7 @@
             <div class="modal-body">
                 <form id="formEditarCorreo" method="post">
                     @Html.AntiForgeryToken()
+                    <input type="hidden" name="idDetalle" id="edit-idDetalle" />
                     <input type="hidden" name="IdCorreos" id="edit-IdCorreos" />
                     <input type="hidden" name="IdPaisNegocioSistemaOriginal" id="edit-IdPaisNegocioSistemaOriginal" />
                     <h5>Datos Envío Correo</h5>
@@ -478,6 +479,7 @@
                     .done(function (response) {
                         if (response.success && response.data) {
                             var data = response.data;
+                            $('#edit-idDetalle').val(data.idDetalle);
                             $('#edit-IdCorreos').val(data.idCorreos); $('#edit-IdPaisNegocioSistemaOriginal').val(data.idPaisNegocioSistema);
                             $('#edit-OSI').val(data.osi); $('#edit-Correo_OSI').val(data.correo_OSI);
                             $('#edit-Responsable').val(data.responsable); $('#edit-Correo_Responsable').val(data.correo_Responsable);
