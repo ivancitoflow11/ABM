@@ -1,0 +1,227 @@
+﻿@* En Vistas/CargarArchivosAD/Index.cshtml (CÓDIGO CORREGIDO) *@
+@model ABM.Models.CargarArchivosViewModel
+@{
+    ViewData["Title"] = "Carga Archivos AD";
+}
+
+<link rel="stylesheet" href="~/lib/datatables.net-bs4/css/dataTables.bootstrap4.min.css" />
+<link rel="stylesheet" href="~/css/botones.css" asp-append-version="true" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+
+<div class="pt-5">
+    <h4 class="mt-5">@ViewData["Title"]</h4>
+
+    @if (TempData["MensajeExito"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @TempData["MensajeExito"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            @TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+
+    <div class="card mb-4">
+        <div class="card-header text-white" style="background-color:#b0d404;">
+            Datos de Carga
+        </div>
+        <div class="card-body">
+            <form asp-controller="CargarArchivosAD" asp-action="Cargar" method="post" enctype="multipart/form-data">
+                @Html.AntiForgeryToken()
+                <div class="row g-3 mb-3 align-items-end">
+                    <div class="col-md-3">
+                        <label asp-for="PaisSeleccionado" class="form-label">País</label>
+                        <select asp-for="PaisSeleccionado" asp-items="Model.Paises" class="form-select">
+                            <option value="">Seleccione País...</option>
+                        </select>
+                        <span asp-validation-for="PaisSeleccionado" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-3">
+                        <label asp-for="NegocioSeleccionado" class="form-label">Negocio</label>
+                        <select asp-for="NegocioSeleccionado" asp-items="Model.Negocios" class="form-select">
+                            <option value="">Seleccione Negocio...</option>
+                        </select>
+                        <span asp-validation-for="NegocioSeleccionado" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-3">
+                        <label asp-for="FechaCarga" class="form-label">Fecha Carga</label>
+                        <input asp-for="FechaCarga" class="form-control" type="date" />
+                        <span asp-validation-for="FechaCarga" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="archivo" class="form-label">+ AGREGAR ARCHIVO</label>
+                        <input name="archivo" type="file" class="form-control" required />
+                    </div>
+                </div>
+
+                <div class="row mt-4">
+                    <div class="col-md-12 text-end">
+                        <button type="submit" class="btn btn-success">GUARDAR</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-header text-white" style="background-color:#b0d404;">
+            Histórico de Cargas
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table id="file_export4" class="table table-striped table-bordered nowrap" style="width:100%;">
+                    <thead>
+                        <tr>
+                            <th>País</th>
+                            <th>Negocio</th>
+                            <th>Fecha de Carga</th>
+                            <th>Nombre Archivo</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model.HistoricoCargas != null && Model.HistoricoCargas.Any())
+                        {
+                            @foreach (var item in Model.HistoricoCargas)
+                            {
+                                <tr>
+                                    <td>@item.NombrePais</td>
+                                    <td>@item.NombreNegocio</td>
+                                    <td>@item.Fecha.ToString("dd/MM/yyyy")</td>
+                                    <td>@(item.Archivo ?? "N/A")</td>
+                                    <td>
+                                        @if (!string.IsNullOrEmpty(item.Archivo))
+                                        {
+                                            // --- CAMBIO AQUÍ ---
+                                            // Ya no es un <a> con href, sino un <button> que usa JavaScript.
+                                            // Guardamos la URL de descarga en un atributo 'data-url'.
+                                            <button type="button" class="btn btn-sm btn-info btn-descargar" 
+                                                    data-url="@Url.Action("DescargarArchivo", "CargarArchivosAD", new { nombreArchivo = item.Archivo })"
+                                                    title="Ver Archivo">
+                                                <i class="fas fa-download"></i> Ver Archivo
+                                            </button>
+                                        }
+                                        else
+                                        {
+                                            <button type="button" class="btn btn-sm btn-secondary btn-no-archivo" title="No hay archivo">
+                                                <i class="fas fa-times-circle"></i> Sin Archivo
+                                            </button>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.all.min.js"></script>
+
+    <script>
+        $(function () {
+            
+            var $paisSelect = $('#PaisSeleccionado');
+            var $negocioSelect = $('#NegocioSeleccionado');
+            
+            $negocioSelect.prop('disabled', true);
+
+            $paisSelect.on('change', function () {
+                var pais = $(this).val();
+                $negocioSelect.empty().append('<option value="">Cargando...</option>');
+
+                if (pais) {
+                    $negocioSelect.prop('disabled', true); 
+                    $.getJSON('@Url.Action("GetNegociosPorPais", "CargarArchivosAD")', { pais: pais })
+                        .done(function (data) {
+                            $negocioSelect.empty().append('<option value="">Seleccione Negocio...</option>');
+                            if (data.length > 0) {
+                                $.each(data, function (index, item) {
+                                    $negocioSelect.append($('<option>', {
+                                        value: item.text,
+                                        text: item.text
+                                    }));
+                                });
+                                $negocioSelect.prop('disabled', false); 
+                            } else {
+                                $negocioSelect.empty().append('<option value="">No hay negocios</option>');
+                                $negocioSelect.prop('disabled', true);
+                            }
+                        })
+                        .fail(function () {
+                            Swal.fire('Error', 'No se pudieron cargar los negocios.', 'error');
+                            $negocioSelect.empty().append('<option value="">Error al cargar</option>').prop('disabled', true);
+                        });
+                } else {
+                    $negocioSelect.empty().append('<option value="">Seleccione Negocio...</option>').prop('disabled', true);
+                }
+            });
+
+            // Botón para cuando el registro NO tiene archivo
+            $(document).on('click', '.btn-no-archivo', function () {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'No Disponible',
+                    text: 'Este registro no tiene un archivo asociado para descargar.'
+                });
+            });
+
+            // --- NUEVO SCRIPT AQUÍ ---
+            // Evento para el botón de descarga que verifica si el archivo existe
+            $(document).on('click', '.btn-descargar', function () {
+                var downloadUrl = $(this).data('url'); // Obtenemos la URL del atributo data-url
+
+                // Hacemos una petición para verificar el estado de la URL
+                fetch(downloadUrl)
+                    .then(response => {
+                        if (response.ok) { // Si la respuesta es 200 OK, el archivo existe
+                            // Procedemos con la descarga. La forma más fácil es redirigir.
+                            window.location.href = downloadUrl;
+                        } else if (response.status === 404) { // Si es 404 Not Found
+                            // Mostramos la alerta de SweetAlert2 que solicitaste
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Archivo no encontrado',
+                                text: 'El archivo de este registro no fue encontrado en el servidor. Es posible que haya sido eliminado.'
+                            });
+                        } else { // Otros errores
+                             Swal.fire({
+                                icon: 'error',
+                                title: 'Error Inesperado',
+                                text: 'Ocurrió un error al intentar acceder al archivo.'
+                            });
+                        }
+                    })
+                    .catch(err => {
+
+                         Swal.fire({
+                            icon: 'error',
+                            title: 'Error de Red',
+                            text: 'No se pudo comunicar con el servidor para verificar el archivo.'
+                        });
+                    });
+            });
+        });
+    </script>
+    
+    <script src="~/js/vendor.min.js"></script>
+    <script src="~/libs/datatables.net/js/jquery.dataTables.min.js"></script>
+    <script src="~/js/dataTables.buttons.min.js"></script>
+    <script src="~/js/jszip.min.js"></script>
+    <script src="~/js/pdfmake.min.js"></script>
+    <script src="~/js/vfs_fonts.js"></script>
+    <script src="~/js/buttons.html5.min.js"></script>
+    <script src="~/js/buttons.print.min.js"></script>
+    <script src="~/js/datatable/datatable-advanced.init.js" asp-append-version="true"></script>
+}
