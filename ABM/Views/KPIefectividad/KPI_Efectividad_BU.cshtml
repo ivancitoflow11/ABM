@@ -1,0 +1,116 @@
+﻿@model IEnumerable<ABM.Models.KpiResultado>
+
+@{
+    ViewData["Title"] = "KPI Efectividad";
+}
+
+<h1 class="mb-4">@ViewData["Title"]</h1>
+
+<div class="table-responsive">
+    <table class="table table-bordered table-striped table-hover">
+        <thead class="table">
+            <tr>
+                <th>NEGOCIO</th>
+                <th>PAIS</th>
+                <th>Q SISTEMAS MES ACTUAL</th>
+                <th>Q SISTEMAS MES ANTERIOR</th>
+                <th>FINIQUITADOS MES ACTUAL</th>
+                <th>% EFECTIVIDAD MES ACTUAL</th>
+                <th>FINIQUITADOS MES ANTERIOR</th>
+                <th>% EFECTIVIDAD MES ANTERIOR</th>
+                <th>TOTAL CUENTAS</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model != null && Model.Any())
+            {
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td>@item.negocio</td>
+                        <td>@item.pais</td>
+                        <td>@item.sistemas_mes_actual</td>
+                        <td>@item.sistemas_mes_anterior</td>
+                        <td>@item.finiquitados_mes_actual</td>
+
+                        <td class="kpi-cell text-center">
+                            @item.p_cumplimiento_mes_actual.ToString("N1") %
+                        </td>
+
+                        <td>@item.finiquitados_mes_anterior</td>
+
+                        <td class="kpi-cell text-center">
+                            @item.p_cumplimiento_mes_anteior.ToString("N1") %
+                        </td>
+
+                        <td>@item.total_cuentas</td>
+                    </tr>
+                }
+            }
+            else
+            {
+                <tr>
+                    <td colspan="9" class="text-center">
+                        No se encontraron registros para mostrar.
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+
+@section Scripts {
+    <script>
+        // Se asegura de que el script se ejecute solo cuando todo el HTML de la página esté cargado.
+        document.addEventListener('DOMContentLoaded', function () {
+
+            // 1. Buscamos todas las celdas que marcamos con la clase 'kpi-cell'.
+            const kpiCells = document.querySelectorAll('.kpi-cell');
+
+            // 2. Recorremos cada una de las celdas encontradas.
+            kpiCells.forEach(cell => {
+                // Obtenemos el texto de la celda (ej: "98.5 %") y lo limpiamos para convertirlo en un número.
+                // Usamos replace para cambiar la coma por punto, por si acaso la configuración regional usa comas.
+                const textValue = cell.textContent.replace(',', '.');
+                const percentage = parseFloat(textValue);
+
+                // Verificamos que sea un número válido antes de continuar.
+                if (isNaN(percentage)) {
+                    return; // Si no es un número, no hacemos nada con esta celda.
+                }
+
+                let cellClass = '';
+                let iconClass = '';
+                let iconTitle = '';
+
+                // 3. Aplicamos la misma lógica de colores que antes, pero en JavaScript.
+                if (percentage > 99) {
+                    cellClass = 'bg-success-subtle';
+                    iconClass = 'fas fa-circle text-success me-2';
+                    iconTitle = '> 99%';
+                } else if (percentage >= 98) {
+                    cellClass = 'bg-warning-subtle';
+                    iconClass = 'fas fa-circle text-warning me-2';
+                    iconTitle = '98% - 99%';
+                } else {
+                    cellClass = 'bg-danger-subtle';
+                    iconClass = 'fas fa-circle text-danger me-2';
+                    iconTitle = '< 98%';
+                }
+
+                // 4. Modificamos el HTML de la celda.
+                // Añadimos la clase de color de fondo a la celda (<td>).
+                cell.classList.add(cellClass);
+
+                // Creamos el elemento del ícono <i> de Font Awesome.
+                const iconElement = document.createElement('i');
+                iconElement.className = iconClass;
+                iconElement.title = iconTitle;
+
+                // Insertamos el ícono al principio del contenido de la celda.
+                cell.prepend(iconElement);
+            });
+        });
+    </script>
+}
