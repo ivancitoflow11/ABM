@@ -52,7 +52,7 @@ namespace ABM.Servicios
             using (IDbConnection db = new SqlConnection(connectionString))
             {
 
-                var query = "SELECT * FROM [ABM_CORP].[dbo].[ftc_activos_falanet];";
+                var query = "SELECT * FROM ftc_activos_falanet;";
                 return await db.QueryAsync<dynamic>(query);
             }
         }
