@@ -140,8 +140,15 @@ namespace ABM.Controllers
 
             using (var smtp = new SmtpClient(smtpServer, puerto))
             {
-                smtp.Credentials = new NetworkCredential(remitente, password);
-                smtp.EnableSsl = true;
+                // Para SMTP
+                if (!string.IsNullOrEmpty(password))
+                {
+                    smtp.Credentials = new NetworkCredential(remitente, password);
+                }
+
+                // para leer EnableSsl desde configuración
+                smtp.EnableSsl = bool.Parse(_configuration["EmailSettings:EnableSsl"] ?? "false");
+
                 await smtp.SendMailAsync(mensaje);
             }
         }
@@ -398,8 +405,15 @@ namespace ABM.Controllers
 
                 using (var smtp = new SmtpClient(smtpServer, puerto))
                 {
-                    smtp.Credentials = new NetworkCredential(remitente, password);
-                    smtp.EnableSsl = bool.Parse(_configuration["EmailSettings:EnableSsl"] ?? "true");
+                    // Para SMTP
+                    if (!string.IsNullOrEmpty(password))
+                    {
+                        smtp.Credentials = new NetworkCredential(remitente, password);
+                    }
+
+                    // para leer EnableSsl desde configuración
+                    smtp.EnableSsl = bool.Parse(_configuration["EmailSettings:EnableSsl"] ?? "false");
+
                     await smtp.SendMailAsync(mensaje);
                 }
                 // Opcional: Registrar éxito

@@ -737,7 +737,8 @@
             {
                 foreach (var item in Model.ListaTendenciaDiaria)
                 {
-                    @:{ x: new Date("@item.feccarga"), y: @item.cnt_finiquitados },
+                    var fechaParts = item.feccarga.Split('-');
+                    @:{ x: new Date("@item.feccarga" + "T12:00:00"), y: @item.cnt_finiquitados },
                 }
             }
                     ]
