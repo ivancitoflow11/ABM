@@ -5,7 +5,8 @@
         public string Sistema { get; set; }
 		public string Pais { get; set; }
 		public string Negocio { get; set; }
-		public int TotalUsuarios { get; set; } 
+        public string Bandera { get; set; }
+        public int TotalUsuarios { get; set; } 
         public int Activos { get; set; } 
         public int Finiquitados { get; set; } 
         public int NoEncontrados { get; set; }

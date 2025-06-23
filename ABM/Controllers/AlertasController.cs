@@ -34,21 +34,42 @@ namespace ABM.Controllers
         [Monitoreo("AlertaSistema", "SELECT", "verAlertaSistema")]
         public async Task<IActionResult> AlertaSistema(int? idNegocio, int? idSistema)
         {
+            // Se instancia el ViewModel actualizado.
             var modelo = new AlertaSistemaViewModel();
 
-            // 1) Tus datos de alerta
-            modelo.estadisticas = await repositorioAlertas.ObtenerEstadisticasUsuarios(idNegocio, idSistema);
+            // 1. OBTENER DATOS BASE
+            // Se obtienen todas las estadísticas de una sola vez.
+            var estadisticasCompletas = await repositorioAlertas.ObtenerEstadisticasUsuarios(idNegocio, idSistema);
+
+            // 2. RELLENAR PROPIEDADES DEL VIEWMODEL
+            // a) Se asigna la lista completa para mantener la compatibilidad con los modales.
+            modelo.estadisticas = estadisticasCompletas;
             modelo.ListaFiltroFiniquitados = await repositorioAlertas.ObtenerDetalleFiniquitados(idNegocio, idSistema);
             modelo.ListaUsuariosNoEncontrados = await repositorioAlertas.ObtenerDetalleNoEncontrados(idNegocio, idSistema);
             modelo.ListaUsuariosDuplicados = await repositorioAlertas.ObtenerDetalleDuplicados(idNegocio, idSistema);
 
-            // 2) Obtengo los PaisesNegocios desde tu repositorio de roles
+            // b) Se crea la lista de países para la cabecera de la tabla.
+            //    Esto toma los países únicos de los datos obtenidos para no mostrar columnas vacías.
+            //    IMPORTANTE: Esto asume que tu modelo 'EstadisticasUsuarios' contiene la propiedad 'Bandera'.
+            //    Si 'Bandera' no está en 'EstadisticasUsuarios', deberás obtenerla de tu tabla [ftc_pais].
+            modelo.PaisesEnCabecera = estadisticasCompletas
+                .Select(e => new PaisViewModel { pais = e.Pais, Bandera = e.Bandera })
+                .GroupBy(p => p.pais)
+                .Select(g => g.First())
+                .OrderBy(p => p.pais) // Se ordena para que las columnas siempre aparezcan en el mismo orden.
+                .ToList();
+
+            // c) Se agrupan las estadísticas por Negocio y Sistema para las filas de la tabla.
+            modelo.EstadisticasAgrupadas = estadisticasCompletas
+                .GroupBy(e => new { e.Negocio, e.Sistema })
+                .ToList();
+
+            // 3. LÓGICA PARA FILTROS (Sin cambios)
+            // Se obtienen los negocios a los que el usuario tiene acceso.
             var usuario = await repositorioUsuarios.ObtenerDatosUsuarioPerfilLogeado();
             var rolConPNS = (await repositorioRoles.ObtenerRolesConPNS())
-                            .FirstOrDefault(r => r.idRol == usuario.idRol);
+                             .FirstOrDefault(r => r.idRol == usuario.idRol);
 
-            // 3) Extraigo sólo los Negocios (distinct por idNegocio),
-            //    evitando el uso de '??' entre tipos incompatibles
             List<PaisNegocioViewModel> listaNegocios = new();
             if (rolConPNS?.PaisesNegocios != null)
             {
@@ -59,13 +80,14 @@ namespace ABM.Controllers
             }
             ViewBag.Negocios = listaNegocios;
 
-            // 4) Traigo los sistemas según el negocio seleccionado
+            // Se traen los sistemas según el negocio seleccionado.
             ViewBag.Sistemas = await repositorioAlertas.ObtenerSistemasPorNegocio(idNegocio);
 
-            // 5) Para mantener la opción seleccionada tras el submit
+            // Se mantienen las opciones seleccionadas en los filtros después del submit.
             ViewBag.IdNegocioSeleccionado = idNegocio;
             ViewBag.IdSistemaSeleccionado = idSistema;
 
+            // 4. DEVOLVER LA VISTA CON EL MODELO COMPLETO
             return View(modelo);
         }
 

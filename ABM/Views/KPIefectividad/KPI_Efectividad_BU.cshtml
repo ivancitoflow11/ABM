@@ -1,4 +1,4 @@
-﻿@model IEnumerable<ABM.Models.KpiResultado>
+﻿@model ABM.Models.KpiEfectividadViewModel
 
 @{
     ViewData["Title"] = "KPI Efectividad";
@@ -6,52 +6,111 @@
 
 <h1 class="mb-4">@ViewData["Title"]</h1>
 
+<form asp-action="KPI_Efectividad_BU" method="post" class="mb-4">
+    <div class="row">
+        <div class="col-md-3">
+            <div class="form-group">
+                <label asp-for="AnioSeleccionado"></label>
+                <select asp-for="AnioSeleccionado" asp-items="Model.Anios" class="form-control">
+                    <option value="">Seleccione Año</option>
+                </select>
+                <span asp-validation-for="AnioSeleccionado" class="text-danger"></span>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="form-group">
+                <label asp-for="MesSeleccionado"></label>
+                <select asp-for="MesSeleccionado" asp-items="Model.Meses" class="form-control">
+                    <option value="">Seleccione Mes</option>
+                </select>
+                <span asp-validation-for="MesSeleccionado" class="text-danger"></span>
+            </div>
+        </div>
+        <div class="col-md-6 d-flex align-items-end">
+            <button type="submit" class="btn btn-primary mt-3">Buscar por Mes y Año</button>
+        </div>
+    </div>
+</form>
+
 <div class="table-responsive">
     <table class="table table-bordered table-striped table-hover">
         <thead class="table">
             <tr>
-                <th>NEGOCIO</th>
+                <th>FECHA CARGA</th>
+                <th>MES</th>
+                <th>AÑO</th>
                 <th>PAIS</th>
-                <th>Q SISTEMAS MES ACTUAL</th>
-                <th>Q SISTEMAS MES ANTERIOR</th>
-                <th>FINIQUITADOS MES ACTUAL</th>
-                <th>% EFECTIVIDAD MES ACTUAL</th>
-                <th>FINIQUITADOS MES ANTERIOR</th>
-                <th>% EFECTIVIDAD MES ANTERIOR</th>
-                <th>TOTAL CUENTAS</th>
+                <th>N FINIQUITADOS</th>
+                <th>N FINIQUITADOS TOTAL</th>
+                <th>CUMPLIMIENTO FINIQUITADOS</th>
+                <th>N 60</th>
+                <th>N 60 TOTAL</th>
+                <th>CUMPLIMIENTO 60</th>
+                <th>N 180</th>
+                <th>N 180 TOTAL</th>
+                <th>CUMPLIMIENTO 180</th>
+                <th>N GENÉRICA SIN RESPONSABLE</th>
+                <th>N GENÉRICA SIN RESPONSABLE TOTAL</th>
+                <th>CUMPLIMIENTO GENÉRICA SIN RESPONSABLE</th>
+                <th>N USUARIOS NO LOGEADOS</th>
+                <th>N USUARIOS NO LOGEADOS TOTAL</th>
+                <th>CUMPLIMIENTO USUARIOS NO LOGEADOS</th>
+                <th>USUARIOS DUPLICADOS</th>
+                <th>N USUARIOS DUPLICADOS</th>
+                <th>N USUARIOS DUPLICADOS TOTAL</th>
+                <th>CUMPLIMIENTO USUARIOS DUPLICADOS</th>
+                <th>N USUARIOS PASS NO EXPIRA</th>
+                <th>N USUARIOS PASS NO EXPIRA TOTAL</th>
+                <th>CUMPLIMIENTO USUARIOS PASS NO EXPIRA</th>
+                <th>N GENÉRICOS PASS NO EXPIRA</th>
+                <th>N GENÉRICOS PASS NO EXPIRA TOTAL</th>
+                <th>CUMPLIMIENTO GENÉRICOS PASS NO EXPIRA</th>
             </tr>
         </thead>
         <tbody>
-            @if (Model != null && Model.Any())
+            @if (Model.Resultados != null && Model.Resultados.Any())
             {
-                @foreach (var item in Model)
+                @foreach (var item in Model.Resultados)
                 {
                     <tr>
-                        <td>@item.negocio</td>
-                        <td>@item.pais</td>
-                        <td>@item.sistemas_mes_actual</td>
-                        <td>@item.sistemas_mes_anterior</td>
-                        <td>@item.finiquitados_mes_actual</td>
-
-                        <td class="kpi-cell text-center">
-                            @item.p_cumplimiento_mes_actual.ToString("N1") %
-                        </td>
-
-                        <td>@item.finiquitados_mes_anterior</td>
-
-                        <td class="kpi-cell text-center">
-                            @item.p_cumplimiento_mes_anteior.ToString("N1") %
-                        </td>
-
-                        <td>@item.total_cuentas</td>
+                        <td>@item.fecha_carga.ToShortDateString()</td>
+                        <td>@item.mes</td>
+                        <td>@item.año</td>
+                        <td>@item.PAIS</td>
+                        <td>@item.n_finiquitados</td>
+                        <td>@item.n_finiquitados_total</td>
+                        <td class="kpi-cell-cumplimiento">@item.cumplimiento_finiquitados</td>
+                        <td>@item.n_60</td>
+                        <td>@item.n_60_total</td>
+                        <td class="kpi-cell-cumplimiento">@item.cumplimiento_60</td>
+                        <td>@item.n_180</td>
+                        <td>@item.n_180_total</td>
+                        <td class="kpi-cell-cumplimiento">@item.cumplimiento_180</td>
+                        <td>@item.n_generica_sin_responsable</td>
+                        <td>@item.n_generica_sin_responsable_total</td>
+                        <td class="kpi-cell-cumplimiento">@item.cumplimiento_generica_sin_responsable</td>
+                        <td>@item.n_usuarios_no_logeados</td>
+                        <td>@item.n_usuarios_no_logeados_total</td>
+                        <td class="kpi-cell-cumplimiento">@item.cumplimiento_usuarios_no_logeados</td>
+                        <td>@item.usuarios_duplicados</td>
+                        <td>@item.n_usuarios_duplicados</td>
+                        <td>@item.n_usuarios_duplicados_total</td>
+                        <td class="kpi-cell-cumplimiento">@item.cumplimiento_usuarios_duplicados</td>
+                        <td>@item.n_usuarios_pass_no_expira</td>
+                        <td>@item.n_usuarios_pass_no_expira_total</td>
+                        <td class="kpi-cell-cumplimiento">@item.cumplimiento_usuarios_pass_no_expira</td>
+                        <td>@item.n_genericos_pass_no_expira</td>
+                        <td>@item.n_genericos_pass_no_expira_total</td>
+                        <td class="kpi-cell-cumplimiento">@item.cumplimiento_genericos_pass_no_expira</td>
                     </tr>
                 }
             }
             else
             {
+                var colCount = 29;
                 <tr>
-                    <td colspan="9" class="text-center">
-                        No se encontraron registros para mostrar.
+                    <td colspan="@colCount" class="text-center">
+                        No se encontraron registros para mostrar para el mes y año seleccionados.
                     </td>
                 </tr>
             }
@@ -59,32 +118,26 @@
     </table>
 </div>
 
-
 @section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
     <script>
-        // Se asegura de que el script se ejecute solo cuando todo el HTML de la página esté cargado.
         document.addEventListener('DOMContentLoaded', function () {
+            const kpiCellsCumplimiento = document.querySelectorAll('.kpi-cell-cumplimiento');
 
-            // 1. Buscamos todas las celdas que marcamos con la clase 'kpi-cell'.
-            const kpiCells = document.querySelectorAll('.kpi-cell');
-
-            // 2. Recorremos cada una de las celdas encontradas.
-            kpiCells.forEach(cell => {
-                // Obtenemos el texto de la celda (ej: "98.5 %") y lo limpiamos para convertirlo en un número.
-                // Usamos replace para cambiar la coma por punto, por si acaso la configuración regional usa comas.
-                const textValue = cell.textContent.replace(',', '.');
+            kpiCellsCumplimiento.forEach(cell => {
+                const textValue = cell.textContent.replace(',', '.').replace('%', '').trim();
                 const percentage = parseFloat(textValue);
 
-                // Verificamos que sea un número válido antes de continuar.
                 if (isNaN(percentage)) {
-                    return; // Si no es un número, no hacemos nada con esta celda.
+                    return;
                 }
 
                 let cellClass = '';
                 let iconClass = '';
                 let iconTitle = '';
 
-                // 3. Aplicamos la misma lógica de colores que antes, pero en JavaScript.
                 if (percentage > 99) {
                     cellClass = 'bg-success-subtle';
                     iconClass = 'fas fa-circle text-success me-2';
@@ -99,18 +152,24 @@
                     iconTitle = '< 98%';
                 }
 
-                // 4. Modificamos el HTML de la celda.
-                // Añadimos la clase de color de fondo a la celda (<td>).
                 cell.classList.add(cellClass);
 
-                // Creamos el elemento del ícono <i> de Font Awesome.
                 const iconElement = document.createElement('i');
                 iconElement.className = iconClass;
                 iconElement.title = iconTitle;
 
-                // Insertamos el ícono al principio del contenido de la celda.
                 cell.prepend(iconElement);
             });
+
+            const anioSelect = document.getElementById('AnioSeleccionado');
+            const mesSelect = document.getElementById('MesSeleccionado');
+
+            if (anioSelect && mesSelect) {
+                anioSelect.addEventListener('change', async function () {
+                    const selectedAnio = this.value;
+                    this.form.submit();
+                });
+            }
         });
     </script>
 }

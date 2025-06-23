@@ -9,27 +9,83 @@
     <title>Alerta Sistema</title>
     <style>
         .responsive-img {
-            max-width: 100%; /* La imagen no será más grande que su contenedor */
-            height: auto; /* Mantiene la proporción de la imagen */
+            max-width: 100%;
+            height: auto;
         }
-
 
         .custom-modal-dialog {
             display: flex;
             justify-content: center;
             align-items: center;
-            margin: 1.75rem auto; /* Centra verticalmente el modal */
-            max-width: 90%; /* Ajusta el ancho máximo del modal si es necesario */
+            margin: 1.75rem auto;
+            max-width: 90%;
         }
 
         .modal-body {
-            max-height: 60vh; /* Ajusta la altura máxima del modal */
-            overflow-y: auto; /* Agrega scroll vertical si el contenido es demasiado alto */
+            max-height: 80vh;
+            overflow-y: auto;
         }
 
         .table {
-            width: 100%; /* Asegúrate de que la tabla ocupe el 100% del ancho del modal */
+            width: 100%;
         }
+
+        /* --- INICIO: NUEVOS ESTILOS PARA LA TABLA --- */
+        .table-container-scroll {
+            overflow-x: auto;
+            width: 100%;
+        }
+
+        .table-incidencias {
+            table-layout: fixed;
+            min-width: 900px;
+        }
+
+            .table-incidencias th,
+            .table-incidencias td {
+                text-align: center;
+                vertical-align: middle;
+            }
+
+                .table-incidencias th.col-negocio,
+                .table-incidencias td.col-negocio,
+                .table-incidencias th.col-sistema,
+                .table-incidencias td.col-sistema {
+                    text-align: left;
+                    white-space: normal; /* Permite que el texto largo se ajuste */
+                }
+
+                .table-incidencias th.col-negocio {
+                    width: 180px;
+                }
+
+                .table-incidencias th.col-sistema {
+                    width: 150px;
+                }
+
+                .table-incidencias th.col-detalle {
+                    width: 120px;
+                }
+
+            .table-incidencias .data-cell {
+                width: 45px;
+                white-space: nowrap;
+            }
+
+        .flag-img {
+            width: 30px;
+            height: auto;
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .sub-header th {
+            font-size: 0.8em;
+            font-weight: bold;
+        }
+        /* --- FIN: NUEVOS ESTILOS PARA LA TABLA --- */
+
     </style>
 </head>
 <body>
@@ -37,8 +93,6 @@
         <br />
         <br />
 
-
-        <!-- IMAGEN-->
         <div class="row">
             <div class="col-md-12">
                 <div class="d-flex justify-content-center" style="padding:10px; margin-top:20px">
@@ -47,62 +101,24 @@
             </div>
         </div>
 
-        <div class="d-flex justify-content-center">
-            <div class="col-lg-5 col-md-12">
-                <div class="card" hidden>
-                    <!-- Se agrega la clase custom-shadow -->
-                    <div class="card-header bg-primary text-white">
-                        Sistemas
-                    </div>
-                    <div class="message-box position-relative">
-                        <div class="message-widget contact-widget position-relative pb-4">
-                            @if (Model.estadisticas != null && Model.estadisticas.Any())
-                            {
-                                @foreach (var item in Model.estadisticas)
-                                {
-                                    <a class="px-7 py-3 d-flex align-items-center gap-3 border-bottom">
-                                        <span class="flex-shrink-0 bg-primary-subtle rounded-circle round-40 d-flex align-items-center justify-content-center fs-6 text-primary">
-                                            <i class="fa-regular fa-building"></i>
-                                        </span>
-                                        <div class="w-100">
-                                            <div class="d-flex align-items-center justify-content-between">
-                                                <h6 class="mb-1">@item.Sistema</h6>
-                                            </div>
-                                        </div>
-                                    </a>
-                                }
-                            }
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-
-
-
-        <!-- tabla -->
         <div class="row">
             <div class="col-md-12">
                 <div class="card mb-4">
-                    <div class="card-header text-white" style="background-color: #acd743;">
-                        Resumen de Incidencias
+                    <div class="card-header text-white" style="background-color: #5a6268; color: white !important;">
+                        Resumen de incidencias por sistemas
                     </div>
                     <div class="card-body text-center bg-light">
                         <div style="margin-bottom:10px">Estados de Usuario:</div>
                         <div class="d-flex justify-content-center gap-4 flex-wrap">
-                            <div><i class="fas fa-circle" style="color:#dc3545;"></i> Finiquitados</div>
-                            <div><i class="fas fa-circle" style="color:#ffc107;"></i> No Encontrados</div>
-                            <div><i class="fas fa-circle" style="color:#17a2b8;"></i> Duplicadas</div>
+                            <div><i class="fas fa-circle" style="color:#dc3545;"></i> Finiquitados (F.)</div>
+                            <div><i class="fas fa-circle" style="color:#ffc107;"></i> No Encontrados (N.E.)</div>
+                            <div><i class="fas fa-circle" style="color:#17a2b8;"></i> Duplicadas (C.D.)</div>
                         </div>
-                        @* 						<img src="/images/logos/imperialband.png" class="img-fluid" alt="Logo" style="width: 10%; height: auto; opacity: 0.5;"> *@
                     </div>
 
                     <form method="get" asp-action="AlertaSistema"
                           class="row g-2 align-items-end mb-4"
                           style="margin-left:30px; margin-top:10px">
-
-                        <!-- Negocio -->
                         <div class="col-md-3">
                             <label class="form-label">Negocio</label>
                             <select name="idNegocio" id="selectNegocio" class="form-select">
@@ -120,8 +136,6 @@
                                 }
                             </select>
                         </div>
-
-                        <!-- Sistema -->
                         <div class="col-md-3">
                             <label class="form-label">Sistema</label>
                             <select name="idSistema" id="selectSistema" class="form-select">
@@ -139,72 +153,95 @@
                                 }
                             </select>
                         </div>
-
-                        <!-- Botón Filtrar -->
                         <div class="col-md-2">
                             <button class="btn btn-success" type="submit">Filtrar</button>
                         </div>
                     </form>
 
-
-
-                    <div class="card-body table-responsive">
-                        <table id="file_export4" class="table table-bordered">
-
+                    <div class="card-body table-container-scroll">
+                        <table id="file_export4" class="table table-bordered table-incidencias">
                             <thead>
                                 <tr>
-                                    <th scope="col">PAÍS</th>
-                                    <th scope="col">NEGOCIO</th>
-                                    <th scope="col">SISTEMA</th>
-                                    <th scope="col">ACTIVOS</th>
-                                    <th scope="col">FINIQUITADOS</th>
-                                    <th scope="col">NO ENCONTRADOS</th>
-                                    <th scope="col">CTAS DUPLICADAS</th>
-                                    <th scope="col">DETALLES</th>
+                                    <th rowspan="2" class="col-negocio">Negocio</th>
+                                    <th rowspan="2" class="col-sistema">Sistema</th>
+                                    @if (Model?.PaisesEnCabecera != null)
+                                    {
+                                        @foreach (var pais in Model.PaisesEnCabecera)
+                                        {
+                                            <th colspan="3">
+                                                @if (!string.IsNullOrEmpty(pais.Bandera))
+                                                {
+                                                    <img src="data:image/png;base64,@pais.Bandera" alt="@pais.pais" class="flag-img" title="@pais.pais" />
+                                                }
+                                            </th>
+                                        }
+                                    }
+                                    <th rowspan="2" class="col-detalle">Detalle</th>
+                                </tr>
+                                <tr class="sub-header">
+                                    @if (Model?.PaisesEnCabecera != null)
+                                    {
+                                        @foreach (var pais in Model.PaisesEnCabecera)
+                                        {
+                                            <th class="data-cell" title="Finiquitados">F.</th>
+                                            <th class="data-cell" title="No Encontrados">N.E.</th>
+                                            <th class="data-cell" title="Cuentas Duplicadas">C.D.</th>
+                                        }
+                                    }
                                 </tr>
                             </thead>
                             <tbody>
-                                @if (Model != null)
+                                @if (Model?.EstadisticasAgrupadas != null)
                                 {
-                                    @foreach (var item in Model.estadisticas)
+                                    foreach (var grupo in Model.EstadisticasAgrupadas)
                                     {
                                         <tr>
-                                            <td>@item.Pais</td>
-                                            <td>@item.Negocio</td>
-                                            <td>@item.Sistema</td>
-                                            <td>@item.Activos</td>
+                                            <td class="col-negocio">@grupo.Key.Negocio</td>
+                                            <td class="col-sistema">@grupo.Key.Sistema</td>
 
-                                            <td class="@(item.Finiquitados > 0 ? "bg-danger text-white" : "")"
-                                                onclick="showFiniquitadosModal('@item.Sistema', '@item.Pais', '@item.Negocio')">
-                                                @item.Finiquitados
-                                            </td>
+                                            @foreach (var pais in Model.PaisesEnCabecera)
+                                            {
+                                                var statsPais = grupo.FirstOrDefault(g => g.Pais == pais.pais);
 
-                                            <td class="@(item.NoEncontrados > 0 ? "bg-warning text-dark" : item.NoEncontrados == 0 ? "" : "")"
-                                                onclick="showNoEncontradosModal('@item.Sistema', '@item.Pais', '@item.Negocio')">
-                                                @item.NoEncontrados
-                                            </td>
+                                                if (statsPais != null)
+                                                {
+                                                    <td class="data-cell @(statsPais.Finiquitados > 0 ? "bg-danger text-white" : "")" style="cursor:pointer;"
+                                                        onclick="showFiniquitadosModal('@statsPais.Sistema', '@statsPais.Pais', '@statsPais.Negocio')">
+                                                        @statsPais.Finiquitados
+                                                    </td>
+                                                    <td class="data-cell @(statsPais.NoEncontrados > 0 ? "bg-warning text-dark" : "")" style="cursor:pointer;"
+                                                        onclick="showNoEncontradosModal('@statsPais.Sistema', '@statsPais.Pais', '@statsPais.Negocio')">
+                                                        @statsPais.NoEncontrados
+                                                    </td>
+                                                    <td class="data-cell @(statsPais.CtaDuplicadas > 0 ? "bg-info text-white" : "")" style="cursor:pointer;"
+                                                        onclick="showCtasDuplicadasModal('@statsPais.Sistema', '@statsPais.Pais', '@statsPais.Negocio')">
+                                                        @statsPais.CtaDuplicadas
+                                                    </td>
+                                                }
+                                                else
+                                                {
+                                                    <td class="data-cell">0</td>
+                                                    <td class="data-cell">0</td>
+                                                    <td class="data-cell">0</td>
+                                                }
+                                            }
 
-                                            <td class="@(item.CtaDuplicadas > 0 ? "bg-info text-white" : item.CtaDuplicadas == 0 ? "" : "")"
-                                                onclick="showCtasDuplicadasModal('@item.Sistema', '@item.Pais', '@item.Negocio')">
-                                                @item.CtaDuplicadas
-                                            </td>
-
-                                            <td>
+                                            <td class="col-detalle">
                                                 <button type="button" class="btn btn-success"
                                                         data-bs-toggle="modal"
                                                         data-bs-target="#detailsModal"
-                                                        data-sistema="@item.Sistema"
-                                                        data-pais="@item.Pais"
-                                                        data-negocio="@item.Negocio"
-                                                        data-total-usuarios="@item.TotalUsuarios"
-                                                        data-activos="@item.Activos"
-                                                        data-finiquitados="@item.Finiquitados"
-                                                        data-no-encontrados="@item.NoEncontrados"
-                                                        data-recontratados="@item.Recontratados"
-                                                        data-duplicados="@item.CtaDuplicadas"
-                                                        data-de1a3-dias-sin-gestion="@item.De1a3DiasSinGestion"
-                                                        data-de4a6-dias-sin-gestion="@item.De4a6DiasSinGestion"
-                                                        data-mas-de6-dias-sin-gestion="@item.MasDe6DiasSinGestion">
+                                                        data-sistema="@grupo.Key.Sistema"
+                                                        data-negocio="@grupo.Key.Negocio"
+                                                        data-pais=""
+                                                        data-total-usuarios="@grupo.Sum(g => g.TotalUsuarios)"
+                                                        data-activos="@grupo.Sum(g => g.Activos)"
+                                                        data-finiquitados="@grupo.Sum(g => g.Finiquitados)"
+                                                        data-no-encontrados="@grupo.Sum(g => g.NoEncontrados)"
+                                                        data-recontratados="@grupo.Sum(g => g.Recontratados)"
+                                                        data-duplicados="@grupo.Sum(g => g.CtaDuplicadas)"
+                                                        data-de1a3-dias-sin-gestion="@grupo.Sum(g => g.De1a3DiasSinGestion)"
+                                                        data-de4a6-dias-sin-gestion="@grupo.Sum(g => g.De4a6DiasSinGestion)"
+                                                        data-mas-de6-dias-sin-gestion="@grupo.Sum(g => g.MasDe6DiasSinGestion)">
                                                     Ver Detalles
                                                 </button>
                                             </td>
@@ -219,17 +256,14 @@
         </div>
     </div>
 
-    <!-- Modal -->
     <div class="modal fade" id="detailsModal" tabindex="-1" aria-labelledby="detailsModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered custom-modal-dialog">
+        <div class="modal-dialog modal-dialog-centered custom-modal-dialog modal-xl">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="detailsModalLabel">Detalles del Sistema</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <div class="modal-body">
-                    <!-- Contenido del modal será actualizado con JavaScript -->
-                </div>
+                <div class="modal-body"></div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Cerrar</button>
                 </div>
@@ -237,56 +271,47 @@
         </div>
     </div>
     <div class="modal fade" id="finiquitadosModal" tabindex="-1" aria-labelledby="finiquitadosModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered custom-modal-dialog">
+        <div class="modal-dialog modal-dialog-centered custom-modal-dialog modal-xl">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="finiquitadosModalLabel">Detalles de Usuarios Finiquitados</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <div class="modal-body">
-                    <!-- Aquí se llenará el contenido dinámicamente -->
-                </div>
+                <div class="modal-body"></div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
                 </div>
             </div>
         </div>
     </div>
-    <!-- Modal Usuarios No Encontrados -->
     <div class="modal fade" id="NoEncontradosModal" tabindex="-1" aria-labelledby="NoEncontradosModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered custom-modal-dialog">
+        <div class="modal-dialog modal-dialog-centered custom-modal-dialog modal-xl">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="NoEncontradosModalLabel">Detalles de Usuarios No Encontrados</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <div class="modal-body">
-                    <!-- Aquí se llenará el contenido dinámicamente -->
-                </div>
+                <div class="modal-body"></div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
                 </div>
             </div>
         </div>
     </div>
-    <!-- Modal Cuentas Duplicadas -->
     <div class="modal fade" id="CtasDuplicadasModal" tabindex="-1" aria-labelledby="CtasDuplicadasModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered custom-modal-dialog">
+        <div class="modal-dialog modal-dialog-centered custom-modal-dialog modal-xl">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="CtasDuplicadasModalLabel">Detalles de Cuentas Duplicadas</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <div class="modal-body">
-                    <!-- Aquí se llenará el contenido dinámicamente -->
-                </div>
+                <div class="modal-body"></div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
                 </div>
             </div>
         </div>
     </div>
-
 
     @section scripts {
         <script src="/js/vendor.min.js"></script>
@@ -297,435 +322,103 @@
         <script src="/js/vfs_fonts.js"></script>
         <script src="/js/buttons.html5.min.js"></script>
         <script src="/js/buttons.print.min.js"></script>
-        <script src="/js/datatable/datatable-advanced.init.js" asp-append-version="true"></script>
+
         <script>
+            $(document).ready(function() {
+                // Inicialización de la tabla principal con paginación, botones, etc.
+                $('#file_export4').DataTable({
+                     pageLength: 10,
+                     // El 'dom' controla qué elementos se muestran y en qué orden.
+                     // l=Length, B=Buttons, f=Filtering, r=processing, t=table, i=info, p=pagination
+                     dom: 'lBfrtip',
+                     buttons: [
+                        { extend: 'copy', text: 'Copiar', className: 'btn btn-secondary btn-sm' },
+                        { extend: 'excel', text: 'Excel', className: 'btn btn-success btn-sm' },
+                        { extend: 'pdf', text: 'PDF', className: 'btn btn-danger btn-sm' }
+                     ],
+                     language: {
+                        lengthMenu: "Mostrar _MENU_ registros",
+                        search: "Buscar en tabla:",
+                        info: "Mostrando _START_ a _END_ de _TOTAL_ entradas",
+                        infoEmpty: "Mostrando 0 a 0 de 0 entradas",
+                        infoFiltered:"(filtrado de _MAX_ totales)",
+                        zeroRecords: "No se encontraron registros que coincidan",
+                        paginate: {
+                            next: "Siguiente",
+                            previous: "Anterior"
+                        }
+                     }
+                });
+            });
+
             document.addEventListener('DOMContentLoaded', function () {
                 var detailsModal = document.getElementById('detailsModal');
                 detailsModal.addEventListener('show.bs.modal', function (event) {
                     var button = event.relatedTarget;
-                    var pais = button.getAttribute('data-pais');
-                    var negocio = button.getAttribute('data-negocio');
-                    var sistema = button.getAttribute('data-sistema');
-                    var totalUsuarios = button.getAttribute('data-total-usuarios');
-                    var activos = button.getAttribute('data-activos');
-                    var finiquitados = button.getAttribute('data-finiquitados');
-                    var noEncontrados = button.getAttribute('data-no-encontrados');
-                    var recontratados = button.getAttribute('data-recontratados');
-                    var duplicados = button.getAttribute('data-duplicados');
-                    var de1a3DiasSinGestion = button.getAttribute('data-de1a3-dias-sin-gestion');
-                    var de4a6DiasSinGestion = button.getAttribute('data-de4a6-dias-sin-gestion');
-                    var masDe6DiasSinGestion = button.getAttribute('data-mas-de6-dias-sin-gestion');
-
                     var modalBody = detailsModal.querySelector('.modal-body');
-
-                    modalBody.innerHTML = `
-                                                                            <table id="file_export" class="table">
-                                                                                <thead>
-                                                                                    <tr>
-                                                                                        <th>PAÍS</th>
-                                                                                        <th>NEGOCIO</th>
-                                                                                        <th>SISTEMA</th>
-                                                                                        <th>TOTAL USUARIOS</th>
-                                                                                        <th>ACTIVOS</th>
-                                                                                        <th>FINIQUITADOS</th>
-                                                                                        <th>NO ENCONTRADOS</th>
-                                                                                        <th>RECONTRATADOS</th>
-                                                                                        <th>DUPLICADOS</th>
-                                                                                        <th>DE 1 A 3 DIAS SIN GESTION</th>
-                                                                                        <th>DE 4 A 6 DIAS SIN GESTION</th>
-                                                                                        <th>MÁS DE 6 DIAS SIN GESTION</th>
-                                                                                    </tr>
-                                                                                </thead>
-                                                                                <tbody>
-                                                                                    <tr>
-                                                                                        <td>${pais}</td>
-                                                                                        <td>${negocio}</td>
-                                                                                        <td>${sistema}</td>
-                                                                                        <td>${totalUsuarios}</td>
-                                                                                        <td>${activos}</td>
-                                                                                        <td>${finiquitados}</td>
-                                                                                        <td>${noEncontrados}</td>
-                                                                                        <td>${recontratados}</td>
-                                                                                        <td>${duplicados}</td>
-                                                                                        <td>${de1a3DiasSinGestion}</td>
-                                                                                        <td>${de4a6DiasSinGestion}</td>
-                                                                                        <td>${masDe6DiasSinGestion}</td>
-                                                                                    </tr>
-                                                                                </tbody>
-                                                                            </table>
-                                                                        `;
-                    $("#file_export").DataTable({
-                        dom: "Bfrtip",
-                        buttons: [
-                            {
-                                extend: 'copy',
-                                text: '<i class="fa-regular fa-clipboard"></i>',
-                                titleAttr: 'Copiar',
-                                className: 'btn btn-copy'
-                            },
-                            {
-                                extend: 'excel',
-                                text: '<i class="fa-solid fa-file-excel"></i>',
-                                titleAttr: 'Exportar a Excel',
-                                className: 'btn btn-excel'
-                            },
-                            {
-                                extend: 'pdf',
-                                text: '<i class="fa-solid fa-file-pdf"></i>',
-                                titleAttr: 'Exportar a PDF',
-                                className: 'btn btn-pdf',
-                                orientation: 'landscape',
-                                pageSize: 'LEGAL',
-                                customize: function (doc) {
-
-                                    doc.defaultStyle.fontSize = 8;
-
-
-                                    doc.content[1].table.widths =
-                                        Array(doc.content[1].table.body[0].length + 1).join('*').split('');
-
-
-                                    doc.pageMargins = [10, 10, 10, 10];
-                                },
-                                exportOptions: {
-                                    columns: ':visible'
-                                }
-                            }
-                        ]
-                    });
+                    modalBody.innerHTML = `<table class="table table-bordered"><thead><tr><th>PAÍS</th><th>NEGOCIO</th><th>SISTEMA</th><th>TOTAL USUARIOS</th><th>ACTIVOS</th><th>FINIQUITADOS</th><th>NO ENCONTRADOS</th><th>RECONTRATADOS</th><th>DUPLICADOS</th><th>DE 1 A 3 DIAS</th><th>DE 4 A 6 DIAS</th><th>MÁS DE 6 DIAS</th></tr></thead><tbody><tr><td>TODOS</td><td>${button.getAttribute('data-negocio')}</td><td>${button.getAttribute('data-sistema')}</td><td>${button.getAttribute('data-total-usuarios')}</td><td>${button.getAttribute('data-activos')}</td><td>${button.getAttribute('data-finiquitados')}</td><td>${button.getAttribute('data-no-encontrados')}</td><td>${button.getAttribute('data-recontratados')}</td><td>${button.getAttribute('data-duplicados')}</td><td>${button.getAttribute('data-de1a3-dias-sin-gestion')}</td><td>${button.getAttribute('data-de4a6-dias-sin-gestion')}</td><td>${button.getAttribute('data-mas-de6-dias-sin-gestion')}</td></tr></tbody></table>`;
                 });
             });
-        </script>
-        <script>
+
             function showFiniquitadosModal(sistema, pais, negocio) {
-                var finiquitadosList = @Html.Raw(Json.Serialize(Model.ListaFiltroFiniquitados));
-                var sistemaFiniquitados = finiquitadosList.filter(f =>
-                    f.sistema === sistema &&
-                    f.pais === pais &&
-                    f.negocio === negocio
-                );
-
+                var finiquitadosList = @Html.Raw(Json.Serialize(Model.ListaFiltroFiniquitados ?? new List<Finiquitados>()));
+                var data = finiquitadosList.filter(f => f.sistema === sistema && f.pais === pais && f.negocio === negocio);
                 var modalBody = document.querySelector('#finiquitadosModal .modal-body');
-                if (sistemaFiniquitados.length > 0) {
-                    modalBody.innerHTML = `
-                                                                        <table id="file_export2" class="table">
-                                                                            <thead>
-                                                                                <tr>
-                                                                                    <th>País</th>
-                                                                                    <th>Negocio</th>
-                                                                                    <th>Sistema</th>
-                                                                                    <th>Nombre de Usuario</th>
-                                                                                    <th>RUT/DNI</th>
-                                                                                    <th>ID de Usuario</th>
-                                                                                    <th>Cargo</th>
-                                                                                    <th>Nombre Centro Costo Spr</th>
-                                                                                    <th>Último login</th>
-                                                                                    <th>Fecha de alta</th>
-                                                                                    <th>Fecha de baja</th>
-                                                                                    <th>Fecha de Finiquito</th>
-                                                                                </tr>
-                                                                            </thead>
-                                                                            <tbody>
-                                                                                ${sistemaFiniquitados.map(f => `
-                                                                                    <tr>
-                                                                                        <td>${f.pais}</td>
-                                                                                        <td>${f.negocio}</td>
-                                                                                        <td>${f.sistema}</td>
-                                                                                        <td>${f.nombreusuario}</td>
-                                                                                        <td>${f.rutdni}</td>
-                                                                                        <td>${f.userid}</td>
-                                                                                        <td>${f.cargo}</td>
-                                                                                        <td>${f.Nomccostospr}</td>
-                                                                                        <td>${f.fecultlogin}</td>
-                                                                                        <td>${f.fecalta}</td>
-                                                                                        <td>${f.fecbaja}</td>
-                                                                                        <td>${f.fecfiniq}</td>
-                                                                                    </tr>
-                                                                                `).join('')}
-                                                                            </tbody>
-                                                                        </table>
-                                                                    `;
+                if (data.length > 0) {
+                    modalBody.innerHTML = `<table id="tablaFiniquitados" class="table table-striped" style="width:100%"><thead><tr><th>País</th><th>Negocio</th><th>Sistema</th><th>Nombre</th><th>RUT/DNI</th><th>User ID</th><th>Cargo</th><th>C. Costo</th><th>Últ. Login</th><th>Alta</th><th>Baja</th><th>Finiquito</th></tr></thead><tbody>${data.map(f => `<tr><td>${f.pais}</td><td>${f.negocio}</td><td>${f.sistema}</td><td>${f.nombreusuario}</td><td>${f.rutdni}</td><td>${f.userid}</td><td>${f.cargo}</td><td>${f.Nomccostospr}</td><td>${f.fecultlogin}</td><td>${f.fecalta}</td><td>${f.fecbaja}</td><td>${f.fecfiniq}</td></tr>`).join('')}</tbody></table>`;
+                    $('#tablaFiniquitados').DataTable({ dom: "Bfrtip", buttons: ['copy', 'excel', 'pdf'], "destroy": true });
                 } else {
-                    modalBody.innerHTML = '<p>No hay usuarios finiquitados para este sistema.</p>';
+                    modalBody.innerHTML = '<p>No hay usuarios finiquitados para esta selección.</p>';
                 }
-
-                var modal = new bootstrap.Modal(document.getElementById('finiquitadosModal'));
-                modal.show();
-
-                $("#file_export2").DataTable({
-                    dom: "Bfrtip",
-                    buttons: [
-                        {
-                            extend: 'copy',
-                            text: '<i class="fa-regular fa-clipboard"></i>',
-                            titleAttr: 'Copiar',
-                            className: 'btn btn-copy'
-                        },
-                        {
-                            extend: 'excel',
-                            text: '<i class="fa-solid fa-file-excel"></i>',
-                            titleAttr: 'Exportar a Excel',
-                            className: 'btn btn-excel'
-                        },
-                        {
-                            extend: 'pdf',
-                            text: '<i class="fa-solid fa-file-pdf"></i>',
-                            titleAttr: 'Exportar a PDF',
-                            className: 'btn btn-pdf',
-                            orientation: 'landscape',
-                            pageSize: 'LEGAL',
-                            customize: function (doc) {
-
-                                doc.defaultStyle.fontSize = 8;
-
-
-                                doc.content[1].table.widths =
-                                    Array(doc.content[1].table.body[0].length + 1).join('*').split('');
-
-
-                                doc.pageMargins = [10, 10, 10, 10];
-                            },
-                            exportOptions: {
-                                columns: ':visible'
-                            }
-                        }
-                    ]
-                });
+                new bootstrap.Modal(document.getElementById('finiquitadosModal')).show();
             }
-        </script>
-        <script>
+
             function showNoEncontradosModal(sistema, pais, negocio) {
-                var noEncontradosList = @Html.Raw(Json.Serialize(Model.ListaUsuariosNoEncontrados));
-
-                var sistemaNoEncontrados = noEncontradosList.filter(f =>
-                    f.sistema === sistema &&
-                    f.pais === pais &&
-                    f.negocio === negocio
-                );
-
-                    var modalBody = document.querySelector('#NoEncontradosModal .modal-body');
-                    if (sistemaNoEncontrados.length > 0) {
-                        var tableHtml = `
-                            <table id="file_export3" class="table">
-                                <thead>
-                                    <tr>
-                                        <th>País</th>
-                                        <th>Negocio</th>
-                                        <th>Sistema</th>
-                                        <th>Nombre de Usuario</th>
-                                        <th>RUT/DNI</th>
-                                        <th>ID de Usuario</th>
-                                        <th>Cargo</th>
-                                        <th>Nombre Centro Costo Spr</th>
-                                        <th>Último login</th>
-                                        <th>Fecha de alta</th>
-                                        <th>Fecha de baja</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    ${sistemaNoEncontrados.map(f => `
-                                        <tr>
-                                            <td>${f.pais}</td>
-                                            <td>${f.negocio}</td>
-                                            <td>${f.sistema}</td>
-                                            <td>${f.nombreusuario}</td>
-                                            <td>${f.rutdni}</td>
-                                            <td>${f.userid}</td>
-                                            <td>${f.cargo}</td>
-                                            <td>${f.Nomccostospr}</td>
-                                            <td>${f.fecultlogin}</td>
-                                            <td>${f.fecalta}</td>
-                                            <td>${f.fecbaja}</td>
-                                        </tr>
-                                    `).join('')}
-                                </tbody>
-                            </table>
-                                                                    `;
-                    modalBody.innerHTML = tableHtml;
-                } else {
-                    modalBody.innerHTML = '<p>No hay usuarios no encontrados para este sistema.</p>';
-                }
-
-                // Muestra el modal
-                var modal = new bootstrap.Modal(document.getElementById('NoEncontradosModal'));
-                modal.show();
-
-                $("#file_export3").DataTable({
-                    dom: "Bfrtip",
-                    buttons: [
-                        {
-                            extend: 'copy',
-                            text: '<i class="fa-regular fa-clipboard"></i>',
-                            titleAttr: 'Copiar',
-                            className: 'btn btn-copy'
-                        },
-                        {
-                            extend: 'excel',
-                            text: '<i class="fa-solid fa-file-excel"></i>',
-                            titleAttr: 'Exportar a Excel',
-                            className: 'btn btn-excel'
-                        },
-                        {
-                            extend: 'pdf',
-                            text: '<i class="fa-solid fa-file-pdf"></i>',
-                            titleAttr: 'Exportar a PDF',
-                            className: 'btn btn-pdf',
-                            orientation: 'landscape',
-                            pageSize: 'LEGAL',
-                            customize: function (doc) {
-
-                                doc.defaultStyle.fontSize = 8;
-
-
-                                doc.content[1].table.widths =
-                                    Array(doc.content[1].table.body[0].length + 1).join('*').split('');
-
-
-                                doc.pageMargins = [10, 10, 10, 10];
-                            },
-                            exportOptions: {
-                                columns: ':visible'
-                            }
-                        }
-                    ]
-                });
+                 var noEncontradosList = @Html.Raw(Json.Serialize(Model.ListaUsuariosNoEncontrados ?? new List<UsuariosNoEncontrados>()));
+                 var data = noEncontradosList.filter(f => f.sistema === sistema && f.pais === pais && f.negocio === negocio);
+                 var modalBody = document.querySelector('#NoEncontradosModal .modal-body');
+                 if (data.length > 0) {
+                    modalBody.innerHTML = `<table id="tablaNoEncontrados" class="table table-striped" style="width:100%"><thead><tr><th>País</th><th>Negocio</th><th>Sistema</th><th>Nombre</th><th>RUT/DNI</th><th>User ID</th><th>Cargo</th><th>C. Costo</th><th>Últ. Login</th><th>Alta</th><th>Baja</th></tr></thead><tbody>${data.map(f => `<tr><td>${f.pais}</td><td>${f.negocio}</td><td>${f.sistema}</td><td>${f.nombreusuario}</td><td>${f.rutdni}</td><td>${f.userid}</td><td>${f.cargo}</td><td>${f.Nomccostospr}</td><td>${f.fecultlogin}</td><td>${f.fecalta}</td><td>${f.fecbaja}</td></tr>`).join('')}</tbody></table>`;
+                    $('#tablaNoEncontrados').DataTable({ dom: "Bfrtip", buttons: ['copy', 'excel', 'pdf'], "destroy": true });
+                 } else {
+                    modalBody.innerHTML = '<p>No hay usuarios no encontrados para esta selección.</p>';
+                 }
+                 new bootstrap.Modal(document.getElementById('NoEncontradosModal')).show();
             }
-        </script>
 
-        <script>
             function showCtasDuplicadasModal(sistema, pais, negocio) {
-                var ctasDuplicadasList = @Html.Raw(Json.Serialize(Model.ListaUsuariosDuplicados));
-
-                var sistemaCtasDuplicadas = ctasDuplicadasList.filter(f =>
-                    f.sistema === sistema &&
-                    f.pais === pais &&
-                    f.negocio === negocio
-                );
-
+                var ctasDuplicadasList = @Html.Raw(Json.Serialize(Model.ListaUsuariosDuplicados ?? new List<UsuariosDuplicados>()));
+                var data = ctasDuplicadasList.filter(f => f.sistema === sistema && f.pais === pais && f.negocio === negocio);
                 var modalBody = document.querySelector('#CtasDuplicadasModal .modal-body');
-                if (sistemaCtasDuplicadas.length > 0) {
-                    var tableHtml = `
-                            <table id="file_export4" class="table">
-                                <thead>
-                                    <tr>
-                                        <th>País</th>
-                                        <th>Negocio</th>
-                                        <th>Sistema</th>
-                                        <th>Nombre de Usuario</th>
-                                        <th>RUT/DNI</th>
-                                        <th>ID de Usuario</th>
-                                        <th>Cod. Centro Costo</th>
-                                        <th>Cargo</th>
-                                        <th>Nombre Centro Costo Spr</th>
-                                        <th>Último login</th>
-                                        <th>Fecha de alta</th>
-                                        <th>Fecha de baja</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    ${sistemaCtasDuplicadas.map(f => `
-                                        <tr>
-                                            <td>${f.pais}</td>
-                                            <td>${f.negocio}</td>
-                                            <td>${f.sistema}</td>
-                                            <td>${f.nombreusuario}</td>
-                                            <td>${f.rutdni}</td>
-                                            <td>${f.userid}</td>
-                                            <td>${f.codccosto}</td>
-                                            <td>${f.cargo}</td>
-                                            <td>${f.Nomccostospr}</td>
-                                            <td>${f.fecultlogin}</td>
-                                            <td>${f.fecalta}</td>
-                                            <td>${f.fecbaja}</td>
-                                        </tr>
-                                    `).join('')}
-                                </tbody>
-                            </table>
-                                                                        `;
-                    modalBody.innerHTML = tableHtml;
-                } else {
-                    modalBody.innerHTML = '<p>No hay cuentas duplicadas para este sistema.</p>';
-                }
-
-                var modal = new bootstrap.Modal(document.getElementById('CtasDuplicadasModal'));
-                modal.show();
-
-                $("#file_export4").DataTable({
-                    dom: "Bfrtip",
-                    buttons: [
-                        {
-                            extend: 'copy',
-                            text: '<i class="fa-regular fa-clipboard"></i>',
-                            titleAttr: 'Copiar',
-                            className: 'btn btn-copy'
-                        },
-                        {
-                            extend: 'excel',
-                            text: '<i class="fa-solid fa-file-excel"></i>',
-                            titleAttr: 'Exportar a Excel',
-                            className: 'btn btn-excel'
-                        },
-                        {
-                            extend: 'pdf',
-                            text: '<i class="fa-solid fa-file-pdf"></i>',
-                            titleAttr: 'Exportar a PDF',
-                            className: 'btn btn-pdf',
-                            orientation: 'landscape',
-                            pageSize: 'LEGAL',
-                            customize: function (doc) {
-
-                                doc.defaultStyle.fontSize = 8;
-
-
-                                doc.content[1].table.widths =
-                                    Array(doc.content[1].table.body[0].length + 1).join('*').split('');
-
-
-                                doc.pageMargins = [10, 10, 10, 10];
-                            },
-                            exportOptions: {
-                                columns: ':visible'
-                            }
-                        }
-                    ]
-                });
+                 if (data.length > 0) {
+                    modalBody.innerHTML = `<table id="tablaDuplicados" class="table table-striped" style="width:100%"><thead><tr><th>País</th><th>Negocio</th><th>Sistema</th><th>Nombre</th><th>RUT/DNI</th><th>User ID</th><th>Cod. C. Costo</th><th>Cargo</th><th>Nom. C. Costo</th><th>Últ. Login</th><th>Alta</th><th>Baja</th></tr></thead><tbody>${data.map(f => `<tr><td>${f.pais}</td><td>${f.negocio}</td><td>${f.sistema}</td><td>${f.nombreusuario}</td><td>${f.rutdni}</td><td>${f.userid}</td><td>${f.codccosto}</td><td>${f.cargo}</td><td>${f.Nomccostospr}</td><td>${f.fecultlogin}</td><td>${f.fecalta}</td><td>${f.fecbaja}</td></tr>`).join('')}</tbody></table>`;
+                    $('#tablaDuplicados').DataTable({ dom: "Bfrtip", buttons: ['copy', 'excel', 'pdf'], "destroy": true });
+                 } else {
+                    modalBody.innerHTML = '<p>No hay cuentas duplicadas para esta selección.</p>';
+                 }
+                 new bootstrap.Modal(document.getElementById('CtasDuplicadasModal')).show();
             }
-        </script>
-        <script>
+
             (function () {
-                // Cuando cambie el negocio
-                document
-                    .getElementById('selectNegocio')
-                    .addEventListener('change', function () {
-                        var idNeg = this.value;
-
-                        // Llamada AJAX con fetch
-                        fetch('@Url.Action("SistemasPorNegocio", "Alertas")?idNegocio=' + idNeg)
-                            .then(resp => resp.json())
-                            .then(data => {
-                                var selSis = document.getElementById('selectSistema');
-                                // Limpio opciones actuales
-                                selSis.innerHTML = '';
-                                // Opción por defecto
-                                var opt0 = document.createElement('option');
-                                opt0.value = '';
-                                opt0.text = 'Todos los sistemas';
-                                selSis.appendChild(opt0);
-
-                                // Repoblo con los sistemas recibidos
-                                data.forEach(function (s) {
-                                    var opt = document.createElement('option');
-                                    opt.value = s.idSistema;
-                                    opt.text = s.sistema;
-                                    selSis.appendChild(opt);
-                                });
-                            })
-                            .catch(err => console.error('Error cargando sistemas:', err));
-                    });
+                document.getElementById('selectNegocio').addEventListener('change', function () {
+                    var idNeg = this.value;
+                    var selSis = document.getElementById('selectSistema');
+                    selSis.innerHTML = '<option value="">Cargando...</option>';
+                    fetch('@Url.Action("SistemasPorNegocio", "Alertas")?idNegocio=' + idNeg)
+                        .then(resp => resp.json())
+                        .then(data => {
+                            selSis.innerHTML = '<option value="">Todos los sistemas</option>';
+                            data.forEach(function (s) {
+                                selSis.innerHTML += `<option value="${s.idSistema}">${s.sistema}</option>`;
+                            });
+                        })
+                        .catch(err => {
+                            console.error('Error cargando sistemas:', err);
+                            selSis.innerHTML = '<option value="">Error al cargar</option>';
+                        });
+                });
             })();
         </script>
     }
-
-
 </body>
 </html>

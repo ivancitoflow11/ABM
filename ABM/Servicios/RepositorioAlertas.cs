@@ -31,83 +31,84 @@ namespace ABM.Servicios
             using (IDbConnection dbdapper = new SqlConnection(connectionString))
             {
                 return await dbdapper.QueryAsync<EstadisticasUsuarios>(@"
-            
-        WITH ActivosData AS (
-            SELECT 
-                AL3.sistema AS Sistema,
-                AL5.negocio AS Negocio,
-                AL4.pais AS Pais,
-                COUNT(CASE WHEN AL1.estado = 'ACTIVO' THEN 1 END) AS Activos,
-                COUNT(CASE WHEN AL1.estado = 'FINIQUITADO' THEN 1 END) AS Finiquitados,
-                COUNT(CASE WHEN AL1.estado = 'NO ENCONTRADO' THEN 1 END) AS No_Encontrados,
-                COUNT(CASE WHEN AL1.cta_duplicada = 'SI' THEN 1 END) AS CtaDuplicadas,
-                COUNT(CASE WHEN AL1.estado IN ('ACTIVO', 'FINIQUITADO', 'NO ENCONTRADO') OR AL1.cta_duplicada = 'SI' THEN 1 END) AS total_Usuarios
-            FROM 
-                dbo.ftc_agrupa_activos AL1
-            JOIN dbo.ftc_pais_negocio_sistema AL2 
-                ON AL2.idPaisNegocioSistema = AL1.idPaisNegocioSistema
-            JOIN dbo.ftc_sistema AL3 
-                ON AL3.idSistema = AL2.idSistema
-            JOIN dbo.ftc_pais AL4 
-                ON AL4.idPais = AL2.idPais
-            JOIN dbo.ftc_negocio AL5
-                ON AL5.idNegocio = AL2.idNegocio
-            WHERE 
-                (@idNegocio IS NULL OR AL5.idNegocio = @idNegocio)
-                AND (@idSistema IS NULL OR AL3.idSistema = @idSistema)
-            GROUP BY AL3.sistema, AL5.negocio, AL4.pais
-        ),
-        GestionDiariaData AS (
-            SELECT DISTINCT 
-                ftc_sistema.sistema AS Sistema,
-                ftc_negocio.negocio AS Negocio,
-                ftc_pais.pais AS Pais,
-                ISNULL(ftc_gestion_diaria.cnt_recontratados, 0) AS Recontratados,
-                ISNULL(ftc_gestion_diaria.entre_1_3, 0) AS De_1_a_3_Dias_Sin_Gestion,
-                ISNULL(ftc_gestion_diaria.entre_4_6, 0) AS De_4_a_6_Dias_Sin_Gestion,
-                ISNULL(ftc_gestion_diaria.mayor_a_6, 0) AS Mas_de_6_Dias_Sin_Gestion
-            FROM
-                ftc_pais_negocio_sistema 
-            INNER JOIN ftc_gestion_diaria 
-                ON ftc_pais_negocio_sistema.idPaisNegocioSistema = ftc_gestion_diaria.idPaisNegocioSistema 
-            INNER JOIN ftc_pais 
-                ON ftc_pais_negocio_sistema.idPais = ftc_pais.idPais 
-            INNER JOIN ftc_sistema 
-                ON ftc_pais_negocio_sistema.idSistema = ftc_sistema.idSistema 
-            INNER JOIN ftc_negocio
-                ON ftc_pais_negocio_sistema.idNegocio = ftc_negocio.idNegocio
-            WHERE 
-                ftc_gestion_diaria.feccarga = (
-                    SELECT TOP 1 feccarga 
-                    FROM ftc_gestion_diaria 
-                    ORDER BY SUBSTRING(feccarga,7,4)+SUBSTRING(feccarga,4,2)+SUBSTRING(feccarga,1,2) DESC
-                )
-                AND (@idNegocio IS NULL OR ftc_negocio.idNegocio = @idNegocio)
-                AND (@idSistema IS NULL OR ftc_sistema.idSistema = @idSistema)
-        )
-
+        
+    WITH ActivosData AS (
         SELECT 
-            A.Sistema,
-            A.Negocio,
-            A.Pais,
-            A.total_Usuarios AS TotalUsuarios,
-            A.Activos,
-            A.Finiquitados,
-            A.No_Encontrados AS NoEncontrados,
-            A.CtaDuplicadas,
-            G.Recontratados,
-            G.De_1_a_3_Dias_Sin_Gestion AS De1a3DiasSinGestion,
-            G.De_4_a_6_Dias_Sin_Gestion AS De4a6DiasSinGestion,
-            G.Mas_de_6_Dias_Sin_Gestion AS MasDe6DiasSinGestion
+            AL3.sistema AS Sistema,
+            AL5.negocio AS Negocio,
+            AL4.pais AS Pais,
+            AL4.Bandera, 
+            COUNT(CASE WHEN AL1.estado = 'ACTIVO' THEN 1 END) AS Activos,
+            COUNT(CASE WHEN AL1.estado = 'FINIQUITADO' THEN 1 END) AS Finiquitados,
+            COUNT(CASE WHEN AL1.estado = 'NO ENCONTRADO' THEN 1 END) AS No_Encontrados,
+            COUNT(CASE WHEN AL1.cta_duplicada = 'SI' THEN 1 END) AS CtaDuplicadas,
+            COUNT(CASE WHEN AL1.estado IN ('ACTIVO', 'FINIQUITADO', 'NO ENCONTRADO') OR AL1.cta_duplicada = 'SI' THEN 1 END) AS total_Usuarios
         FROM 
-            ActivosData A
-        LEFT JOIN 
-            GestionDiariaData G 
-            ON A.Sistema = G.Sistema AND A.Negocio = G.Negocio AND A.Pais = G.Pais;
-        ", new { idNegocio, idSistema });
+            dbo.ftc_agrupa_activos AL1
+        JOIN dbo.ftc_pais_negocio_sistema AL2 
+            ON AL2.idPaisNegocioSistema = AL1.idPaisNegocioSistema
+        JOIN dbo.ftc_sistema AL3 
+            ON AL3.idSistema = AL2.idSistema
+        JOIN dbo.ftc_pais AL4 
+            ON AL4.idPais = AL2.idPais
+        JOIN dbo.ftc_negocio AL5
+            ON AL5.idNegocio = AL2.idNegocio
+        WHERE 
+            (@idNegocio IS NULL OR AL5.idNegocio = @idNegocio)
+            AND (@idSistema IS NULL OR AL3.idSistema = @idSistema)
+        GROUP BY AL3.sistema, AL5.negocio, AL4.pais, AL4.Bandera 
+    ),
+    GestionDiariaData AS (
+        SELECT DISTINCT 
+            ftc_sistema.sistema AS Sistema,
+            ftc_negocio.negocio AS Negocio,
+            ftc_pais.pais AS Pais,
+            ISNULL(ftc_gestion_diaria.cnt_recontratados, 0) AS Recontratados,
+            ISNULL(ftc_gestion_diaria.entre_1_3, 0) AS De_1_a_3_Dias_Sin_Gestion,
+            ISNULL(ftc_gestion_diaria.entre_4_6, 0) AS De_4_a_6_Dias_Sin_Gestion,
+            ISNULL(ftc_gestion_diaria.mayor_a_6, 0) AS Mas_de_6_Dias_Sin_Gestion
+        FROM
+            ftc_pais_negocio_sistema 
+        INNER JOIN ftc_gestion_diaria 
+            ON ftc_pais_negocio_sistema.idPaisNegocioSistema = ftc_gestion_diaria.idPaisNegocioSistema 
+        INNER JOIN ftc_pais 
+            ON ftc_pais_negocio_sistema.idPais = ftc_pais.idPais 
+        INNER JOIN ftc_sistema 
+            ON ftc_pais_negocio_sistema.idSistema = ftc_sistema.idSistema 
+        INNER JOIN ftc_negocio
+            ON ftc_pais_negocio_sistema.idNegocio = ftc_negocio.idNegocio
+        WHERE 
+            ftc_gestion_diaria.feccarga = (
+                SELECT TOP 1 feccarga 
+                FROM ftc_gestion_diaria 
+                ORDER BY SUBSTRING(feccarga,7,4)+SUBSTRING(feccarga,4,2)+SUBSTRING(feccarga,1,2) DESC
+            )
+            AND (@idNegocio IS NULL OR ftc_negocio.idNegocio = @idNegocio)
+            AND (@idSistema IS NULL OR ftc_sistema.idSistema = @idSistema)
+    )
+
+    SELECT 
+        A.Sistema,
+        A.Negocio,
+        A.Pais,
+        A.Bandera,
+        A.total_Usuarios AS TotalUsuarios,
+        A.Activos,
+        A.Finiquitados,
+        A.No_Encontrados AS NoEncontrados,
+        A.CtaDuplicadas,
+        G.Recontratados,
+        G.De_1_a_3_Dias_Sin_Gestion AS De1a3DiasSinGestion,
+        G.De_4_a_6_Dias_Sin_Gestion AS De4a6DiasSinGestion,
+        G.Mas_de_6_Dias_Sin_Gestion AS MasDe6DiasSinGestion
+    FROM 
+        ActivosData A
+    LEFT JOIN 
+        GestionDiariaData G 
+        ON A.Sistema = G.Sistema AND A.Negocio = G.Negocio AND A.Pais = G.Pais;
+", new { idNegocio, idSistema });
             }
         }
-
 
 
         public async Task<IEnumerable<Finiquitados>> ObtenerDetalleFiniquitados(int? idNegocio, int? idSistema)

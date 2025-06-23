@@ -1,15 +1,37 @@
-﻿namespace ABM.Models
+﻿using System;
+
+namespace ABM.Models
 {
     public class KpiResultado
     {
-        public string pais { get; set; }
-        public string negocio { get; set; }
-        public int sistemas_mes_actual { get; set; }
-        public int sistemas_mes_anterior { get; set; }
-        public int finiquitados_mes_actual { get; set; }
-        public decimal p_cumplimiento_mes_actual { get; set; }
-        public int finiquitados_mes_anterior { get; set; }
-        public decimal p_cumplimiento_mes_anteior { get; set; }
-        public int total_cuentas { get; set; }
+        public DateTime fecha_carga { get; set; }
+        public int mes { get; set; }
+        public int año { get; set; }
+        public string PAIS { get; set; }
+        public int n_finiquitados { get; set; }
+        public int n_finiquitados_total { get; set; }
+        public string cumplimiento_finiquitados { get; set; } 
+        public int n_60 { get; set; }
+        public int n_60_total { get; set; }
+        public string cumplimiento_60 { get; set; }
+        public int n_180 { get; set; }
+        public int n_180_total { get; set; }
+        public string cumplimiento_180 { get; set; }
+        public int n_generica_sin_responsable { get; set; } 
+        public int n_generica_sin_responsable_total { get; set; } 
+        public string cumplimiento_generica_sin_responsable { get; set; } 
+        public int n_usuarios_no_logeados { get; set; }
+        public int n_usuarios_no_logeados_total { get; set; } 
+        public string cumplimiento_usuarios_no_logeados { get; set; } 
+        public int usuarios_duplicados { get; set; }
+        public int n_usuarios_duplicados { get; set; }
+        public int n_usuarios_duplicados_total { get; set; } 
+        public string cumplimiento_usuarios_duplicados { get; set; } 
+        public int n_usuarios_pass_no_expira { get; set; }
+        public int n_usuarios_pass_no_expira_total { get; set; } 
+        public string cumplimiento_usuarios_pass_no_expira { get; set; } 
+        public int n_genericos_pass_no_expira { get; set; } 
+        public int n_genericos_pass_no_expira_total { get; set; } 
+        public string cumplimiento_genericos_pass_no_expira { get; set; } 
     }
 }
