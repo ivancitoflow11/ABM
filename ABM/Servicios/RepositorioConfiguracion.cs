@@ -1,9 +1,10 @@
-﻿using Dapper;
+﻿using System.Collections.Generic;
+using System.Data;
+using System.Threading.Tasks;
 using ABM.Models;
+using Dapper;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 
 namespace ABM.Servicios
 {
@@ -57,6 +58,14 @@ namespace ABM.Servicios
         Task<bool> ActualizarEnvioCorreoDetalleAsync(EnvioCorreoDetalle correoDetalle);
         Task<bool> EliminarEnvioCorreoDetalleAsync(int idDetalle);
         Task<int> CrearEnvioCorreoListaAsync(EnvioCorreoLista envioLista);
+
+        // --- NUEVOS MÉTODOS PARA GERENCIAS ---
+        Task<IEnumerable<Gerencia>> ObtenerGerencias();
+        Task<Gerencia> ObtenerGerenciaPorId(int id);
+        Task CrearGerencia(Gerencia modelo);
+        Task ActualizarGerencia(Gerencia modelo);
+        Task<bool> EliminarGerencia(int id);
+        Task<bool> ExisteGerenciaNombre(string nombre, int? idExcluir = null);
     }
 
     public class RepositorioConfiguracion : IRepositorioConfiguracion
@@ -68,13 +77,65 @@ namespace ABM.Servicios
             connectionString = configuration.GetConnectionString("CadenaSQL");
         }
 
+        public async Task<IEnumerable<Gerencia>> ObtenerGerencias()
+        {
+            using IDbConnection db = new SqlConnection(connectionString);
+
+            var sql = "SELECT ID_gerencia as IdGerencia, Nom_Gerencia, sistema FROM dbo.ftc_gerencia ORDER BY Nom_Gerencia;";
+            return await db.QueryAsync<Gerencia>(sql);
+        }
+
+        public async Task<Gerencia> ObtenerGerenciaPorId(int id)
+        {
+            using IDbConnection db = new SqlConnection(connectionString);
+            var sql = "SELECT ID_gerencia as IdGerencia, Nom_Gerencia, sistema FROM dbo.ftc_gerencia WHERE ID_gerencia = @id;";
+            return await db.QuerySingleOrDefaultAsync<Gerencia>(sql, new { id });
+        }
+
+        public async Task CrearGerencia(Gerencia modelo)
+        {
+            using IDbConnection db = new SqlConnection(connectionString);
+            var sql = @"INSERT INTO dbo.ftc_gerencia (Nom_Gerencia, sistema) 
+                        VALUES (@Nom_Gerencia, @sistema);";
+            await db.ExecuteAsync(sql, modelo);
+        }
+
+        public async Task ActualizarGerencia(Gerencia modelo)
+        {
+            using IDbConnection db = new SqlConnection(connectionString);
+            var sql = @"UPDATE dbo.ftc_gerencia 
+                        SET Nom_Gerencia = @Nom_Gerencia, sistema = @sistema 
+                        WHERE ID_gerencia = @IdGerencia;";
+            await db.ExecuteAsync(sql, modelo);
+        }
+
+        public async Task<bool> EliminarGerencia(int id)
+        {
+            using IDbConnection db = new SqlConnection(connectionString);
+            var sql = "DELETE FROM dbo.ftc_gerencia WHERE ID_gerencia = @id;";
+            var affectedRows = await db.ExecuteAsync(sql, new { id });
+            return affectedRows > 0; // Devuelve true si se eliminó al menos una fila
+        }
+
+        public async Task<bool> ExisteGerenciaNombre(string nombre, int? idExcluir = null)
+        {
+            using IDbConnection db = new SqlConnection(connectionString);
+
+            var sql = @"SELECT CAST(CASE WHEN EXISTS (
+                            SELECT 1 
+                            FROM dbo.ftc_gerencia 
+                            WHERE Nom_Gerencia = @nombre AND (@idExcluir IS NULL OR ID_gerencia <> @idExcluir)
+                        ) THEN 1 ELSE 0 END AS BIT)";
+
+            return await db.QuerySingleAsync<bool>(sql, new { nombre, idExcluir });
+        }
+
+
         // ENVIO CORREOS
         public async Task<int?> ObtenerIdCorreoListaPorPNSAsync(int idPaisNegocioSistema)
         {
             using var db = new SqlConnection(connectionString);
-            // Buscamos en la tabla de detalle si ya existe un registro para este cruce PNS.
-            // Como todos los detalles para una misma lista comparten el mismo IdCorreos,
-            // con obtener el primero es suficiente.
+
             var sql = @"
             SELECT TOP 1 idCorreos
             FROM ftc_envio_correo_detalle

@@ -558,7 +558,100 @@ namespace ABM.Controllers
             return Json(selectListItems);
         }
 
+        [HttpGet]
+        [Monitoreo("Gerencias", "SELECT", "verListadoGerencias")]
+        public async Task<IActionResult> Gerencias()
+        {
+            var lista = await _repo.ObtenerGerencias();
+            return View("Gerencias", lista); // Vista principal que muestra la lista y el form de creación
+        }
 
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [Monitoreo("Gerencias", "INSERT", "crearGerencia")]
+        public async Task<IActionResult> CrearGerencia(Gerencia modelo)
+        {
+            if (await _repo.ExisteGerenciaNombre(modelo.Nom_Gerencia))
+            {
+                ModelState.AddModelError(nameof(modelo.Nom_Gerencia), "El nombre de la Gerencia ya existe.");
+            }
+
+            if (!ModelState.IsValid)
+            {
+                TempData["ErrorMessage"] = "Error al crear la gerencia. Por favor, corrija los errores.";
+                // Volvemos a cargar la vista con la lista y los errores del modelo
+                var lista = await _repo.ObtenerGerencias();
+                return View("Gerencias", lista);
+            }
+
+            await _repo.CrearGerencia(modelo);
+            TempData["SuccessMessage"] = "Gerencia creada exitosamente.";
+            return RedirectToAction(nameof(Gerencias));
+        }
+
+        [HttpGet]
+        [Monitoreo("EditarGerencia", "SELECT", "obtenerGerenciaPorId")]
+        public async Task<IActionResult> EditarGerencia(int id)
+        {
+            var gerencia = await _repo.ObtenerGerenciaPorId(id);
+            if (gerencia == null) return NotFound();
+            return Json(gerencia); // Devuelve JSON para el modal
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [Monitoreo("EditarGerencia", "UPDATE", "editarGerencia")]
+        public async Task<IActionResult> EditarGerencia(Gerencia modelo)
+        {
+            if (await _repo.ExisteGerenciaNombre(modelo.Nom_Gerencia, modelo.IdGerencia))
+            {
+                ModelState.AddModelError("Nom_Gerencia", "El nombre de la Gerencia ya existe.");
+            }
+
+            if (!ModelState.IsValid)
+            {
+                var errores = ModelState.ToDictionary(
+                    kvp => kvp.Key,
+                    kvp => kvp.Value.Errors.Select(e => e.ErrorMessage).ToArray()
+                );
+                return BadRequest(new { errors = errores }); // Devuelve errores en JSON para el modal
+            }
+
+            await _repo.ActualizarGerencia(modelo);
+            return Ok(new { message = "Gerencia actualizada exitosamente." }); // Devuelve éxito en JSON
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [Monitoreo("Gerencias", "DELETE", "eliminarGerencia")]
+        public async Task<IActionResult> EliminarGerencia(int id)
+        {
+            var existe = await _repo.ObtenerGerenciaPorId(id);
+            if (existe == null)
+            {
+                TempData["ErrorMessage"] = "La gerencia que intenta eliminar no existe.";
+                return RedirectToAction(nameof(Gerencias));
+            }
+
+            try
+            {
+                var eliminado = await _repo.EliminarGerencia(id);
+                if (eliminado)
+                {
+                    TempData["SuccessMessage"] = "Gerencia eliminada exitosamente.";
+                }
+                else
+                {
+                    TempData["ErrorMessage"] = "No se pudo eliminar la gerencia.";
+                }
+            }
+            catch (Exception ex)
+            {
+                TempData["ErrorMessage"] = "Error al eliminar. Es posible que la gerencia esté en uso.";
+            }
+
+            return RedirectToAction(nameof(Gerencias));
+        }
         [HttpGet]
 
         public async Task<IActionResult> GetDatosEnvioCorreo(int id) 

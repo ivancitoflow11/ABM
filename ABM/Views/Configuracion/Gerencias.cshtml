@@ -1,0 +1,214 @@
+﻿@model IEnumerable<ABM.Models.Gerencia>
+
+@{
+    ViewData["Title"] = "Mantenedor de Gerencias";
+}
+
+
+
+<div class="container-fluid pt-5">
+
+    <h4 class="mt-5">Mantenedor de Gerencias</h4>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success">@TempData["SuccessMessage"]</div>
+    }
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger">@TempData["ErrorMessage"]</div>
+    }
+
+    <div class="card">
+        <div class="card-header">
+            <h5 class="card-title mb-0">Crear Nueva Gerencia</h5>
+        </div>
+        <div class="card-body">
+            <form asp-action="CrearGerencia" method="post">
+                @Html.AntiForgeryToken()
+                <div class="row">
+                    <div class="col-md-5 mb-3">
+                        <label for="Nom_Gerencia" class="form-label">Nombre Gerencia</label>
+                        <input name="Nom_Gerencia" class="form-control" />
+                        @Html.ValidationMessage("Nom_Gerencia", new { @class = "text-danger" })
+                    </div>
+                    <div class="col-md-5 mb-3">
+                        <label for="sistema" class="form-label">Sistema (Opcional)</label>
+                        <input name="sistema" class="form-control" />
+                        @Html.ValidationMessage("sistema", new { @class = "text-danger" })
+                    </div>
+                    <div class="col-md-2 d-flex align-items-end mb-3">
+                        <button type="submit" class="btn btn-success w-100">Crear</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h5 class="card-title mb-0">Listado de Gerencias</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table id="tablaGerencias" class="table table-striped table-bordered" style="width:100%">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Nombre Gerencia</th>
+                            <th>Sistema</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model)
+                        {
+                            <tr>
+                                <td>@item.IdGerencia</td>
+                                <td>@item.Nom_Gerencia</td>
+                                <td>@(item.sistema ?? "-")</td>
+                                <td>
+                                    <button class="btn btn-sm btn-primary btn-editar" data-id="@item.IdGerencia">Editar</button>
+                                    <button class="btn btn-sm btn-danger btn-eliminar" data-id="@item.IdGerencia">Eliminar</button>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+@* ... tu código para el modal y los scripts sigue aquí ... *@
+<div class="modal fade" id="modalEditarGerencia" tabindex="-1" aria-labelledby="modalEditarLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="formEditarGerencia">
+                @Html.AntiForgeryToken()
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalEditarLabel">Editar Gerencia</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="editIdGerencia" name="IdGerencia" />
+                    <div class="mb-3">
+                        <label for="editNom_Gerencia" class="form-label">Nombre Gerencia</label>
+                        <input type="text" id="editNom_Gerencia" name="Nom_Gerencia" class="form-control" />
+                        <div class="text-danger" id="error-Nom_Gerencia"></div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editSistema" class="form-label">Sistema (Opcional)</label>
+                        <input type="text" id="editSistema" name="sistema" class="form-control" />
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<form id="formEliminar" asp-action="EliminarGerencia" method="post" style="display:none;">
+    @Html.AntiForgeryToken()
+    <input type="hidden" name="id" id="idEliminar" />
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+
+    <script src="/libs/datatables.net/js/jquery.dataTables.min.js"></script>
+    <script src="/js/dataTables.buttons.min.js"></script>
+    <script src="/js/jszip.min.js"></script>
+    <script src="/js/pdfmake.min.js"></script>
+    <script src="/js/vfs_fonts.js"></script>
+    <script src="/js/buttons.html5.min.js"></script>
+    <script src="/js/buttons.print.min.js"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <script>
+        $(document).ready(function () {
+            // 1. Ahora esta línea funcionará porque la librería ya está cargada
+            $('#tablaGerencias').DataTable({
+                "language": {
+                    "url": "//cdn.datatables.net/plug-ins/1.10.21/i18n/Spanish.json"
+                }
+            });
+
+            // 2. Lógica para EDITAR (usando delegación de eventos)
+            $('#tablaGerencias tbody').on('click', '.btn-editar', function () {
+                var id = $(this).data('id');
+                $('#error-Nom_Gerencia').text('');
+
+                $.ajax({
+                    url: '@Url.Action("EditarGerencia", "Configuracion")/' + id,
+                    type: 'GET',
+                    success: function (data) {
+                        $('#editIdGerencia').val(data.idGerencia);
+                        $('#editNom_Gerencia').val(data.nom_Gerencia);
+                        $('#editSistema').val(data.sistema);
+                        $('#modalEditarGerencia').modal('show');
+                    },
+                    error: function () {
+                        Swal.fire('Error', 'No se pudo cargar la información de la gerencia.', 'error');
+                    }
+                });
+            });
+
+            // 3. Lógica para ELIMINAR (usando delegación de eventos)
+            $('#tablaGerencias tbody').on('click', '.btn-eliminar', function () {
+                var id = $(this).data('id');
+                Swal.fire({
+                    title: '¿Estás seguro?',
+                    text: "¡No podrás revertir esta acción!",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#d33',
+                    cancelButtonColor: '#3085d6',
+                    confirmButtonText: 'Sí, ¡eliminar!',
+                    cancelButtonText: 'Cancelar'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        $('#idEliminar').val(id);
+                        $('#formEliminar').submit();
+                    }
+                });
+            });
+
+            // 4. Lógica para el envío del formulario del MODAL DE EDICIÓN
+            $('#formEditarGerencia').on('submit', function (e) {
+                e.preventDefault();
+                var form = $(this);
+
+                $.ajax({
+                    url: '@Url.Action("EditarGerencia", "Configuracion")',
+                    type: 'POST',
+                    data: form.serialize(),
+                    success: function (response) {
+                        $('#modalEditarGerencia').modal('hide');
+                        Swal.fire('¡Éxito!', response.message, 'success').then(() => {
+                            window.location.reload();
+                        });
+                    },
+                    error: function (xhr) {
+                        $('#error-Nom_Gerencia').text('');
+                        var response = xhr.responseJSON;
+
+                        if (response && response.errors) {
+                            if (response.errors.Nom_Gerencia) {
+                                $('#error-Nom_Gerencia').text(response.errors.Nom_Gerencia[0]);
+                            } else {
+                                 Swal.fire('Error', 'Ocurrió un error de validación.', 'error');
+                            }
+                        } else {
+                            Swal.fire('Error', 'Ocurrió un error inesperado al actualizar.', 'error');
+                        }
+                    }
+                });
+            });
+        });
+    </script>
+}
