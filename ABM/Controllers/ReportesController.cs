@@ -30,6 +30,77 @@ namespace ABM.Controllers
             repositorioReportes = RepositorioReportes;
         }
 
+        [HttpGet]
+        [Monitoreo("TiempoInactividad", "SELECT", "verTiempoInactividad")]
+        public async Task<IActionResult> TiempoInactividad(string sistema = null)
+        {
+            var idPaisSesion = HttpContext.Session.GetInt32("IdPais");
+            var idNegocioSesion = HttpContext.Session.GetInt32("IdNegocio");
+            if (!idPaisSesion.HasValue || !idNegocioSesion.HasValue)
+                return RedirectToAction("PnsSelectorPartial", "Home");
+
+            int idPais = idPaisSesion.Value;
+            int idNegocio = idNegocioSesion.Value;
+
+            // 1) Traigo la lista de usuarios con inactividad
+            var lista = (await repositorioReportes
+                .ObtenerListaTiempoInactividad(idPais, idNegocio))
+                .ToList();
+
+            // 2) Extraigo los sistemas únicos para el dropdown
+            var sistemas = lista
+                .Select(x => x.sistema)
+                .Where(s => !string.IsNullOrEmpty(s))
+                .Distinct()
+                .OrderBy(s => s)
+                .ToList();
+            ViewBag.Sistemas = sistemas;
+            ViewBag.SistemaSeleccionado = sistema;
+
+            // 3) Si el usuario filtró por un sistema, lo aplico sobre la lista
+            if (!string.IsNullOrEmpty(sistema))
+            {
+                lista = lista.Where(x => x.sistema == sistema).ToList();
+            }
+
+            return View(lista);
+        }
+
+        [HttpGet]
+        [Monitoreo("DifCargoPerfil", "SELECT", "verDifCargoPerfil")]
+        public async Task<IActionResult> DifCargoPerfil(string sistema = null)
+        {
+            var idPaisSesion = HttpContext.Session.GetInt32("IdPais");
+            var idNegocioSesion = HttpContext.Session.GetInt32("IdNegocio");
+            if (!idPaisSesion.HasValue || !idNegocioSesion.HasValue)
+                return RedirectToAction("PnsSelectorPartial", "Home");
+
+            int idPais = idPaisSesion.Value;
+            int idNegocio = idNegocioSesion.Value;
+
+            // 1) Traigo la lista de diferencias desde el repositorio
+            var lista = (await repositorioReportes
+                .ObtenerListaDifCargoPerfil(idPais, idNegocio))
+                .ToList();
+
+            // 2) Extraigo los sistemas únicos para el dropdown
+            var sistemas = lista
+                .Select(x => x.sistema)
+                .Where(s => !string.IsNullOrEmpty(s))
+                .Distinct()
+                .OrderBy(s => s)
+                .ToList();
+            ViewBag.Sistemas = sistemas;
+            ViewBag.SistemaSeleccionado = sistema;
+
+            // 3) Si el usuario filtró por un sistema, lo aplico sobre la lista en memoria
+            if (!string.IsNullOrEmpty(sistema))
+            {
+                lista = lista.Where(x => x.sistema == sistema).ToList();
+            }
+
+            return View(lista);
+        }
 
         [HttpGet]
         [Monitoreo("Finiquitados", "SELECT", "verFiniquitadosPorSistema")]

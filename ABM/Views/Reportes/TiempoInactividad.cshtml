@@ -1,20 +1,20 @@
-﻿@model IEnumerable<ABM.Models.DifCargoPerfil>
+﻿@model IEnumerable<ABM.Models.TiempoInactividad>
 @using System.Linq
 
 <link rel="stylesheet" href="~/css/botones.css" asp-append-version="true" />
 
 <div class="pt-5">
-    <h4 class="mt-5">Reporte de Diferencia Cargo/Perfil</h4>
+    <h4 class="mt-5">Reporte de Tiempos de Inactividad </h4>
 
     <div class="mt-4">
         <div class="row">
             <div class="col-md-12">
                 <div class="card mb-4">
                     <div class="card-header text-white" style="background-color: #acd743;">
-                        Listado de Diferencias
+                        Usuarios Inactivos
                     </div>
                     <div class="card-body table-responsive">
-                        <form method="get" asp-action="DifCargoPerfil"
+                        <form method="get" asp-action="TiempoInactividad"
                               class="row g-2 mb-3 justify-content-end align-items-end">
                             <div class="col-auto">
                                 <label for="sistema" class="form-label">Sistema:</label>
@@ -37,19 +37,18 @@
                                 <button type="submit" class="btn btn-primary">Filtrar</button>
                             </div>
                         </form>
-                        <table id="file_export5"
-                               class="table table-striped table-bordered nowrap"
+                        <table id="file_export6" class="table table-striped table-bordered nowrap"
                                style="width:100%; text-align:center; table-layout:auto;">
                             <thead>
                                 <tr>
                                     <th>RUT</th>
                                     <th>Nombre Usuario</th>
                                     <th>País</th>
+                                    <th>Negocio</th>
                                     <th>Sistema</th>
-                                    <th>Cargo</th>
-                                    <th>Perfil</th>
                                     <th>Estado</th>
-                                    <th>Centro Costo</th>
+                                    <th>Último Login</th>
+                                    <th>Días Inactivo</th>
                                 </tr>
                             </thead>
                             <tbody class="table-group-divider">
@@ -74,11 +73,11 @@
                                             <td style="white-space:nowrap;">@($"{item.rutdni}-{item.dv}")</td>
                                             <td style="white-space:nowrap;">@(item.nombreusuario ?? "-")</td>
                                             <td style="white-space:nowrap;">@(item.pais ?? "-")</td>
+                                            <td style="white-space:nowrap;">@(item.negocio ?? "-")</td>
                                             <td style="white-space:nowrap;">@(item.sistema ?? "-")</td>
-                                            <td style="white-space:nowrap;">@(item.cargo ?? "-")</td>
-                                            <td style="white-space:nowrap;">@(item.perfil ?? "-")</td>
                                             <td style="white-space:nowrap;">@(item.estado ?? "-")</td>
-                                            <td style="white-space:nowrap;">@(item.Nomccostospr ?? "-")</td>
+                                            <td style="white-space:nowrap;">@(item.fecultlogin ?? "-")</td>
+                                            <td style="white-space:nowrap;">@item.DiasDesdeUltLogin</td>
                                         </tr>
                                     }
                                 }

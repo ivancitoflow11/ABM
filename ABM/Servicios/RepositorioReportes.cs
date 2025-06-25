@@ -14,6 +14,9 @@ namespace ABM.Servicios
         Task<IEnumerable<UltimaConexion>> ObtenerListaUltimaConexion(int idpais, int idnegocio);
         Task<IEnumerable<UsuariosActivos>> ObtenerListaUsuariosActivos(int idpais, int idnegocio);
         Task<IEnumerable<UsersBuscar>> ObtenerUsuariosPorRutONombre(int idPais, int idNegocio, string rutDni = null, string nombreUsuario = null);
+        Task<IEnumerable<DifCargoPerfil>> ObtenerListaDifCargoPerfil(int idpais, int idnegocio);
+
+        Task<IEnumerable<TiempoInactividad>> ObtenerListaTiempoInactividad(int idpais, int idnegocio);
 
     }
 
@@ -29,8 +32,92 @@ namespace ABM.Servicios
         }
 
 
+            public async Task<IEnumerable<TiempoInactividad>> ObtenerListaTiempoInactividad(int idpais, int idnegocio)
+            {
+                using (IDbConnection dbdapper = new SqlConnection(connectionString))
+                {
+                    // Consulta SQL adaptada para ser consistente con los otros reportes
+                    var query = @"
+                SELECT DISTINCT 
+                    AL4.pais,
+                    AL5.negocio,
+                    AL3.sistema, 
+                    AL1.rutdni, 
+                    AL1.dv, 
+                    AL1.nombreusuario, 
+                    AL1.userid, 
+                    AL1.fecultlogin, 
+                    AL1.estado,
+                    DATEDIFF(DAY, AL1.fecultlogin, GETDATE()) AS DiasDesdeUltLogin
+                FROM 
+                    dbo.ftc_agrupa_activos AL1
+                JOIN 
+                    dbo.ftc_pais_negocio_sistema AL2 ON AL2.idPaisNegocioSistema = AL1.idPaisNegocioSistema
+                JOIN 
+                    dbo.ftc_sistema AL3 ON AL3.idSistema = AL2.idSistema
+                JOIN 
+                    dbo.ftc_pais AL4 ON AL4.idPais = AL2.idPais
+                JOIN
+                    dbo.ftc_negocio AL5 ON AL5.idNegocio = AL2.idNegocio
+                WHERE 
+                    DATEDIFF(DAY, AL1.fecultlogin, GETDATE()) > 30
+                    AND AL2.idPais = @idpais
+                    AND AL2.idNegocio = @idnegocio;
+            ";
 
+                    return await dbdapper.QueryAsync<TiempoInactividad>(query, new { idpais, idnegocio });
+                }
+            }
+        
 
+        public async Task<IEnumerable<DifCargoPerfil>> ObtenerListaDifCargoPerfil(int idpais, int idnegocio)
+        {
+            // Se ha eliminado la lógica de permisos de usuario.
+            using (IDbConnection dbdapper = new SqlConnection(connectionString))
+            {
+                // Consulta SQL simplificada sin joins ni filtros de gerencia/subgerencia.
+                var query = @"
+            WITH UniqueRutDni AS (
+                SELECT 
+                    AL1.rutdni, 
+                    AGR.dv,
+                    AL1.nombreusuario, 
+                    AL1.userid,
+                    PAIS.pais,
+                    AL3.sistema, 
+                    AL1.cargospr AS cargo, 
+                    AL1.perfil, 
+                    AGR.estado,
+                    AGR.empresa,
+                    AGR.Nomccostospr,
+                    AGR.codccostospr,
+                    AL1.idCarga,
+                    ROW_NUMBER() OVER (PARTITION BY CONCAT(AL1.rutdni, AL1.userid) ORDER BY AL1.idCarga DESC) AS rn
+                FROM 
+                    dbo.ftc_matriz_diaria AL1
+                JOIN dbo.ftc_pais_negocio_sistema AL2 ON AL2.idPaisNegocioSistema = AL1.idPaisNegocioSistema
+                JOIN dbo.ftc_sistema AL3 ON AL3.idSistema = AL2.idSistema
+                LEFT JOIN dbo.ftc_agrupa_activos AGR ON AL1.rutdni = AGR.rutdni 
+                    AND AL1.idPaisNegocioSistema = AGR.idPaisNegocioSistema AND AGR.cargomatriz IS NULL AND AGR.estado = 'ACTIVO'
+                LEFT JOIN dbo.ftc_pais PAIS ON PAIS.idPais = AL2.idPais
+                WHERE 
+                    AL1.estado_ex <> 'CERRADO' 
+                    AND AL1.estadousuario IN ('ACTIVO', 'EXTERNO') 
+                    AND AL1.fechaAutorizacion_ex IS NULL
+                    AND AL2.idPais = @idpais
+                    AND AL2.idNegocio = @idnegocio
+            )
+            SELECT *
+            FROM UniqueRutDni
+            WHERE rn = 1;
+        ";
+
+                return await dbdapper.QueryAsync<DifCargoPerfil>(
+                    query,
+                    new { idpais, idnegocio }
+                );
+            }
+        }
         public async Task<IEnumerable<Finiquitados>> ObtenerListaFiniquitadosPorSistema(int idpais, int idnegocio)
         {
             using (IDbConnection dbdapper = new SqlConnection(connectionString))
