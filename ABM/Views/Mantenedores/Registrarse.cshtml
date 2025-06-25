@@ -109,6 +109,13 @@
                             @Html.ValidationMessageFor(m => m.Repeat_Password, "", new { @class = "text-danger" })
                         </div>
                         <div class="mb-3">
+                            <label asp-for="IdGerencia" class="form-label"></label>
+                            <select class="form-select" asp-for="IdGerencia" asp-items="@Model.GerenciasDisponibles">
+                                <option value="">Seleccione una gerencia (Opcional)...</option>
+                            </select>
+                            <span asp-validation-for="IdGerencia" class="text-danger"></span>
+                        </div>
+                        <div class="mb-3">
                             <label for="RolId" class="form-label">Rol</label>
                             <select class="form-select" asp-for="RolId" asp-items="@(new SelectList(Model.RolesDisponibles, "idRol", "nombre"))">
                                 <option disabled selected value="">Seleccione un rol...</option>

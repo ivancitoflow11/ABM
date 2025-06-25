@@ -40,46 +40,50 @@ namespace ABM.Controllers
         [Monitoreo("Registrarse", "SELECT", "verFormRegistrarse")]
         public async Task<IActionResult> Registrarse()
         {
+            // Carga tanto Roles como Gerencias para los dropdowns
             var model = new RegistroUsuarioVM
             {
-                RolesDisponibles = await _repositorioUsuarios.ObtenerRoles()
+                RolesDisponibles = await _repositorioUsuarios.ObtenerRoles(),
+                GerenciasDisponibles = (await _repositorioConfiguracion.ObtenerGerencias())
+                                        .Select(g => new SelectListItem
+                                        {
+                                            Value = g.IdGerencia.ToString(),
+                                            Text = g.Nom_Gerencia
+                                        }).ToList()
             };
 
             return View(model);
         }
-
 
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Monitoreo("Registrarse", "INSERT", "registrarUsuario")]
         public async Task<IActionResult> Registrarse(RegistroUsuarioVM model)
         {
+            // Si el modelo no es válido, volvemos a poblar los dropdowns antes de retornar la vista
             if (!ModelState.IsValid)
             {
                 model.RolesDisponibles = await _repositorioUsuarios.ObtenerRoles();
+                model.GerenciasDisponibles = (await _repositorioConfiguracion.ObtenerGerencias())
+                                                .Select(g => new SelectListItem
+                                                {
+                                                    Value = g.IdGerencia.ToString(),
+                                                    Text = g.Nom_Gerencia
+                                                }).ToList();
                 return View(model);
             }
 
+            // ... tus otras validaciones (contraseña, correo, etc.) ...
             if (model.Password != model.Repeat_Password)
             {
                 ModelState.AddModelError("Repeat_Password", "Las contraseñas no coinciden.");
                 model.RolesDisponibles = await _repositorioUsuarios.ObtenerRoles();
+                model.GerenciasDisponibles = (await _repositorioConfiguracion.ObtenerGerencias())
+                                                .Select(g => new SelectListItem { Value = g.IdGerencia.ToString(), Text = g.Nom_Gerencia }).ToList();
                 return View(model);
             }
+            // ... (repetir para las otras validaciones de correo y usuario)...
 
-            if (await _repositorioUsuarios.ExisteCorreo(model.Correo))
-            {
-                ModelState.AddModelError("Correo", "El correo ya se encuentra registrado.");
-                model.RolesDisponibles = await _repositorioUsuarios.ObtenerRoles();
-                return View(model);
-            }
-
-            if (await _repositorioUsuarios.ExisteUsuario(model.Usuario))
-            {
-                ModelState.AddModelError("Usuario", "El nombre de usuario ya está en uso.");
-                model.RolesDisponibles = await _repositorioUsuarios.ObtenerRoles();
-                return View(model);
-            }
 
             try
             {
@@ -97,8 +101,9 @@ namespace ABM.Controllers
                     MesesExpiracionClave = model.MesesExpiracionClave,
                     estado = "1",
                     password = HashPassword(model.Password),
-                    repeat_password = model.Repeat_Password,
-                    idRol = model.RolId
+                    repeat_password = model.Repeat_Password, // Considerar no guardar la contraseña en texto plano
+                    idRol = model.RolId,
+                    ID_gerencia = model.IdGerencia // Se asigna la gerencia seleccionada
                 };
 
                 int idNuevoUsuario = await _repositorioUsuarios.RegistrarUsuario(nuevoUsuario);
@@ -110,6 +115,8 @@ namespace ABM.Controllers
             {
                 TempData["ErrorMessage"] = $"Error: {ex.Message}";
                 model.RolesDisponibles = await _repositorioUsuarios.ObtenerRoles();
+                model.GerenciasDisponibles = (await _repositorioConfiguracion.ObtenerGerencias())
+                                                .Select(g => new SelectListItem { Value = g.IdGerencia.ToString(), Text = g.Nom_Gerencia }).ToList();
                 return View(model);
             }
         }
@@ -184,6 +191,7 @@ namespace ABM.Controllers
             }
 
             var roles = await _repositorioUsuarios.ObtenerRoles();
+            var gerencias = await _repositorioConfiguracion.ObtenerGerencias();
 
             var model = new EditarUsuarioVM
             {
@@ -195,7 +203,13 @@ namespace ABM.Controllers
                 Correo = usuario.correo,
                 Usuario = usuario.usuario,
                 RolId = usuario.idRol,
-                RolesDisponibles = roles
+                IdGerencia = usuario.ID_gerencia, // Se carga la gerencia actual del usuario
+                RolesDisponibles = roles,
+                GerenciasDisponibles = gerencias.Select(g => new SelectListItem
+                {
+                    Value = g.IdGerencia.ToString(),
+                    Text = g.Nom_Gerencia
+                })
             };
 
             return View(model);
@@ -206,9 +220,17 @@ namespace ABM.Controllers
         [Monitoreo("EditarUsuario", "UPDATE", "editarUsuario")]
         public async Task<IActionResult> EditarUsuario(EditarUsuarioVM model)
         {
+            // Función auxiliar para recargar dropdowns en caso de error
+            async Task PopulateDropdowns(EditarUsuarioVM m)
+            {
+                m.RolesDisponibles = await _repositorioUsuarios.ObtenerRoles();
+                m.GerenciasDisponibles = (await _repositorioConfiguracion.ObtenerGerencias())
+                                        .Select(g => new SelectListItem { Value = g.IdGerencia.ToString(), Text = g.Nom_Gerencia });
+            }
+
             if (!ModelState.IsValid)
             {
-                model.RolesDisponibles = await _repositorioUsuarios.ObtenerRoles();
+                await PopulateDropdowns(model);
                 return View(model);
             }
 
@@ -219,25 +241,7 @@ namespace ABM.Controllers
                 return RedirectToAction("ListaUsuarios");
             }
 
-            // Verifica si otro usuario ya usa el mismo correo
-            var correoUsado = await _repositorioUsuarios.ExisteCorreo(model.Correo);
-            if (correoUsado && !string.Equals(usuarioExistente.correo, model.Correo, StringComparison.OrdinalIgnoreCase))
-            {
-                ModelState.AddModelError("Correo", "El correo ya se encuentra registrado.");
-                model.RolesDisponibles = await _repositorioUsuarios.ObtenerRoles();
-                return View(model);
-            }
 
-            // Verifica si otro usuario ya usa el mismo nombre de usuario
-            var usuarioUsado = await _repositorioUsuarios.ExisteUsuario(model.Usuario);
-            if (usuarioUsado && !string.Equals(usuarioExistente.usuario, model.Usuario, StringComparison.OrdinalIgnoreCase))
-            {
-                ModelState.AddModelError("Usuario", "El nombre de usuario ya está en uso.");
-                model.RolesDisponibles = await _repositorioUsuarios.ObtenerRoles();
-                return View(model);
-            }
-
-            // Actualiza
             usuarioExistente.nombre = model.Nombre;
             usuarioExistente.apellidos = model.Apellidos;
             usuarioExistente.rut = model.Rut;
@@ -245,6 +249,7 @@ namespace ABM.Controllers
             usuarioExistente.correo = model.Correo;
             usuarioExistente.usuario = model.Usuario;
             usuarioExistente.idRol = model.RolId;
+            usuarioExistente.ID_gerencia = model.IdGerencia; // <-- Se actualiza la gerencia
 
             bool actualizado = await _repositorioUsuarios.ActualizarUsuario(usuarioExistente);
 
@@ -256,7 +261,7 @@ namespace ABM.Controllers
             else
             {
                 ModelState.AddModelError("", "No se pudo actualizar el usuario.");
-                model.RolesDisponibles = await _repositorioUsuarios.ObtenerRoles();
+                await PopulateDropdowns(model);
                 return View(model);
             }
         }

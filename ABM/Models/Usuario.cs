@@ -33,5 +33,6 @@
         public string? FotoUrl { get; set; }
 
         public DateTime? FechaNacimiento { get; set; }
+        public int? ID_gerencia { get; set; }
     }
 }

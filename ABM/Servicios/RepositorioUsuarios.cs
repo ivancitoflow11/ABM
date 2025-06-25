@@ -285,53 +285,23 @@ namespace ABM.Servicios
         {
             using (IDbConnection dbdapper = new SqlConnection(connectionString))
             {
-                try
-                {
-                    string query = @"
-                INSERT INTO ftc_usuario (
-                    nombre, 
-                    apellidos, 
-                    rut, 
-                    telefono, 
-                    correo, 
-                    usuario, 
-                    password, 
-                    repeat_password, 
-                    Fcreacion, 
-                    otc, 
-                    inicioOtc, 
-                    MesesExpiracionClave,
-                    estado,
-                    estado_password,
-                    idRol,
-                    primerInicio
-                )
-                VALUES (
-                    @nombre, 
-                    @apellidos, 
-                    @rut, 
-                    @telefono, 
-                    @correo, 
-                    @usuario, 
-                    @password, 
-                    @repeat_password, 
-                    @Fcreacion, 
-                    @otc, 
-                    @inicioOtc, 
-                    @MesesExpiracionClave,
-                    @estado,
-                    '1',
-                    @idRol,
-                    '1'
-                );
-                SELECT CAST(SCOPE_IDENTITY() as int)";
-                    return await dbdapper.ExecuteScalarAsync<int>(query, usuario);
-                }
-                catch (Exception ex)
-                {
-                    // Aquí puedes registrar el error o mostrarlo para depuración
-                    throw new Exception("Error al registrar el usuario: " + ex.Message, ex);
-                }
+                // Se añade ID_gerencia al INSERT
+                string query = @"
+        INSERT INTO ftc_usuario (
+            nombre, apellidos, rut, telefono, correo, usuario, 
+            password, repeat_password, Fcreacion, otc, inicioOtc, 
+            MesesExpiracionClave, estado, estado_password, idRol, primerInicio,
+            ID_gerencia
+        )
+        VALUES (
+            @nombre, @apellidos, @rut, @telefono, @correo, @usuario,
+            @password, @repeat_password, @Fcreacion, @otc, @inicioOtc,
+            @MesesExpiracionClave, @estado, '1', @idRol, '1',
+            @ID_gerencia
+        );
+        SELECT CAST(SCOPE_IDENTITY() as int)";
+
+                return await dbdapper.ExecuteScalarAsync<int>(query, usuario);
             }
         }
 
@@ -339,17 +309,19 @@ namespace ABM.Servicios
         {
             using (IDbConnection dbdapper = new SqlConnection(connectionString))
             {
+                // Se añade ID_gerencia al UPDATE
                 string query = @"
-            UPDATE ftc_usuario
-            SET nombre = @nombre,
-                apellidos = @apellidos,
-                rut = @rut,
-                telefono = @telefono,
-                correo = @correo,
-                usuario = @usuario,
-                idRol = @idRol,
-                FultimaModificacion = GETDATE()
-            WHERE idUsuario = @idUsuario";
+        UPDATE ftc_usuario
+        SET nombre = @nombre,
+            apellidos = @apellidos,
+            rut = @rut,
+            telefono = @telefono,
+            correo = @correo,
+            usuario = @usuario,
+            idRol = @idRol,
+            ID_gerencia = @ID_gerencia,
+            FultimaModificacion = GETDATE()
+        WHERE idUsuario = @idUsuario";
 
                 int filas = await dbdapper.ExecuteAsync(query, usuario);
                 return filas > 0;

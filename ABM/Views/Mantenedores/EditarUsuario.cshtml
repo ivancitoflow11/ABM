@@ -58,6 +58,13 @@
                             <input class="form-control" type="text" placeholder="Ingrese RUT" asp-for="Rut" />
                             @Html.ValidationMessageFor(m => m.Rut, "", new { @class = "text-danger" })
                         </div>
+                        <div class="mb-3">
+                            <label asp-for="IdGerencia" class="form-label"></label>
+                            <select class="form-select" asp-for="IdGerencia" asp-items="Model.GerenciasDisponibles">
+                                <option value="">Seleccione una gerencia (Opcional)...</option>
+                            </select>
+                            <span asp-validation-for="IdGerencia" class="text-danger"></span>
+                        </div>
                     </div>
 
                     <!-- Columna derecha -->

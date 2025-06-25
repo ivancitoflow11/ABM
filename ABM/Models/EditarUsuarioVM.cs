@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using Microsoft.AspNetCore.Mvc.Rendering;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 
 namespace ABM.Models
@@ -27,5 +28,10 @@ namespace ABM.Models
         public int? RolId { get; set; }
 
         public IEnumerable<Rol> RolesDisponibles { get; set; }
+
+        [Display(Name = "Gerencia")]
+        public int? IdGerencia { get; set; } 
+
+        public IEnumerable<SelectListItem> GerenciasDisponibles { get; set; }
     }
 }

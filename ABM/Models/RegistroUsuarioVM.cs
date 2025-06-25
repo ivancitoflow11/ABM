@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using Microsoft.AspNetCore.Mvc.Rendering;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 
 namespace ABM.Models
@@ -37,6 +38,11 @@ namespace ABM.Models
         public int MesesExpiracionClave { get; set; }
         [Required(ErrorMessage = "Debe seleccionar un rol.")]
         public int? RolId { get; set; }
+
+        [Display(Name = "Gerencia")]
+        public int? IdGerencia { get; set; }
+
+        public IEnumerable<SelectListItem> GerenciasDisponibles { get; set; }
 
         public IEnumerable<Rol> RolesDisponibles { get; set; }
     }
