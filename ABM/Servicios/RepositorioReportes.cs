@@ -14,6 +14,7 @@ namespace ABM.Servicios
         Task<IEnumerable<UltimaConexion>> ObtenerListaUltimaConexion(int idpais, int idnegocio);
         Task<IEnumerable<UsuariosActivos>> ObtenerListaUsuariosActivos(int idpais, int idnegocio);
         Task<IEnumerable<UsersBuscar>> ObtenerUsuariosPorRutONombre(int idPais, int idNegocio, string rutDni = null, string nombreUsuario = null);
+
     }
 
     public class RepositorioReportes : IRepositorioReportes
@@ -217,42 +218,46 @@ WHERE
 
         public async Task<IEnumerable<UltimaConexion>> ObtenerListaUltimaConexion(int idpais, int idnegocio)
         {
+            // Se ha eliminado toda la lógica para obtener el usuario logueado y sus permisos.
             using (IDbConnection dbdapper = new SqlConnection(connectionString))
             {
+                // Consulta SQL simplificada sin los filtros de gerencia/subgerencia.
                 var query = @"
-            SELECT DISTINCT 
-    a.rutdni, 
-    a.dv, 
-    e.sistema
-	c.pais,
-	d.negocio,
-    a.nombreusuario, 
-    a.estado, 
-    a.fecfiniq AS fecha_finiquito, 
-    a.fecultlogin AS ultima_conexion,  
-    a.fechaad AS Fecha_AD, 
-    e.sistema, 
-    a.idPaisNegocioSistema,
-    g.ID_gerencia, 
-    g.Nom_Gerencia, 
-    s.ID_Subgerencia, 
-    s.Nom_Subgerencia
-FROM ftc_agrupa_activos a
-JOIN ftc_pais_negocio_sistema b ON a.idPaisNegocioSistema = b.idPaisNegocioSistema
-JOIN ftc_pais c ON b.idPais = c.idPais
-JOIN ftc_negocio d ON b.idNegocio = d.idNegocio
-JOIN ftc_sistema e ON b.idSistema = e.idSistema
-LEFT JOIN dbo.ftc_Subgerencias s ON a.Nomccostospr = s.Nom_Subgerencia
-LEFT JOIN dbo.ftc_gerencia g ON s.COD_Gerencia = g.ID_gerencia
-WHERE 
-    a.fechaad IS NULL
-	AND b.idPais = @idpais
-	AND b.idNegocio = @idnegocio";
+                SELECT DISTINCT 
+                    a.rutdni, 
+                    a.dv, 
+                    c.pais,
+                    d.negocio,
+                    e.sistema, 
+                    a.nombreusuario, 
+                    a.estado, 
+                    a.fecfiniq AS fecha_finiquito, 
+                    a.fecultlogin AS ultima_conexion,  
+                    a.fechaad AS Fecha_AD, 
+                    a.idPaisNegocioSistema,
+                    g.ID_gerencia, 
+                    g.Nom_Gerencia, 
+                    s.ID_Subgerencia, 
+                    s.Nom_Subgerencia
+                FROM dbo.ftc_agrupa_activos a
+                JOIN dbo.ftc_pais_negocio_sistema b ON a.idPaisNegocioSistema = b.idPaisNegocioSistema
+                JOIN dbo.ftc_pais c ON b.idPais = c.idPais
+                JOIN dbo.ftc_negocio d ON b.idNegocio = d.idNegocio
+                JOIN dbo.ftc_sistema e ON b.idSistema = e.idSistema
+                LEFT JOIN dbo.ftc_Subgerencias s ON a.Nomccostospr = s.Nom_Subgerencia
+                LEFT JOIN dbo.ftc_gerencia g ON s.COD_Gerencia = g.ID_gerencia
+                WHERE 
+                    b.idPais = @idpais
+                    AND b.idNegocio = @idnegocio
+                    AND a.fechaad IS NULL";
 
-                return await dbdapper.QueryAsync<UltimaConexion>(query, new { idpais, idnegocio });
+                // Los únicos parámetros necesarios ahora son idpais e idnegocio.
+                return await dbdapper.QueryAsync<UltimaConexion>(
+                    query,
+                    new { idpais, idnegocio }
+                );
             }
         }
-
         public async Task<IEnumerable<UsuariosActivos>> ObtenerListaUsuariosActivos(int idpais, int idnegocio)
         {
             using (IDbConnection dbdapper = new SqlConnection(connectionString))

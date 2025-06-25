@@ -174,5 +174,40 @@ namespace ABM.Controllers
 
 
 
-    }
+
+            [HttpGet]
+            [Monitoreo("UltimaConexion", "SELECT", "verUltimaConexion")]
+            public async Task<IActionResult> UltimaConexion(string sistema = null)
+            {
+                var idPaisSesion = HttpContext.Session.GetInt32("IdPais");
+                var idNegocioSesion = HttpContext.Session.GetInt32("IdNegocio");
+                if (!idPaisSesion.HasValue || !idNegocioSesion.HasValue)
+                    return RedirectToAction("PnsSelectorPartial", "Home");
+
+                int idPais = idPaisSesion.Value;
+                int idNegocio = idNegocioSesion.Value;
+
+                // 1) Traigo todos los registros según los permisos del usuario logueado
+                var lista = (await repositorioReportes
+                    .ObtenerListaUltimaConexion(idPais, idNegocio))
+                    .ToList();
+
+                // 2) Extraigo sistemas únicos para el dropdown
+                var sistemas = lista
+                    .Select(x => x.sistema)
+                    .Where(s => !string.IsNullOrEmpty(s))
+                    .Distinct()
+                    .OrderBy(s => s)
+                    .ToList();
+                ViewBag.Sistemas = sistemas;
+                ViewBag.SistemaSeleccionado = sistema;
+
+                // 3) Si viene un filtro de sistema, aplico en memoria
+                if (!string.IsNullOrEmpty(sistema))
+                    lista = lista.Where(x => x.sistema == sistema).ToList();
+
+                return View(lista);
+            }
+
+        }
 }
