@@ -1,0 +1,46 @@
+﻿@model IEnumerable<ABM.Models.MatrizDisponible>
+
+@{
+    ViewData["Title"] = "Seleccionar Matriz";
+}
+
+
+
+<div class="container">
+    <h1 class="my-4 text-center">@ViewData["Title"]</h1>
+    <p class="text-center text-muted">Seleccione una matriz de la lista para ver sus datos en detalle.</p>
+
+    @if (!Model.Any())
+    {
+        <div class="alert alert-warning mt-4" role="alert">
+            No hay matrices de datos disponibles en este momento.
+        </div>
+    }
+    else
+    {
+        @foreach (var group in Model.GroupBy(item => item.Pais))
+        {
+            <div class="card mb-4">
+                <div style="background-color: #b0d404" class="card-header  text-white py-3 text-center">
+                    <h4 class="mb-0">@(string.IsNullOrEmpty(group.Key) ? "PAÍS SIN NOMBRE" : group.Key)</h4>
+                </div>
+                <div class="card-body">
+                    <ul class="list-group list-group-flush">
+                        @foreach (var matriz in group)
+                        {
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <span>@matriz.Sistema</span>
+                                <a asp-action="Detalle"
+                                   asp-route-idSistema="@matriz.IdSistema"
+                                   asp-route-idPais="@matriz.Pais"
+                                   class="btn btn-outline-primary">
+                                    Ver Matriz &rarr;
+                                </a>
+                            </li>
+                        }
+                    </ul>
+                </div>
+            </div>
+        }
+    }
+</div>
