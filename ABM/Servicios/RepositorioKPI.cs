@@ -13,6 +13,8 @@ namespace ABM.Servicios
         Task<IEnumerable<KpiResultado>> ObtenerKpiDiario(int mes, int año);
         Task<(int mes, int año)> ObtenerUltimoMesAnioKpiFinal();
         Task<IEnumerable<(int mes, int anio)>> ObtenerMesesAniosDisponibles();
+        Task<IEnumerable<(int mes, string nombreMes)>> ObtenerMesesDisponiblesPorAnio(int anio);
+
     }
     public class RepositorioKPI : IRepositorioKPI
     {
@@ -20,6 +22,27 @@ namespace ABM.Servicios
         public RepositorioKPI(IConfiguration configuration)
         {
             connectionString = configuration.GetConnectionString("CadenaSQL");
+        }
+
+        public async Task<IEnumerable<(int mes, string nombreMes)>> ObtenerMesesDisponiblesPorAnio(int anio)
+        {
+            using var connection = new SqlConnection(connectionString);
+            var sql = @"
+        SELECT DISTINCT
+            mes
+        FROM
+            dbo.ftc_kpi_final
+        WHERE
+            año = @Anio
+        ORDER BY
+            mes ASC;
+    ";
+            var mesesNumeros = await connection.QueryAsync<int>(sql, new { Anio = anio });
+
+            var nombresMeses = new string[] { "", "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
+                                     "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre" };
+
+            return mesesNumeros.Select(m => (mes: m, nombreMes: nombresMeses[m]));
         }
         public async Task<IEnumerable<KpiResultado>> ObtenerKpiDiario(int mes, int año)
         {

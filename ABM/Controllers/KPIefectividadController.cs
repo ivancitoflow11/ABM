@@ -31,20 +31,26 @@ namespace ABM.Controllers
         {
             var model = new KpiEfectividadViewModel();
 
-            // Obtener el último mes y año de la tabla
-            var (ultimoMes, ultimoAnio) = await repositorioKPI.ObtenerUltimoMesAnioKpiFinal();
-            model.MesSeleccionado = ultimoMes;
-            model.AnioSeleccionado = ultimoAnio;
 
-            // Obtener todos los meses y años disponibles para los dropdowns
             await PopulateMesesAniosDropdowns(model);
 
-            // Obtener los resultados para el mes y año por defecto
-            model.Resultados = await repositorioKPI.ObtenerKpiDiario(model.MesSeleccionado, model.AnioSeleccionado);
+
+            model.Resultados = Enumerable.Empty<KpiResultado>();
+
 
             return View(model);
         }
-
+        [HttpGet]
+        public async Task<JsonResult> ObtenerMesesPorAnio(int anio)
+        {
+            var meses = await repositorioKPI.ObtenerMesesDisponiblesPorAnio(anio);
+            var resultado = meses.Select(m => new SelectListItem
+            {
+                Value = m.mes.ToString(),
+                Text = m.nombreMes
+            });
+            return Json(resultado);
+        }
         [HttpPost]
         [Monitoreo("KPI_Efectividad_BU", "SELECT", "verKPIdiario")]
         public async Task<IActionResult> KPI_Efectividad_BU(KpiEfectividadViewModel model)

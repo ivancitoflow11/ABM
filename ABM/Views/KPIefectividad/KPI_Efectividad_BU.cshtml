@@ -2,173 +2,356 @@
 
 @{
     ViewData["Title"] = "KPI Efectividad";
+    var cardColors = new[] { "card-pastel-green", "card-pastel-blue", "card-pastel-pink", "card-pastel-yellow" };
+    int colorIndex = 0;
 }
 
-<h1 class="mb-4">@ViewData["Title"]</h1>
+<style>
+    .filter-container {
+        max-width: 800px;
+        margin: 5rem auto; /* Más margen superior */
+        padding: 2.5rem;
+        background-color: #ffffff; /* Fondo blanco limpio */
+        border: 1px solid #dee2e6; /* Borde sutil */
+        border-radius: 12px; /* Bordes más redondeados */
+        box-shadow: 0 10px 25px rgba(0,0,0,0.08); /* Sombra más suave y pronunciada */
+        transition: all 0.3s ease-in-out;
+    }
 
-<form asp-action="KPI_Efectividad_BU" method="post" class="mb-4">
-    <div class="row">
-        <div class="col-md-3">
-            <div class="form-group">
-                <label asp-for="AnioSeleccionado"></label>
-                <select asp-for="AnioSeleccionado" asp-items="Model.Anios" class="form-control">
-                    <option value="">Seleccione Año</option>
-                </select>
-                <span asp-validation-for="AnioSeleccionado" class="text-danger"></span>
+    .filter-title {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #343a40;
+    }
+
+        .filter-title i {
+            font-size: 1.5rem;
+            color: #0d6efd; /* Color primario de Bootstrap */
+        }
+
+    /* Estilo para el botón de búsqueda */
+    .btn-primary {
+        box-shadow: 0 4px 14px 0 rgba(0, 115, 255, 0.39);
+        transition: all 0.3s ease;
+    }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px 0 rgba(0, 115, 255, 0.45);
+        }
+
+    /* Estilo para el encabezado de la tabla */
+    .table-dark th {
+        color: #ffffff !important;
+        vertical-align: middle;
+    }
+
+    /* (El resto de tus estilos para cards, highlight, etc. no cambian) */
+    .card-pastel-green {
+        background-color: #e8f5e9;
+        border-color: #c8e6c9;
+    }
+
+    .card-pastel-blue {
+        background-color: #e3f2fd;
+        border-color: #bbdefb;
+    }
+
+    .card-pastel-pink {
+        background-color: #fce4ec;
+        border-color: #f8bbd0;
+    }
+
+    .card-pastel-yellow {
+        background-color: #fffde7;
+        border-color: #fff9c4;
+    }
+
+    .kpi-card {
+        transition: transform 0.2s ease-in-out;
+        height: 100%;
+    }
+
+        .kpi-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+        }
+
+        .kpi-card .card-body {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .kpi-card h5 {
+            font-weight: 600;
+        }
+
+    .kpi-metric p {
+        margin-bottom: 0.5rem;
+        font-size: 0.9rem;
+    }
+
+    .kpi-metric span {
+        font-weight: 700;
+        font-size: 1.2rem;
+    }
+
+    .highlight-row {
+        animation: highlight 3s ease-out;
+    }
+
+    @@keyframes highlight {
+        0% {
+            background-color: #a7ffeb;
+        }
+
+        100% {
+            background-color: transparent;
+        }
+    }
+</style>
+
+<div class="filter-container">
+    <h3 class="text-center mb-4 filter-title">
+        <i class="fas fa-filter me-3"></i>
+        Selector de Periodo
+    </h3>
+    <form asp-action="KPI_Efectividad_BU" method="post" id="kpiFilterForm">
+        <div class="row">
+            <div class="col-md-6">
+                <div class="form-group">
+                    <label asp-for="AnioSeleccionado" class="form-label fw-bold"></label>
+                    <select asp-for="AnioSeleccionado" asp-items="Model.Anios" class="form-select form-select-lg">
+                        <option value="">Seleccione Año</option>
+                    </select>
+                    <span asp-validation-for="AnioSeleccionado" class="text-danger"></span>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="form-group">
+                    <label asp-for="MesSeleccionado" class="form-label fw-bold"></label>
+                    <select asp-for="MesSeleccionado" asp-items="Model.Meses" class="form-select form-select-lg" disabled>
+                        <option value="">Seleccione Mes</option>
+                    </select>
+                    <span asp-validation-for="MesSeleccionado" class="text-danger"></span>
+                </div>
             </div>
         </div>
-        <div class="col-md-3">
-            <div class="form-group">
-                <label asp-for="MesSeleccionado"></label>
-                <select asp-for="MesSeleccionado" asp-items="Model.Meses" class="form-control">
-                    <option value="">Seleccione Mes</option>
-                </select>
-                <span asp-validation-for="MesSeleccionado" class="text-danger"></span>
-            </div>
+        <div class="text-center mt-4 pt-2">
+            <button type="submit" class="btn btn-primary btn-lg px-5">Buscar</button>
         </div>
-        <div class="col-md-6 d-flex align-items-end">
-            <button type="submit" class="btn btn-primary mt-3">Buscar por Mes y Año</button>
-        </div>
-    </div>
-</form>
-
-<div class="table-responsive">
-    <table class="table table-bordered table-striped table-hover">
-        <thead class="table">
-            <tr>
-                <th>FECHA CARGA</th>
-                <th>MES</th>
-                <th>AÑO</th>
-                <th>PAIS</th>
-                <th>N FINIQUITADOS</th>
-                <th>N FINIQUITADOS TOTAL</th>
-                <th>CUMPLIMIENTO FINIQUITADOS</th>
-                <th>N 60</th>
-                <th>N 60 TOTAL</th>
-                <th>CUMPLIMIENTO 60</th>
-                <th>N 180</th>
-                <th>N 180 TOTAL</th>
-                <th>CUMPLIMIENTO 180</th>
-                <th>N GENÉRICA SIN RESPONSABLE</th>
-                <th>N GENÉRICA SIN RESPONSABLE TOTAL</th>
-                <th>CUMPLIMIENTO GENÉRICA SIN RESPONSABLE</th>
-                <th>N USUARIOS NO LOGEADOS</th>
-                <th>N USUARIOS NO LOGEADOS TOTAL</th>
-                <th>CUMPLIMIENTO USUARIOS NO LOGEADOS</th>
-                <th>USUARIOS DUPLICADOS</th>
-                <th>N USUARIOS DUPLICADOS</th>
-                <th>N USUARIOS DUPLICADOS TOTAL</th>
-                <th>CUMPLIMIENTO USUARIOS DUPLICADOS</th>
-                <th>N USUARIOS PASS NO EXPIRA</th>
-                <th>N USUARIOS PASS NO EXPIRA TOTAL</th>
-                <th>CUMPLIMIENTO USUARIOS PASS NO EXPIRA</th>
-                <th>N GENÉRICOS PASS NO EXPIRA</th>
-                <th>N GENÉRICOS PASS NO EXPIRA TOTAL</th>
-                <th>CUMPLIMIENTO GENÉRICOS PASS NO EXPIRA</th>
-            </tr>
-        </thead>
-        <tbody>
-            @if (Model.Resultados != null && Model.Resultados.Any())
-            {
-                @foreach (var item in Model.Resultados)
-                {
-                    <tr>
-                        <td>@item.fecha_carga.ToShortDateString()</td>
-                        <td>@item.mes</td>
-                        <td>@item.año</td>
-                        <td>@item.PAIS</td>
-                        <td>@item.n_finiquitados</td>
-                        <td>@item.n_finiquitados_total</td>
-                        <td class="kpi-cell-cumplimiento">@item.cumplimiento_finiquitados</td>
-                        <td>@item.n_60</td>
-                        <td>@item.n_60_total</td>
-                        <td class="kpi-cell-cumplimiento">@item.cumplimiento_60</td>
-                        <td>@item.n_180</td>
-                        <td>@item.n_180_total</td>
-                        <td class="kpi-cell-cumplimiento">@item.cumplimiento_180</td>
-                        <td>@item.n_generica_sin_responsable</td>
-                        <td>@item.n_generica_sin_responsable_total</td>
-                        <td class="kpi-cell-cumplimiento">@item.cumplimiento_generica_sin_responsable</td>
-                        <td>@item.n_usuarios_no_logeados</td>
-                        <td>@item.n_usuarios_no_logeados_total</td>
-                        <td class="kpi-cell-cumplimiento">@item.cumplimiento_usuarios_no_logeados</td>
-                        <td>@item.usuarios_duplicados</td>
-                        <td>@item.n_usuarios_duplicados</td>
-                        <td>@item.n_usuarios_duplicados_total</td>
-                        <td class="kpi-cell-cumplimiento">@item.cumplimiento_usuarios_duplicados</td>
-                        <td>@item.n_usuarios_pass_no_expira</td>
-                        <td>@item.n_usuarios_pass_no_expira_total</td>
-                        <td class="kpi-cell-cumplimiento">@item.cumplimiento_usuarios_pass_no_expira</td>
-                        <td>@item.n_genericos_pass_no_expira</td>
-                        <td>@item.n_genericos_pass_no_expira_total</td>
-                        <td class="kpi-cell-cumplimiento">@item.cumplimiento_genericos_pass_no_expira</td>
-                    </tr>
-                }
-            }
-            else
-            {
-                var colCount = 29;
-                <tr>
-                    <td colspan="@colCount" class="text-center">
-                        No se encontraron registros para mostrar para el mes y año seleccionados.
-                    </td>
-                </tr>
-            }
-        </tbody>
-    </table>
+    </form>
 </div>
+
+@if (Model.Resultados != null && Model.Resultados.Any())
+{
+    <div id="cards-container" class="row g-4 mb-5">
+        @foreach (var item in Model.Resultados)
+        {
+            var colorClass = cardColors[colorIndex % cardColors.Length];
+            colorIndex++;
+            var targetRowId = $"row-{item.PAIS.Replace(" ", "-").Replace("/", "-")}";
+
+            <div class="col-md-3">
+                <div class="card kpi-card @colorClass">
+                    <div class="card-body text-center">
+                        <div>
+                            <h5 class="card-title">@item.PAIS</h5>
+                            <hr />
+                            <div class="kpi-metric mb-2">
+                                <p class="mb-0 text-muted">Cumplimiento Finiquitados</p>
+                                <span>@item.cumplimiento_finiquitados</span>
+                            </div>
+                            <div class="kpi-metric mb-2">
+                                <p class="mb-0 text-muted">Cumpl. Genérica s/Resp.</p>
+                                <span>@item.cumplimiento_generica_sin_responsable</span>
+                            </div>
+                            <div class="kpi-metric mb-3">
+                                <p class="mb-0 text-muted">Cumpl. Usuarios Duplicados</p>
+                                <span>@item.cumplimiento_usuarios_duplicados</span>
+                            </div>
+                        </div>
+                        <button class="btn btn-dark mt-auto btn-ver-detalles" data-target-id="@targetRowId">
+                            Ver más Detalles <i class="fas fa-arrow-down ms-2"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
+
+
+<div id="tabla-resultados-container" style="display: none;">
+    <h2 class="mb-4">Detalle Completo del Periodo</h2>
+    <div class="table-responsive">
+        <table class="table table-bordered table-striped table-hover">
+            <thead class="table-dark">
+                <tr>
+                    <th>FECHA CARGA</th>
+                    <th>MES</th>
+                    <th>AÑO</th>
+                    <th>PAIS</th>
+                    <th>N FINIQUITADOS</th>
+                    <th>CUMPLIMIENTO FINIQUITADOS</th>
+                    <th>N 60</th>
+                    <th>CUMPLIMIENTO 60</th>
+                    <th>N 180</th>
+                    <th>CUMPLIMIENTO 180</th>
+                    <th>N GENÉRICA SIN RESPONSABLE</th>
+                    <th>CUMPLIMIENTO GENÉRICA SIN RESPONSABLE</th>
+                    <th>N USUARIOS NO LOGEADOS</th>
+                    <th>CUMPLIMIENTO USUARIOS NO LOGEADOS</th>
+                    <th>USUARIOS DUPLICADOS</th>
+                    <th>N USUARIOS DUPLICADOS</th>
+                    <th>CUMPLIMIENTO USUARIOS DUPLICADOS</th>
+                    <th>N USUARIOS PASS NO EXPIRA</th>
+                    <th>CUMPLIMIENTO USUARIOS PASS NO EXPIRA</th>
+                    <th>N GENÉRICOS PASS NO EXPIRA</th>
+                    <th>CUMPLIMIENTO GENÉRICOS PASS NO EXPIRA</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model.Resultados != null && Model.Resultados.Any())
+                {
+                    @foreach (var item in Model.Resultados)
+                    {
+                        var rowId = $"row-{item.PAIS.Replace(" ", "-").Replace("/", "-")}";
+                        <tr id="@rowId">
+                            <td>@item.fecha_carga.ToShortDateString()</td>
+                            <td>@item.mes</td>
+                            <td>@item.año</td>
+                            <td>@item.PAIS</td>
+                            <td>@item.n_finiquitados</td>
+                            <td class="kpi-cell-cumplimiento">@item.cumplimiento_finiquitados</td>
+                            <td>@item.n_60</td>
+                            <td class="kpi-cell-cumplimiento">@item.cumplimiento_60</td>
+                            <td>@item.n_180</td>
+                            <td class="kpi-cell-cumplimiento">@item.cumplimiento_180</td>
+                            <td>@item.n_generica_sin_responsable</td>
+                            <td class="kpi-cell-cumplimiento">@item.cumplimiento_generica_sin_responsable</td>
+                            <td>@item.n_usuarios_no_logeados</td>
+                            <td class="kpi-cell-cumplimiento">@item.cumplimiento_usuarios_no_logeados</td>
+                            <td>@item.usuarios_duplicados</td>
+                            <td>@item.n_usuarios_duplicados</td>
+                            <td class="kpi-cell-cumplimiento">@item.cumplimiento_usuarios_duplicados</td>
+                            <td>@item.n_usuarios_pass_no_expira</td>
+                            <td class="kpi-cell-cumplimiento">@item.cumplimiento_usuarios_pass_no_expira</td>
+                            <td>@item.n_genericos_pass_no_expira</td>
+                            <td class="kpi-cell-cumplimiento">@item.cumplimiento_genericos_pass_no_expira</td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr><td colspan="21" class="text-center">No se encontraron registros para mostrar.</td></tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
 
 @section Scripts {
     @{
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
     }
+    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-            const kpiCellsCumplimiento = document.querySelectorAll('.kpi-cell-cumplimiento');
 
-            kpiCellsCumplimiento.forEach(cell => {
-                const textValue = cell.textContent.replace(',', '.').replace('%', '').trim();
-                const percentage = parseFloat(textValue);
-
-                if (isNaN(percentage)) {
-                    return;
-                }
-
-                let cellClass = '';
-                let iconClass = '';
-                let iconTitle = '';
-
-                if (percentage > 99) {
-                    cellClass = 'bg-success-subtle';
-                    iconClass = 'fas fa-circle text-success me-2';
-                    iconTitle = '> 99%';
-                } else if (percentage >= 98) {
-                    cellClass = 'bg-warning-subtle';
-                    iconClass = 'fas fa-circle text-warning me-2';
-                    iconTitle = '98% - 99%';
-                } else {
-                    cellClass = 'bg-danger-subtle';
-                    iconClass = 'fas fa-circle text-danger me-2';
-                    iconTitle = '< 98%';
-                }
-
-                cell.classList.add(cellClass);
-
-                const iconElement = document.createElement('i');
-                iconElement.className = iconClass;
-                iconElement.title = iconTitle;
-
-                cell.prepend(iconElement);
-            });
-
+            // --- NUEVA LÓGICA PARA FILTROS ASÍNCRONOS ---
             const anioSelect = document.getElementById('AnioSeleccionado');
             const mesSelect = document.getElementById('MesSeleccionado');
+            const urlMeses = '@Url.Action("ObtenerMesesPorAnio", "KPIefectividad")';
 
-            if (anioSelect && mesSelect) {
-                anioSelect.addEventListener('change', async function () {
-                    const selectedAnio = this.value;
-                    this.form.submit();
+            anioSelect.addEventListener('change', function () {
+                const anioSeleccionado = this.value;
+
+                // Limpiar y deshabilitar el selector de mes
+                mesSelect.innerHTML = '<option value="">Seleccione Mes</option>';
+                mesSelect.disabled = true;
+
+                if (anioSeleccionado) {
+                    // Si se seleccionó un año, buscar los meses
+                    fetch(`${urlMeses}?anio=${anioSeleccionado}`)
+                        .then(response => {
+                            if (!response.ok) {
+                                throw new Error('Error en la red al obtener los meses.');
+                            }
+                            return response.json();
+                        })
+                        .then(data => {
+                            // Poblar el selector de meses
+                            data.forEach(mes => {
+                                const option = document.createElement('option');
+                                option.value = mes.value;
+                                option.textContent = mes.text;
+                                mesSelect.appendChild(option);
+                            });
+                            // Habilitar el selector de mes
+                            mesSelect.disabled = false;
+                        })
+                        .catch(error => {
+                            console.error('Error al cargar los meses:', error);
+                            // Opcional: mostrar un mensaje de error al usuario
+                        });
+                }
+            });
+
+
+            // --- LÓGICA EXISTENTE (SIN CAMBIOS) ---
+
+            // Lógica para colorear celdas de la tabla
+            function colorearCeldas() {
+                 const kpiCellsCumplimiento = document.querySelectorAll('.kpi-cell-cumplimiento');
+                 kpiCellsCumplimiento.forEach(cell => {
+                     // Evitar duplicar iconos si ya existen
+                     if (cell.querySelector('i.fas')) return;
+
+                     const textValue = cell.textContent.replace(',', '.').replace('%', '').trim();
+                     const percentage = parseFloat(textValue);
+                     if (isNaN(percentage)) return;
+
+                     let cellClass = '', iconClass = '', iconTitle = '';
+                     if (percentage > 99) { cellClass = 'bg-success-subtle'; iconClass = 'fas fa-circle text-success me-2'; iconTitle = '> 99%'; }
+                     else if (percentage >= 98) { cellClass = 'bg-warning-subtle'; iconClass = 'fas fa-circle text-warning me-2'; iconTitle = '98% - 99%'; }
+                     else { cellClass = 'bg-danger-subtle'; iconClass = 'fas fa-circle text-danger me-2'; iconTitle = '< 98%'; }
+                     cell.classList.add(cellClass);
+                     const iconElement = document.createElement('i');
+                     iconElement.className = iconClass;
+                     iconElement.title = iconTitle;
+                     cell.prepend(iconElement);
+                 });
+            }
+
+            // Lógica para el botón "Ver más Detalles"
+            function setupDetailButtons() {
+                const detailButtons = document.querySelectorAll('.btn-ver-detalles');
+                const tableContainer = document.getElementById('tabla-resultados-container');
+
+                detailButtons.forEach(button => {
+                    button.addEventListener('click', function() {
+                        if (tableContainer) { tableContainer.style.display = 'block'; }
+                        const targetId = this.getAttribute('data-target-id');
+                        const targetRow = document.getElementById(targetId);
+                        if (targetRow) {
+                            targetRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            document.querySelectorAll('.highlight-row').forEach(row => row.classList.remove('highlight-row'));
+                            targetRow.classList.add('highlight-row');
+                            setTimeout(() => { targetRow.classList.remove('highlight-row'); }, 3000);
+                        }
+                    });
                 });
+            }
+
+            // Ejecutar las funciones al cargar la página si hay resultados
+            if (document.getElementById('cards-container')) {
+                 colorearCeldas();
+                 setupDetailButtons();
             }
         });
     </script>
