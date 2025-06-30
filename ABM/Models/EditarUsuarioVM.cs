@@ -12,7 +12,16 @@ namespace ABM.Models
         public string Nombre { get; set; }
 
         public string Apellidos { get; set; }
+        [Display(Name = "¿Es responsable de firmar? Marque la casilla si es SÍ")]
+        public bool ResponsableFirma { get; set; }
 
+        // Propiedad para recibir un archivo de firma NUEVO al editar.
+        [Display(Name = "Cargar Nueva Firma (Opcional)")]
+        public IFormFile NuevaFirma { get; set; }
+
+        // Propiedad para guardar la RUTA de la firma que ya existe en la BD.
+        // La usaremos para mostrar la imagen actual.
+        public string FirmaActual { get; set; }
         public string Rut { get; set; }
 
         public int Telefono { get; set; }

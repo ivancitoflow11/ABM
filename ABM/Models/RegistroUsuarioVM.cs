@@ -8,7 +8,11 @@ namespace ABM.Models
     {
         [Required(ErrorMessage = "El nombre es obligatorio.")]
         public string Nombre { get; set; }
+        [Display(Name = "Firma del Usuario")]
+        public IFormFile Firma { get; set; }
 
+        [Display(Name = "¿Es responsable de firmar? Marque la casilla si es SÍ")]
+        public bool ResponsableFirma { get; set; }
         public string Apellidos { get; set; }
 		[Required(ErrorMessage = "El RUT es obligatorio")]
 		public string Rut { get; set; }

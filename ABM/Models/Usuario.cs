@@ -15,7 +15,8 @@
         public DateTime? FultimaModificacion { get; set; }
         public DateTime? Fcreacion { get; set; }
         public string estado { get; set; }
-
+        public string firma { get; set; }
+        public bool ResponsableFirma { get; set; }
         public int? idRol { get; set; }
         public bool estado_password { get; set; }
         public string session { get; set; }
@@ -23,8 +24,7 @@
         public DateTime? inicioOtc { get; set; }
         public int MesesExpiracionClave { get; set; }
         public DateTime? FechaCambioPassword { get; set; }
-        public byte[] firma { get; set; }
-        public bool? ResponsableFirma { get; set; }
+
         public bool primerInicio { get; set; }
 
         public string ResetPasswordToken { get; set; }

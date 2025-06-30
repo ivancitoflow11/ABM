@@ -1,16 +1,20 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using System.Diagnostics;
+using System.Drawing;
+using System.Linq;
+using System.Net;
+using System.Net.Mail;
+using System.Numerics;
+using System.Security.Claims;
+using System.Threading.Tasks;
+using ABM.Filters;
 using ABM.Models;
 using ABM.Servicios;
-using ABM.Filters;
-using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
-using System.Net.Mail;
-using System.Net;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using System.Linq;
-using System.Threading.Tasks;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 
 namespace ABM.Controllers
@@ -24,9 +28,10 @@ namespace ABM.Controllers
         private readonly IRepositorioConfiguracion _repositorioConfiguracion;
         private readonly IRepositorioGlosaNegocios _repositorioGlosaNegocios;
         private readonly IConfiguration _configuration;
+        private readonly IWebHostEnvironment _webHostEnvironment;
 
         private IEnumerable<PaisNegocioSistemaModel> _cachedPnsList;
-        public MantenedoresController(IRepositorioUsuarios repositorioUsuarios, IRepositorioRoles repositorioRoles, IRepositorioListaBlanca repositorioListaBlanca, IRepositorioConfiguracion repositorioConfiguracion, IRepositorioGlosaNegocios repositorioGlosaNegocios, IConfiguration configuration)
+        public MantenedoresController(IRepositorioUsuarios repositorioUsuarios, IRepositorioRoles repositorioRoles, IRepositorioListaBlanca repositorioListaBlanca, IRepositorioConfiguracion repositorioConfiguracion, IRepositorioGlosaNegocios repositorioGlosaNegocios, IConfiguration configuration, IWebHostEnvironment webHostEnvironment)
         {
             _repositorioUsuarios = repositorioUsuarios;
             _repositorioRoles = repositorioRoles;
@@ -34,6 +39,7 @@ namespace ABM.Controllers
             _repositorioConfiguracion = repositorioConfiguracion;
             _repositorioGlosaNegocios = repositorioGlosaNegocios;
             _configuration = configuration;
+            _webHostEnvironment = webHostEnvironment;
         }
 
         [HttpGet]
@@ -55,38 +61,70 @@ namespace ABM.Controllers
             return View(model);
         }
 
+        // En tu archivo Controllers/MantenedoresController.cs
+
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Monitoreo("Registrarse", "INSERT", "registrarUsuario")]
         public async Task<IActionResult> Registrarse(RegistroUsuarioVM model)
         {
-            // Si el modelo no es válido, volvemos a poblar los dropdowns antes de retornar la vista
+            // 1. VERIFICACIÓN DEL MODELO
+            // Si el modelo no es válido (ej. un campo requerido está vacío), se recargan
+            // los datos para los dropdowns y se vuelve a mostrar el formulario con los errores.
             if (!ModelState.IsValid)
             {
                 model.RolesDisponibles = await _repositorioUsuarios.ObtenerRoles();
                 model.GerenciasDisponibles = (await _repositorioConfiguracion.ObtenerGerencias())
-                                                .Select(g => new SelectListItem
-                                                {
-                                                    Value = g.IdGerencia.ToString(),
-                                                    Text = g.Nom_Gerencia
-                                                }).ToList();
+                                                 .Select(g => new SelectListItem { Value = g.IdGerencia.ToString(), Text = g.Nom_Gerencia }).ToList();
                 return View(model);
             }
 
-            // ... tus otras validaciones (contraseña, correo, etc.) ...
+            // 2. VALIDACIONES ADICIONALES (EJ: CONTRASEÑAS)
             if (model.Password != model.Repeat_Password)
             {
                 ModelState.AddModelError("Repeat_Password", "Las contraseñas no coinciden.");
+                // También hay que recargar los dropdowns antes de volver a la vista
                 model.RolesDisponibles = await _repositorioUsuarios.ObtenerRoles();
                 model.GerenciasDisponibles = (await _repositorioConfiguracion.ObtenerGerencias())
-                                                .Select(g => new SelectListItem { Value = g.IdGerencia.ToString(), Text = g.Nom_Gerencia }).ToList();
+                                                 .Select(g => new SelectListItem { Value = g.IdGerencia.ToString(), Text = g.Nom_Gerencia }).ToList();
                 return View(model);
             }
-            // ... (repetir para las otras validaciones de correo y usuario)...
+
+            // (Aquí puedes agregar otras validaciones como verificar si el correo o usuario ya existen)
 
 
             try
             {
+                // 3. PROCESAMIENTO DEL ARCHIVO DE FIRMA
+                string rutaFirma = null; // Se inicializa como nula
+
+                // Se comprueba si el usuario subió un archivo para el campo 'Firma'
+                if (model.Firma != null && model.Firma.Length > 0)
+                {
+                    // Se define la carpeta de destino dentro de wwwroot
+                    string carpetaDestino = Path.Combine(_webHostEnvironment.WebRootPath, "firmas");
+
+                    // Si la carpeta no existe, se crea
+                    if (!Directory.Exists(carpetaDestino))
+                    {
+                        Directory.CreateDirectory(carpetaDestino);
+                    }
+
+                    // Se crea un nombre de archivo único para prevenir conflictos y sobreescrituras
+                    string nombreArchivoUnico = Guid.NewGuid().ToString() + "_" + Path.GetFileName(model.Firma.FileName);
+                    string rutaCompletaArchivo = Path.Combine(carpetaDestino, nombreArchivoUnico);
+
+                    // Se guarda el archivo físicamente en el servidor
+                    using (var fileStream = new FileStream(rutaCompletaArchivo, FileMode.Create))
+                    {
+                        await model.Firma.CopyToAsync(fileStream);
+                    }
+
+                    // Se guarda la RUTA RELATIVA que irá a la base de datos (ej: /firmas/archivo.jpg)
+                    rutaFirma = Path.Combine("/firmas/", nombreArchivoUnico).Replace('\\', '/');
+                }
+
+                // 4. CREACIÓN DEL OBJETO USUARIO PARA LA BASE DE DATOS
                 var nuevoUsuario = new Usuario
                 {
                     nombre = model.Nombre,
@@ -101,11 +139,14 @@ namespace ABM.Controllers
                     MesesExpiracionClave = model.MesesExpiracionClave,
                     estado = "1",
                     password = HashPassword(model.Password),
-                    repeat_password = model.Repeat_Password, // Considerar no guardar la contraseña en texto plano
+                    repeat_password = model.Repeat_Password, // ¡Considera no guardar esto en texto plano!
                     idRol = model.RolId,
-                    ID_gerencia = model.IdGerencia // Se asigna la gerencia seleccionada
+                    ID_gerencia = model.IdGerencia,
+                    firma = rutaFirma, 
+                    ResponsableFirma = model.ResponsableFirma 
                 };
 
+                // 5. LLAMADA AL REPOSITORIO PARA GUARDAR EL USUARIO
                 int idNuevoUsuario = await _repositorioUsuarios.RegistrarUsuario(nuevoUsuario);
 
                 TempData["SuccessMessage"] = "Usuario registrado correctamente.";
@@ -113,10 +154,11 @@ namespace ABM.Controllers
             }
             catch (Exception ex)
             {
-                TempData["ErrorMessage"] = $"Error: {ex.Message}";
+                // 6. MANEJO DE ERRORES
+                TempData["ErrorMessage"] = $"Error al registrar el usuario: {ex.Message}";
                 model.RolesDisponibles = await _repositorioUsuarios.ObtenerRoles();
                 model.GerenciasDisponibles = (await _repositorioConfiguracion.ObtenerGerencias())
-                                                .Select(g => new SelectListItem { Value = g.IdGerencia.ToString(), Text = g.Nom_Gerencia }).ToList();
+                                                 .Select(g => new SelectListItem { Value = g.IdGerencia.ToString(), Text = g.Nom_Gerencia }).ToList();
                 return View(model);
             }
         }
@@ -178,21 +220,26 @@ namespace ABM.Controllers
             return View(usuarios);
         }
 
-        [HttpGet]
-        [Monitoreo("EditarUsuario", "SELECT", "verEditarUsuario")]
-        public async Task<IActionResult> EditarUsuario(int id)
+
+[HttpGet]
+[Monitoreo("EditarUsuario", "SELECT", "verEditarUsuario")]
+public async Task<IActionResult> EditarUsuario(int id)
         {
+            // Busca el usuario en la base de datos por su ID.
             var usuario = await _repositorioUsuarios.ObtenerPorId(id);
 
+            // Si no se encuentra el usuario, redirige a la lista con un mensaje de error.
             if (usuario == null)
             {
                 TempData["ErrorMessage"] = "Usuario no encontrado.";
                 return RedirectToAction("ListaUsuarios");
             }
 
+            // Obtiene los datos necesarios para los menús desplegables (roles y gerencias).
             var roles = await _repositorioUsuarios.ObtenerRoles();
             var gerencias = await _repositorioConfiguracion.ObtenerGerencias();
 
+            // Crea el ViewModel (el modelo para la vista) y lo puebla con los datos del usuario.
             var model = new EditarUsuarioVM
             {
                 IdUsuario = usuario.idUsuario,
@@ -203,15 +250,19 @@ namespace ABM.Controllers
                 Correo = usuario.correo,
                 Usuario = usuario.usuario,
                 RolId = usuario.idRol,
-                IdGerencia = usuario.ID_gerencia, // Se carga la gerencia actual del usuario
+                IdGerencia = usuario.ID_gerencia,
                 RolesDisponibles = roles,
                 GerenciasDisponibles = gerencias.Select(g => new SelectListItem
                 {
                     Value = g.IdGerencia.ToString(),
                     Text = g.Nom_Gerencia
-                })
+                }),
+                // Se cargan los nuevos campos desde el objeto 'usuario' obtenido de la BD.
+                ResponsableFirma = usuario.ResponsableFirma,
+                FirmaActual = usuario.firma
             };
 
+            // Envía el modelo a la vista para que se muestre el formulario.
             return View(model);
         }
 
@@ -220,20 +271,23 @@ namespace ABM.Controllers
         [Monitoreo("EditarUsuario", "UPDATE", "editarUsuario")]
         public async Task<IActionResult> EditarUsuario(EditarUsuarioVM model)
         {
-            // Función auxiliar para recargar dropdowns en caso de error
+            // Función auxiliar para recargar los dropdowns en caso de error y tener que volver a mostrar la vista.
             async Task PopulateDropdowns(EditarUsuarioVM m)
             {
                 m.RolesDisponibles = await _repositorioUsuarios.ObtenerRoles();
                 m.GerenciasDisponibles = (await _repositorioConfiguracion.ObtenerGerencias())
-                                        .Select(g => new SelectListItem { Value = g.IdGerencia.ToString(), Text = g.Nom_Gerencia });
+                                         .Select(g => new SelectListItem { Value = g.IdGerencia.ToString(), Text = g.Nom_Gerencia });
             }
 
+            // Si los datos enviados desde el formulario no son válidos (ej. falta un campo requerido),
+            // se recargan los dropdowns y se vuelve a mostrar la vista con los mensajes de error.
             if (!ModelState.IsValid)
             {
                 await PopulateDropdowns(model);
                 return View(model);
             }
 
+            // Se busca el usuario original en la base de datos para actualizarlo.
             var usuarioExistente = await _repositorioUsuarios.ObtenerPorId(model.IdUsuario);
             if (usuarioExistente == null)
             {
@@ -241,7 +295,41 @@ namespace ABM.Controllers
                 return RedirectToAction("ListaUsuarios");
             }
 
+            // --- LÓGICA PARA ACTUALIZAR LA FIRMA ---
+            // Se comprueba si el usuario ha subido un archivo nuevo en el formulario.
+            if (model.NuevaFirma != null && model.NuevaFirma.Length > 0)
+            {
+                string carpetaDestino = Path.Combine(_webHostEnvironment.WebRootPath, "firmas");
+                if (!Directory.Exists(carpetaDestino))
+                {
+                    Directory.CreateDirectory(carpetaDestino);
+                }
 
+                // Si ya existía una firma, se elimina el archivo antiguo del servidor para no dejar basura.
+                if (!string.IsNullOrEmpty(model.FirmaActual))
+                {
+                    // Se construye la ruta completa del archivo antiguo.
+                    var rutaAntigua = Path.Combine(_webHostEnvironment.WebRootPath, model.FirmaActual.TrimStart('/'));
+                    if (System.IO.File.Exists(rutaAntigua))
+                    {
+                        System.IO.File.Delete(rutaAntigua);
+                    }
+                }
+
+                // Se guarda el nuevo archivo con un nombre único.
+                string nombreArchivoUnico = Guid.NewGuid().ToString() + "_" + Path.GetFileName(model.NuevaFirma.FileName);
+                string rutaCompletaArchivo = Path.Combine(carpetaDestino, nombreArchivoUnico);
+                using (var fileStream = new FileStream(rutaCompletaArchivo, FileMode.Create))
+                {
+                    await model.NuevaFirma.CopyToAsync(fileStream);
+                }
+
+                // Se actualiza la propiedad 'firma' del objeto usuario con la ruta del nuevo archivo.
+                usuarioExistente.firma = Path.Combine("/firmas/", nombreArchivoUnico).Replace('\\', '/');
+            }
+            // Si no se subió un archivo nuevo, no se hace nada y 'usuarioExistente.firma' conserva su valor.
+
+            // Se actualizan las propiedades del usuario con los valores del formulario.
             usuarioExistente.nombre = model.Nombre;
             usuarioExistente.apellidos = model.Apellidos;
             usuarioExistente.rut = model.Rut;
@@ -249,8 +337,10 @@ namespace ABM.Controllers
             usuarioExistente.correo = model.Correo;
             usuarioExistente.usuario = model.Usuario;
             usuarioExistente.idRol = model.RolId;
-            usuarioExistente.ID_gerencia = model.IdGerencia; // <-- Se actualiza la gerencia
+            usuarioExistente.ID_gerencia = model.IdGerencia;
+            usuarioExistente.ResponsableFirma = model.ResponsableFirma; // Se actualiza el valor del checkbox.
 
+            // Se llama al repositorio para que ejecute la consulta UPDATE en la base de datos.
             bool actualizado = await _repositorioUsuarios.ActualizarUsuario(usuarioExistente);
 
             if (actualizado)
@@ -265,6 +355,7 @@ namespace ABM.Controllers
                 return View(model);
             }
         }
+
 
         [HttpGet]
         [Monitoreo("ListarRoles", "SELECT", "verListarRoles")]

@@ -281,47 +281,53 @@ namespace ABM.Servicios
             return mesesDiferencia;
         }
 
+
+
         public async Task<int> RegistrarUsuario(Usuario usuario)
         {
             using (IDbConnection dbdapper = new SqlConnection(connectionString))
             {
-                // Se añade ID_gerencia al INSERT
+                // Se añaden 'firma' y 'ResponsableFirma' al INSERT
                 string query = @"
-        INSERT INTO ftc_usuario (
-            nombre, apellidos, rut, telefono, correo, usuario, 
-            password, repeat_password, Fcreacion, otc, inicioOtc, 
-            MesesExpiracionClave, estado, estado_password, idRol, primerInicio,
-            ID_gerencia
-        )
-        VALUES (
-            @nombre, @apellidos, @rut, @telefono, @correo, @usuario,
-            @password, @repeat_password, @Fcreacion, @otc, @inicioOtc,
-            @MesesExpiracionClave, @estado, '1', @idRol, '1',
-            @ID_gerencia
-        );
-        SELECT CAST(SCOPE_IDENTITY() as int)";
+INSERT INTO ftc_usuario (
+    nombre, apellidos, rut, telefono, correo, usuario, 
+    password, repeat_password, Fcreacion, otc, inicioOtc, 
+    MesesExpiracionClave, estado, estado_password, idRol, primerInicio,
+    ID_gerencia, firma, ResponsableFirma
+)
+VALUES (
+    @nombre, @apellidos, @rut, @telefono, @correo, @usuario,
+    @password, @repeat_password, @Fcreacion, @otc, @inicioOtc,
+    @MesesExpiracionClave, @estado, '1', @idRol, '1',
+    @ID_gerencia, @firma, @ResponsableFirma
+);
+SELECT CAST(SCOPE_IDENTITY() as int)";
 
+                // Dapper mapeará automáticamente las propiedades del objeto 'usuario' a los parámetros
                 return await dbdapper.ExecuteScalarAsync<int>(query, usuario);
             }
         }
+
 
         public async Task<bool> ActualizarUsuario(Usuario usuario)
         {
             using (IDbConnection dbdapper = new SqlConnection(connectionString))
             {
-                // Se añade ID_gerencia al UPDATE
+                // Se añade firma y ResponsableFirma al UPDATE
                 string query = @"
-        UPDATE ftc_usuario
-        SET nombre = @nombre,
-            apellidos = @apellidos,
-            rut = @rut,
-            telefono = @telefono,
-            correo = @correo,
-            usuario = @usuario,
-            idRol = @idRol,
-            ID_gerencia = @ID_gerencia,
-            FultimaModificacion = GETDATE()
-        WHERE idUsuario = @idUsuario";
+UPDATE ftc_usuario
+SET nombre = @nombre,
+    apellidos = @apellidos,
+    rut = @rut,
+    telefono = @telefono,
+    correo = @correo,
+    usuario = @usuario,
+    idRol = @idRol,
+    ID_gerencia = @ID_gerencia,
+    FultimaModificacion = GETDATE(),
+    firma = @firma,
+    ResponsableFirma = @ResponsableFirma
+WHERE idUsuario = @idUsuario";
 
                 int filas = await dbdapper.ExecuteAsync(query, usuario);
                 return filas > 0;
