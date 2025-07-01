@@ -45,15 +45,30 @@ namespace ABM.Controllers
         [HttpGet]
         public async Task<IActionResult> Detalle(int idSistema, string idPais)
         {
+            // 1. Validar los parámetros de la ruta
             if (idSistema <= 0 || string.IsNullOrEmpty(idPais))
             {
                 return BadRequest("Los parámetros proporcionados no son válidos.");
             }
 
-            var datosMatriz = await _repositorioMatriz.ObtenerListaDataMatrizTodo(idSistema, idPais);
+            // 2. CAMBIO: Leer el IdNegocio desde la sesión
+            var idNegocioSesion = HttpContext.Session.GetInt32("IdNegocio");
 
+            // 3. CAMBIO: Validar que el IdNegocio exista en la sesión
+            if (idNegocioSesion == null)
+            {
+                _logger.LogWarning("Se intentó acceder al detalle de la matriz sin un IdNegocio en la sesión.");
+                // Redirigir a una página donde pueda seleccionar el contexto si este se pierde.
+                return RedirectToAction("Index");
+            }
+
+            // 4. CAMBIO: Llamar al repositorio con los tres parámetros (idSistema, idPais, idNegocio)
+            var datosMatriz = await _repositorioMatriz.ObtenerListaDataMatrizTodo(idSistema, idPais, idNegocioSesion.Value);
+
+            // 5. CAMBIO: Poblar ViewData con la información completa para el título
             ViewData["Pais"] = idPais;
             ViewData["Sistema"] = datosMatriz.FirstOrDefault()?.Sistema ?? "Desconocido";
+            ViewData["Negocio"] = datosMatriz.FirstOrDefault()?.Negocio ?? "Desconocido"; // <-- Se añade el Negocio
 
             return View(datosMatriz);
         }
