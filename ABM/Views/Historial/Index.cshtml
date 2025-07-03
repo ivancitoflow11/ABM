@@ -1,0 +1,56 @@
+﻿@model IEnumerable<ABM.Models.Firma>
+
+@{
+    ViewData["Title"] = "Historial de Firmas";
+}
+
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">@ViewData["Title"]</h3>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table id="tablaHistorial" class="table table-bordered table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Fecha de Firma</th>
+                                    <th>País</th>
+                                    <th>Negocio</th>
+                                    <th>Sistema</th>
+                                    <th>Responsable</th>
+                                    <th>Comentario</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var firma in Model)
+                                {
+                                    <tr>
+                                        <td>@firma.fechaFirma.ToString("yyyy-MM-dd HH:mm")</td>
+                                        <td>@firma.NombrePais</td>
+                                        <td>@firma.NombreNegocio</td>
+                                        <td>@firma.NombreSistema</td>
+                                        <td>@firma.NombreUsuarioResponsable</td>
+                                        <td>@(firma.comentario ?? "-")</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            $('#tablaHistorial').DataTable({
+                "order": [[ 0, "desc" ]] // Ordenar por fecha descendente por defecto
+            });
+        });
+    </script>
+}
