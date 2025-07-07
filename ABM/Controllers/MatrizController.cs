@@ -1,17 +1,19 @@
 ﻿using System.Linq;
 using System.Threading.Tasks;
 using ABM.Servicios;
-using Dapper; // Necesario para la consulta directa de Dapper
-using Microsoft.AspNetCore.Authorization; // Asegúrate de tener la autorización
+using Dapper;
+using Microsoft.AspNetCore.Authorization; 
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Data.SqlClient; // Necesario para la conexión directa
+using Microsoft.Data.SqlClient; 
 using Microsoft.Extensions.Logging;
 using System.Security.Claims;
+using Rotativa.AspNetCore;
+
 
 namespace ABM.Controllers
 {
-    [Authorize] // Es una buena práctica proteger todo el controlador
+    [Authorize] 
     public class MatrizController : Controller
     {
         private readonly IRepositorioMatriz _repositorioMatriz;
@@ -28,7 +30,21 @@ namespace ABM.Controllers
             var idClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             return int.Parse(idClaim ?? "0");
         }
+        public async Task<IActionResult> DescargarPdfFirma(int idFirma)
+        {
+            var modelo = await _repositorioMatriz.ObtenerDatosParaReporteFirma(idFirma);
 
+            if (modelo == null)
+            {
+                return NotFound();
+            }
+
+
+            return new ViewAsPdf("~/Views/Reporte/FirmaPdf.cshtml", modelo)
+            {
+                FileName = $"Comprobante_Firma_{idFirma}.pdf"
+            };
+        }
         [HttpGet]
         public async Task<IActionResult> Index()
         {

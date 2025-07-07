@@ -18,6 +18,8 @@ builder.Services.AddControllersWithViews(options =>
     options.Filters.Add<DatabaseExceptionFilter>(); // Agrega el filtro globalmente
 });
 
+Rotativa.AspNetCore.RotativaConfiguration.Setup(builder.Environment.WebRootPath, "Rotativa");
+
 // Registrar IHttpContextAccessor
 builder.Services.AddHttpContextAccessor();
 

@@ -13,7 +13,6 @@
         public string userid { get; set; }
         public string cargospr { get; set; }
         public string perfil { get; set; }
-        public string codcosto { get; set; }
         public string codccostopr { get; set; }
         public string codccosto { get; set; }
         public string Nomccosto { get; set; }
@@ -22,5 +21,7 @@
         public string feccarga { get; set; }
         public string cta_duplicada { get; set; }
         public string Evidencia { get; set; }
+        public int? idNegocio { get; set; } 
+        public string negocio { get; set; }
     }
 }

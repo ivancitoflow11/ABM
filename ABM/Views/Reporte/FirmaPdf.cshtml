@@ -1,0 +1,112 @@
+﻿@model ABM.Models.FirmaReporteViewModel
+@{
+    Layout = null; 
+}
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Comprobante de Firma</title>
+    <style>
+        body { font-family: Arial, sans-serif; font-size: 12px; color: #333; }
+        .container { width: 100%; margin: 0 auto; }
+        .header { background-color: #b0d404; color: white; padding: 15px; text-align: center; }
+        .header h1 { margin: 0; font-size: 24px; }
+        .section { margin-top: 20px; border: 1px solid #ddd; border-radius: 5px; }
+        .section-header { background-color: #f7f7f7; padding: 10px; font-weight: bold; border-bottom: 1px solid #ddd; }
+        .section-content { padding: 15px; }
+        .info-table { width: 100%; border-collapse: collapse; }
+        .info-table td { padding: 8px 0; border-bottom: 1px dotted #ccc; }
+        .info-table td:first-child { font-weight: bold; width: 150px; }
+        .details-table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        .details-table th, .details-table td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        .details-table th { background-color: #f2f2f2; }
+
+        .signature-container {
+            text-align: center;
+            margin-top: 40px;
+        }
+        /* Contenedor para centrar */
+        .signature-box {
+            padding-top: 10px;
+            border-top: 1px solid #333;
+            width: 280px;
+            display: inline-block; /* Permite que el text-align del padre lo centre */
+        }
+
+            .signature-box img {
+                max-width: 200px;
+                max-height: 80px;
+            }
+
+            .signature-box p {
+                margin-top: 5px;
+                margin-bottom: 0;
+            }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Comprobante de Certificación</h1>
+        </div>
+
+        <div class="section">
+            <div class="section-header">Información de la Firma</div>
+            <div class="section-content">
+                <table class="info-table">
+                    <tr><td>País:</td><td>@Model.FirmaInfo.NombrePais</td></tr>
+                    <tr><td>Negocio:</td><td>@Model.FirmaInfo.NombreNegocio</td></tr>
+                    <tr><td>Sistema:</td><td>@Model.FirmaInfo.NombreSistema</td></tr>
+                    <tr><td>Fecha de Firma:</td><td>@Model.FirmaInfo.fechaFirma.ToString("dd 'de' MMMM 'de' yyyy, HH:mm 'hrs.'")</td></tr>
+                    <tr><td>Responsable:</td><td>@Model.FirmaInfo.NombreUsuarioResponsable</td></tr>
+                    <tr><td>Comentario:</td><td>@(string.IsNullOrEmpty(Model.FirmaInfo.comentario) ? "Sin comentario" : Model.FirmaInfo.comentario)</td></tr>
+                </table>
+            </div>
+        </div>
+
+        <div class="signature-container">
+            @if (!string.IsNullOrEmpty(Model.FirmaUsuarioBase64))
+            {
+                <div class="signature-box">
+                    <img src="@Model.FirmaUsuarioBase64" alt="Firma" />
+                    <p>@Model.FirmaInfo.NombreUsuarioResponsable</p>
+                </div>
+            }
+        </div>
+
+        <div class="section">
+            <div class="section-header">Detalle de Activos Certificados</div>
+            <div class="section-content">
+                <table class="details-table">
+                    <thead>
+                        <tr>
+                            <th>RUT/DNI</th>
+                            <th>Nombre Usuario</th>
+                            <th>Cargo</th>
+                            <th>Perfil</th>
+                            <th>Pais</th>
+                            <th>Negocio</th>
+                            <th>Sistema</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model.DetallesFirma)
+                        {
+                            <tr>
+                                <td>@item.rutdni</td>
+                                <td>@item.nombreusuario</td>
+                                <td>@item.cargospr</td>
+                                <td>@item.perfil</td>
+                                <td>@item.pais</td>
+                                <td>@item.negocio</td>
+                                <td>@item.sistema</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

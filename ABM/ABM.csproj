@@ -35,7 +35,6 @@
     <Folder Include="wwwroot\ArchivosManuales\" />
     <Folder Include="wwwroot\Manual\" />
     <Folder Include="wwwroot\archivos\" />
-    <Folder Include="wwwroot\Rotativa\" />
   </ItemGroup>
 
 </Project>
