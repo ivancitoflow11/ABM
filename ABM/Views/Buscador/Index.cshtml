@@ -1,0 +1,145 @@
+﻿@{
+    ViewData["Title"] = "Buscador Unificado";
+}
+<br />
+<br />
+<br />
+<div class="accordion" id="buscadorAcordeon">
+    <div class="accordion-item">
+        <h2 class="accordion-header" id="headingAd">
+            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseAd" aria-expanded="false" aria-controls="collapseAd">
+                Buscador de Usuarios (Active Directory)
+            </button>
+        </h2>
+        <div id="collapseAd" class="accordion-collapse collapse" aria-labelledby="headingAd" data-bs-parent="#buscadorAcordeon">
+            @* El 'data-url' le dice al script a dónde ir a buscar el contenido *@
+            <div class="accordion-body" id="body-ad" data-url="/Buscador/BuscadorAd">
+                Cargando...
+            </div>
+        </div>
+    </div>
+
+    <div class="accordion-item">
+        <h2 class="accordion-header" id="headingFalanet">
+            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFalanet" aria-expanded="false" aria-controls="collapseFalanet">
+                Buscador de Activos Falanet
+            </button>
+        </h2>
+        <div id="collapseFalanet" class="accordion-collapse collapse" aria-labelledby="headingFalanet" data-bs-parent="#buscadorAcordeon">
+            <div class="accordion-body" id="body-falanet" data-url="/Buscador/BuscadorFalanet">
+                Cargando...
+            </div>
+        </div>
+    </div>
+    <div class="accordion-item">
+        <h2 class="accordion-header" id="headingFiniquitados">
+            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFiniquitados" aria-expanded="false" aria-controls="collapseFiniquitados">
+                Buscador de Finiquitados
+            </button>
+        </h2>
+        <div id="collapseFiniquitados" class="accordion-collapse collapse" aria-labelledby="headingFiniquitados" data-bs-parent="#buscadorAcordeon">
+            <div class="accordion-body" id="body-finiquitados" data-url="/Buscador/BuscadorFiniquitados">
+                Cargando...
+            </div>
+        </div>
+    </div>
+    <div class="accordion-item">
+        <h2 class="accordion-header" id="headingPasoSap">
+            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapsePasoSap" aria-expanded="false" aria-controls="collapsePasoSap">
+                Buscador Paso SAP
+            </button>
+        </h2>
+        <div id="collapsePasoSap" class="accordion-collapse collapse" aria-labelledby="headingPasoSap" data-bs-parent="#buscadorAcordeon">
+            <div class="accordion-body" id="body-paso-sap" data-url="/Buscador/BuscadorPasoSap">
+                Cargando...
+            </div>
+        </div>
+    </div>
+
+    <div class="accordion-item">
+        <h2 class="accordion-header" id="headingAgrupaActivos">
+            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseAgrupaActivos" aria-expanded="false" aria-controls="collapseAgrupaActivos">
+                Buscador Agrupa Activos
+            </button>
+        </h2>
+        <div id="collapseAgrupaActivos" class="accordion-collapse collapse" aria-labelledby="headingAgrupaActivos" data-bs-parent="#buscadorAcordeon">
+            <div class="accordion-body" id="body-agrupa-activos" data-url="/Buscador/BuscadorAgrupaActivos">
+                Cargando...
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/vendor.min.js"></script>
+    <script src="~/libs/datatables.net/js/jquery.dataTables.min.js"></script>
+    <script src="~/js/dataTables.buttons.min.js"></script>
+    <script src="~/js/jszip.min.js"></script>
+    <script src="~/js/pdfmake.min.js"></script>
+    <script src="~/js/vfs_fonts.js"></script>
+    <script src="~/js/buttons.html5.min.js"></script>
+    <script src="~/js/buttons.print.min.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const acordeon = document.getElementById('buscadorAcordeon');
+
+            // 1. Cargar el contenido de un buscador cuando se muestra por primera vez
+            acordeon.addEventListener('show.bs.collapse', function (event) {
+                const body = event.target.querySelector('.accordion-body');
+                const url = body.dataset.url;
+
+                if (!body.dataset.loaded) {
+                    fetch(url)
+                        .then(response => response.text())
+                        .then(html => {
+                            body.innerHTML = html;
+                            body.dataset.loaded = 'true';
+                            inicializarDataTables(body);
+                        })
+                        .catch(err => {
+                            body.innerHTML = `<div class="alert alert-danger">Error al cargar el buscador: ${err}</div>`;
+                        });
+                }
+            });
+
+            // 2. Manejar el envío de los formularios de búsqueda usando AJAX
+            document.addEventListener('submit', function (event) {
+                const form = event.target.closest('#buscadorAcordeon form');
+                if (!form) {
+                    return;
+                }
+
+                event.preventDefault();
+
+                const url = form.action;
+                const params = new URLSearchParams(new FormData(form)).toString();
+                const targetBody = form.closest('.accordion-body');
+
+                targetBody.innerHTML = '<div class="text-center p-4"><strong>Buscando...</strong></div>';
+
+                fetch(`${url}?${params}`)
+                    .then(response => response.text())
+                    .then(html => {
+                        targetBody.innerHTML = html;
+                        inicializarDataTables(targetBody);
+                    })
+                    .catch(err => {
+                        targetBody.innerHTML = `<div class="alert alert-danger">Error al realizar la búsqueda: ${err}</div>`;
+                    });
+            });
+
+            // 3. Función para inicializar DataTables en las tablas cargadas
+            function inicializarDataTables(container) {
+                const table = container.querySelector('.datatable-export');
+                if (table) {
+                    $(table).DataTable({
+                        dom: 'Bfrtip',
+                        buttons: ['copy', 'excel', 'pdf', 'print'],
+                        destroy: true
+                    });
+                }
+            }
+        });
+    </script>
+}

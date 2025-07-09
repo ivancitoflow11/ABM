@@ -2,21 +2,89 @@
 using ABM.Servicios;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace ABM.Controllers
 {
     [Authorize]
     public class BuscadorController : Controller
     {
-
         private readonly IRepositorioBuscador _repositorioBuscador;
-
 
         public BuscadorController(IRepositorioBuscador repositorioBuscador)
         {
             _repositorioBuscador = repositorioBuscador;
         }
 
+
+        [HttpGet]
+        public IActionResult Index()
+        {
+            return View();
+        }
+        [HttpGet]
+        public async Task<IActionResult> BuscadorPasoSap(string rutODni, string nombreCompleto, string correoUsuario)
+        {
+            ViewBag.RutODni = rutODni;
+            ViewBag.NombreCompleto = nombreCompleto;
+            ViewBag.CorreoUsuario = correoUsuario;
+
+            List<SapUser> resultados;
+
+            if (string.IsNullOrWhiteSpace(rutODni) &&
+                string.IsNullOrWhiteSpace(nombreCompleto) &&
+                string.IsNullOrWhiteSpace(correoUsuario))
+            {
+                resultados = new List<SapUser>();
+            }
+            else
+            {
+                resultados = (await _repositorioBuscador.BuscarEnPasoSap(rutODni, nombreCompleto, correoUsuario)).ToList();
+            }
+
+            return PartialView("_BuscadorPasoSap", resultados);
+        }
+        [HttpGet]
+        public async Task<IActionResult> BuscadorFiniquitados(string rutDni, string nombreUsuario, string mailUsuario)
+        {
+            // Obtenemos los datos de la sesión, como en tus otros controladores
+            var idPaisSesion = HttpContext.Session.GetInt32("IdPais");
+            var idNegocioSesion = HttpContext.Session.GetInt32("IdNegocio");
+
+            // Validamos que la sesión exista
+            if (!idPaisSesion.HasValue || !idNegocioSesion.HasValue)
+            {
+                // Puedes manejar este error como prefieras, aquí solo devuelvo un mensaje.
+                return PartialView("_ErrorSesion");
+            }
+
+            ViewBag.RutDni = rutDni;
+            ViewBag.NombreUsuario = nombreUsuario;
+            ViewBag.MailUsuario = mailUsuario;
+
+            List<FiniquitadoUser> resultados;
+
+            if (string.IsNullOrWhiteSpace(rutDni) &&
+                string.IsNullOrWhiteSpace(nombreUsuario) &&
+                string.IsNullOrWhiteSpace(mailUsuario))
+            {
+                resultados = new List<FiniquitadoUser>();
+            }
+            else
+            {
+                resultados = (await _repositorioBuscador.BuscarEnFiniquitados(
+                    rutDni,
+                    nombreUsuario,
+                    mailUsuario,
+                    idPaisSesion.Value,
+                    idNegocioSesion.Value
+                )).ToList();
+            }
+
+            return PartialView("_BuscadorFiniquitados", resultados);
+        }
         [HttpGet]
         public async Task<IActionResult> BuscadorAd(string employeeId, string displayName, string mail)
         {
@@ -34,38 +102,60 @@ namespace ABM.Controllers
             }
             else
             {
-                var pEmployeeId = string.IsNullOrWhiteSpace(employeeId) ? null : employeeId;
-                var pDisplayName = string.IsNullOrWhiteSpace(displayName) ? null : displayName;
-                var pMail = string.IsNullOrWhiteSpace(mail) ? null : mail;
-
-
-                resultados = (await _repositorioBuscador.BuscarUsuariosEnAd(pEmployeeId, pDisplayName, pMail)).ToList();
+                // La lógica de la consulta no cambia.
+                resultados = (await _repositorioBuscador.BuscarUsuariosEnAd(employeeId, displayName, mail)).ToList();
             }
 
-            return View(resultados);
+            // Devuelve la vista parcial con el modelo. El nombre debe coincidir con el archivo .cshtml parcial.
+            return PartialView("_BuscadorAd", resultados);
         }
 
+
+        // Reemplaza este método en tu BuscadorController.cs
         [HttpGet]
-        public async Task<IActionResult> BuscadorFalanet(string rut, string apePaterno, string correo)
+        public async Task<IActionResult> BuscadorFalanet(string rut, string nombreCompleto, string correo)
         {
             ViewBag.Rut = rut;
-            ViewBag.ApePaterno = apePaterno;
+            ViewBag.NombreCompleto = nombreCompleto; // Cambio aquí
             ViewBag.Correo = correo;
 
             List<ActivosFalanetUser> resultados;
 
             if (string.IsNullOrWhiteSpace(rut) &&
-                string.IsNullOrWhiteSpace(apePaterno) &&
+                string.IsNullOrWhiteSpace(nombreCompleto) && // Cambio aquí
                 string.IsNullOrWhiteSpace(correo))
             {
                 resultados = new List<ActivosFalanetUser>();
             }
             else
             {
-                resultados = (await _repositorioBuscador.BuscarEnActivosFalanet(rut, apePaterno, correo)).ToList();
+                resultados = (await _repositorioBuscador.BuscarEnActivosFalanet(rut, nombreCompleto, correo)).ToList(); // Cambio aquí
             }
 
-            return View(resultados);
+            return PartialView("_BuscadorFalanet", resultados);
+        }
+        // Añade este método a tu BuscadorController.cs
+        [HttpGet]
+        public async Task<IActionResult> BuscadorAgrupaActivos(string rutDni, string nombreUsuario, string mailUsuario)
+        {
+            ViewBag.RutDni = rutDni;
+            ViewBag.NombreUsuario = nombreUsuario;
+            ViewBag.MailUsuario = mailUsuario;
+
+            List<AgrupaActivosUser> resultados;
+
+            if (string.IsNullOrWhiteSpace(rutDni) &&
+                string.IsNullOrWhiteSpace(nombreUsuario) &&
+                string.IsNullOrWhiteSpace(mailUsuario))
+            {
+                resultados = new List<AgrupaActivosUser>();
+            }
+            else
+            {
+                resultados = (await _repositorioBuscador.BuscarEnAgrupaActivos(rutDni, nombreUsuario, mailUsuario)).ToList();
+            }
+
+            return PartialView("_BuscadorAgrupaActivos", resultados);
         }
     }
 }
