@@ -81,7 +81,7 @@
                     </div>
                 </div>
 
-                <div class="row g-3">
+                <div class="row g-3 mb-3">
                     <div class="col-md-4">
                         <label asp-for="CruceParaCrear.Ip" class="form-label">IP Máquina</label>
                         <input asp-for="CruceParaCrear.Ip" class="form-control" placeholder="Ej: 192.168.1.100" />
@@ -92,8 +92,19 @@
                         <input asp-for="CruceParaCrear.Responsable" class="form-control" placeholder="Nombre del responsable" />
                         <span asp-validation-for="CruceParaCrear.Responsable" class="text-danger"></span>
                     </div>
-                    <div class="col-md-4 d-flex align-items-end">
-                        <button type="submit" class="btn btn-success w-100">Crear Cruce</button>
+                    <div class="col-md-4">
+                        <label asp-for="CruceParaCrear.InfoMatrizPerfil" class="form-label">Info Matriz Perfil</label>
+                        <select asp-for="CruceParaCrear.InfoMatrizPerfil" class="form-select">
+                            <option value="SI">SI</option>
+                            <option value="NO" selected>NO</option>
+                        </select>
+                        <span asp-validation-for="CruceParaCrear.InfoMatrizPerfil" class="text-danger"></span>
+                    </div>
+                </div>
+
+                <div class="row g-3">
+                    <div class="col-md-12 d-flex justify-content-end">
+                        <button type="submit" class="btn btn-success">Crear Cruce</button>
                     </div>
                 </div>
             </form>
@@ -119,6 +130,7 @@
                             <th>Ruta (Trans)</th>
                             <th>IP (PNSJT)</th>
                             <th>Responsable (PNSJT)</th>
+                            <th>Info Matriz</th>
                             <th>Estado (PNS)</th>
                             <th>Acciones</th>
                         </tr>
@@ -136,6 +148,7 @@
                                     <td>@item.Trans</td>
                                     <td>@item.Ip</td>
                                     <td>@item.Responsable</td>
+                                    <td>@item.InfoMatrizPerfil</td>
                                     <td>@(item.Estado == "1" ? "Activo" : (string.IsNullOrEmpty(item.Estado) ? "No definido" : item.Estado))</td>
                                     <td>
                                         <button type="button"
@@ -151,9 +164,9 @@
                                               style="display:inline;">
 
                                             @Html.AntiForgeryToken()
-                                            <button type="button" 
-                                                    class="btn btn-sm btn-danger ms-1 btn-deshabilitar-swal" 
-                                                    data-idpaisnegociosistema="@item.IdPaisNegocioSistema" 
+                                            <button type="button"
+                                                    class="btn btn-sm btn-danger ms-1 btn-deshabilitar-swal"
+                                                    data-idpaisnegociosistema="@item.IdPaisNegocioSistema"
                                                     title="Deshabilitar Cruce PNS">
                                                 <i class="fas fa-link-slash"></i>
                                             </button>
@@ -165,7 +178,7 @@
                         else
                         {
                             <tr>
-                                <td colspan="9" class="text-center">No hay cruces para mostrar.</td>
+                                <td colspan="10" class="text-center">No hay cruces para mostrar.</td>
                             </tr>
                         }
                     </tbody>
@@ -240,10 +253,20 @@
                             </div>
                         </div>
 
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-12">
+                                <label for="edit-InfoMatrizPerfil" class="form-label">Info Matriz Perfil</label>
+                                <select name="InfoMatrizPerfil" id="edit-InfoMatrizPerfil" class="form-select">
+                                    <option value="SI">SI</option>
+                                    <option value="NO">NO</option>
+                                </select>
+                                <span data-valmsg-for="InfoMatrizPerfil" class="text-danger"></span>
+                            </div>
+                        </div>
 
                         <div class="modal-footer">
                             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                            <button type="submit" class="btn btn-primary">Guardar Cambios</button> 
+                            <button type="submit" class="btn btn-primary">Guardar Cambios</button>
                         </div>
                     </form>
                 </div>
@@ -276,7 +299,7 @@
                     paginate: { first: "Primero", last: "Último", next: "Siguiente", previous: "Anterior" }
                 },
                 columns: [
-                    null, null, null, null, null, null, null, null,
+                    null, null, null, null, null, null, null, null, null,
                     { "orderable": false, "searchable": false }
                 ]
             });
@@ -309,6 +332,7 @@
                             $('#edit-Trans').val(data.trans);
                             $('#edit-Ip').val(data.ip);
                             $('#edit-Responsable').val(data.responsable);
+                            $('#edit-InfoMatrizPerfil').val(data.infoMatrizPerfil || 'NO');
                             $('#display-Estado').val(data.estado == "1" ? "Activo" : (data.estado || "No definido"));
                             editarCruceModal.show();
                         } else {

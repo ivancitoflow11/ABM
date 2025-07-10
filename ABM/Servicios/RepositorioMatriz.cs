@@ -154,27 +154,30 @@ namespace ABM.Servicios
             using (IDbConnection db = new SqlConnection(_connectionString))
             {
                 const string query = @"
-            SELECT DISTINCT
-                p.pais,
-                s.sistema,
-                s.idSistema,
-                pns.idNegocio       
-            FROM
-                dbo.ftc_pais_negocio_sistema pns
-            JOIN
-                dbo.ftc_pais p ON pns.idPais = p.idPais
-            JOIN
-                dbo.ftc_sistema s ON pns.idSistema = s.idSistema
-            JOIN
-                dbo.ftc_agrupa_activos aa ON pns.idPaisNegocioSistema = aa.idPaisNegocioSistema
-            WHERE
-                pns.idPais = @IdPais
-                AND pns.idNegocio = @IdNegocio
-                AND pns.estado = 1
-                AND aa.perfil IS NOT NULL
-            ORDER BY
-                p.pais, s.sistema;
-        ";
+        SELECT DISTINCT
+            p.pais,
+            s.sistema,
+            s.idSistema,
+            pns.idNegocio      
+        FROM
+            dbo.ftc_pais_negocio_sistema pns
+        JOIN
+            dbo.ftc_pais p ON pns.idPais = p.idPais
+        JOIN
+            dbo.ftc_sistema s ON pns.idSistema = s.idSistema
+        JOIN
+            dbo.ftc_agrupa_activos aa ON pns.idPaisNegocioSistema = aa.idPaisNegocioSistema
+        JOIN -- <-- 1. NUEVO JOIN A LA TABLA pnsjt
+            dbo.ftc_pnsjt jt ON pns.idPaisNegocioSistema = jt.idPaisNegocioSistema
+        WHERE
+            pns.idPais = @IdPais
+            AND pns.idNegocio = @IdNegocio
+            AND pns.estado = 1
+            AND aa.perfil IS NOT NULL
+            AND jt.infomatrizperfil = 'SI' -- <-- 2. NUEVO FILTRO
+        ORDER BY
+            p.pais, s.sistema;
+    ";
                 return await db.QueryAsync<MatrizDisponible>(query, new { IdPais = idPais, IdNegocio = idNegocio });
             }
         }

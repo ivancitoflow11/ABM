@@ -7,6 +7,7 @@ namespace ABM.Models
     public class CrucesPNSPageViewModel
     {
         public IEnumerable<CrucePNSViewModel> CrucesList { get; set; }
+        public string InfoMatrizPerfil { get; set; }
         public CrucePNSViewModel CruceParaCrear { get; set; } 
     }
 }

@@ -12,6 +12,7 @@ namespace ABM.Models
         [Required(ErrorMessage = "El campo País es obligatorio.")]
         [Display(Name = "País")]
         public int IdPais { get; set; }
+        public string InfoMatrizPerfil { get; set; }
 
         [Required(ErrorMessage = "El campo Negocio es obligatorio.")]
         [Display(Name = "Negocio")]

@@ -12,5 +12,6 @@ namespace ABM.Models
         public int IdPaisNegocioSistema { get; set; }
         public string Ip { get; set; }
         public string Responsable { get; set; }
+        public string infomatrizperfil { get; set; }
     }
 }

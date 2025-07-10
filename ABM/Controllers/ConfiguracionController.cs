@@ -258,7 +258,7 @@ namespace ABM.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Monitoreo("CrucePNS", "INSERT", "ejecutarCreacionCrucePNS")]
-        public async Task<IActionResult> CrearCrucePNS(CrucesPNSPageViewModel pageModel) 
+        public async Task<IActionResult> CrearCrucePNS(CrucesPNSPageViewModel pageModel)
         {
             var modeloForm = pageModel?.CruceParaCrear;
 
@@ -268,7 +268,7 @@ namespace ABM.Controllers
                 var emptyPageViewModel = new CrucesPNSPageViewModel
                 {
                     CrucesList = await _repo.ObtenerCrucesPNS() ?? new List<CrucePNSViewModel>(),
-                    CruceParaCrear = new CrucePNSViewModel // Modelo vacío para el formulario
+                    CruceParaCrear = new CrucePNSViewModel
                     {
                         Paises = new SelectList(await _repo.ObtenerPaises() ?? new List<Pais>(), nameof(Pais.IdPais), nameof(Pais.Nombre)),
                         Negocios = new SelectList(await _repo.ObtenerNegocios() ?? new List<Negocio>(), nameof(Negocio.IdNegocio), nameof(Negocio.Nombre)),
@@ -278,16 +278,13 @@ namespace ABM.Controllers
                 return View("CrucesPNS", emptyPageViewModel);
             }
 
-            // La validación de ExistenciaCruce ahora usa los datos de modeloForm
             if (await _repo.ExisteCrucePNS(modeloForm.IdPais, modeloForm.IdNegocio, modeloForm.IdSistema))
             {
                 ModelState.AddModelError("CruceParaCrear.IdPais", $"La combinación País, Negocio y Sistema ya existe.");
             }
 
-            // ModelState.IsValid ahora se evalúa sobre el 'pageModel' completo.
             if (!ModelState.IsValid)
             {
-                // El modeloForm ya tiene los valores enviados por el usuario.
                 var listaCruces = await _repo.ObtenerCrucesPNS() ?? new List<CrucePNSViewModel>();
                 var paises = await _repo.ObtenerPaises() ?? new List<Pais>();
                 var negocios = await _repo.ObtenerNegocios() ?? new List<Negocio>();
@@ -297,17 +294,15 @@ namespace ABM.Controllers
                 modeloForm.Negocios = new SelectList(negocios, nameof(Negocio.IdNegocio), nameof(Negocio.Nombre), modeloForm.IdNegocio);
                 modeloForm.Sistemas = new SelectList(sistemas, "idSistema", "sistema", modeloForm.IdSistema);
 
-                // se reconstruye el pageModel para la vista, manteniendo el modeloForm con los errores.
                 var viewModelParaVista = new CrucesPNSPageViewModel
                 {
                     CrucesList = listaCruces,
-                    CruceParaCrear = modeloForm 
+                    CruceParaCrear = modeloForm
                 };
                 TempData["ErrorMessage"] = "No se pudo crear el Cruce PNS. Por favor, corrija los errores e intente nuevamente.";
                 return View("CrucesPNS", viewModelParaVista);
             }
 
-            // Si ModelState.IsValid es true, se hace la creación.
             var pns = new PaisNegocioSistema
             {
                 IdPais = modeloForm.IdPais,
@@ -323,7 +318,6 @@ namespace ABM.Controllers
             }
             catch (Exception ex)
             {
-
                 ModelState.AddModelError(string.Empty, $"Error crítico al guardar el cruce principal: {ex.Message}. Revise los logs del servidor.");
             }
 
@@ -335,7 +329,8 @@ namespace ABM.Controllers
                     Trans = modeloForm.Trans,
                     IdPaisNegocioSistema = nuevoIdPaisNegocioSistema,
                     Ip = modeloForm.Ip,
-                    Responsable = modeloForm.Responsable
+                    Responsable = modeloForm.Responsable,
+                    infomatrizperfil = modeloForm.InfoMatrizPerfil
                 };
                 try
                 {
@@ -345,15 +340,13 @@ namespace ABM.Controllers
                 }
                 catch (Exception exPnsjt)
                 {
-
                     ModelState.AddModelError(string.Empty, $"Se creó el cruce principal, pero hubo un error al guardar los detalles (PNSJT): {exPnsjt.Message}. Contacte a soporte.");
                 }
             }
-            else if (ModelState.ErrorCount == 0) 
+            else if (ModelState.ErrorCount == 0)
             {
                 ModelState.AddModelError(string.Empty, "No se pudo obtener el ID del nuevo cruce principal (el repositorio devolvió un ID no válido).");
             }
-
 
             var fallbackListaCruces = await _repo.ObtenerCrucesPNS() ?? new List<CrucePNSViewModel>();
             var fallbackPaises = await _repo.ObtenerPaises() ?? new List<Pais>();
@@ -367,7 +360,7 @@ namespace ABM.Controllers
             var fallbackPageViewModel = new CrucesPNSPageViewModel
             {
                 CrucesList = fallbackListaCruces,
-                CruceParaCrear = modeloForm 
+                CruceParaCrear = modeloForm
             };
             TempData["ErrorMessage"] = "Ocurrió un error durante el proceso de creación. Revise los mensajes.";
             return View("CrucesPNS", fallbackPageViewModel);
@@ -404,14 +397,12 @@ namespace ABM.Controllers
                 return BadRequest(new { Message = "Discrepancia en el ID del Cruce PNS. No se puede procesar la solicitud." });
             }
 
-
             if (modelo.IdPais <= 0) ModelState.AddModelError(nameof(modelo.IdPais), "Debe seleccionar un País.");
             if (modelo.IdNegocio <= 0) ModelState.AddModelError(nameof(modelo.IdNegocio), "Debe seleccionar un Negocio.");
             if (modelo.IdSistema <= 0) ModelState.AddModelError(nameof(modelo.IdSistema), "Debe seleccionar un Sistema.");
             if (string.IsNullOrWhiteSpace(modelo.Tabla)) ModelState.AddModelError(nameof(modelo.Tabla), "El campo Nombre tabla es obligatorio.");
             if (string.IsNullOrWhiteSpace(modelo.Ip)) ModelState.AddModelError(nameof(modelo.Ip), "El campo IP Máquina es obligatorio.");
             if (string.IsNullOrWhiteSpace(modelo.Responsable)) ModelState.AddModelError(nameof(modelo.Responsable), "El campo Responsable es obligatorio.");
-
 
             if (modelo.IdPais > 0 && modelo.IdNegocio > 0 && modelo.IdSistema > 0)
             {
@@ -432,7 +423,6 @@ namespace ABM.Controllers
                 return NotFound(new { Message = $"El registro base del cruce (ID: {modelo.IdPaisNegocioSistema}) no fue encontrado y no se puede actualizar." });
             }
 
-
             pnsExistente.IdPais = modelo.IdPais;
             pnsExistente.IdNegocio = modelo.IdNegocio;
             pnsExistente.IdSistema = modelo.IdSistema;
@@ -444,25 +434,24 @@ namespace ABM.Controllers
             }
             catch (Exception exPns)
             {
-
                 return StatusCode(500, new { Message = $"Error al actualizar el cruce principal: {exPns.Message}" });
             }
-
 
             bool pnsjtOperacionExitosa = false;
             var pnsjtExistente = await _repo.ObtenerPnsjtPorIdPaisNegocioSistema(modelo.IdPaisNegocioSistema);
 
             try
             {
-                if (pnsjtExistente != null) 
+                if (pnsjtExistente != null)
                 {
                     pnsjtExistente.Tabla = modelo.Tabla;
                     pnsjtExistente.Trans = modelo.Trans;
                     pnsjtExistente.Ip = modelo.Ip;
                     pnsjtExistente.Responsable = modelo.Responsable;
+                    pnsjtExistente.infomatrizperfil = modelo.InfoMatrizPerfil;
                     pnsjtOperacionExitosa = await _repo.ActualizarPnsjt(pnsjtExistente);
                 }
-                else 
+                else
                 {
                     var pnsjtToCreate = new Pnsjt
                     {
@@ -470,7 +459,8 @@ namespace ABM.Controllers
                         Tabla = modelo.Tabla,
                         Trans = modelo.Trans,
                         Ip = modelo.Ip,
-                        Responsable = modelo.Responsable
+                        Responsable = modelo.Responsable,
+                        infomatrizperfil = modelo.InfoMatrizPerfil
                     };
                     await _repo.CrearPnsjt(pnsjtToCreate);
                     pnsjtOperacionExitosa = true;
@@ -478,10 +468,8 @@ namespace ABM.Controllers
             }
             catch (Exception exPnsjt)
             {
-
                 return StatusCode(500, new { Message = $"Error al actualizar/crear los detalles del cruce (PNSJT): {exPnsjt.Message}" });
             }
-
 
             if (pnsActualizado || pnsjtOperacionExitosa)
             {

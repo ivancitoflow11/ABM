@@ -496,8 +496,8 @@ namespace ABM.Servicios
         {
             using var db = new SqlConnection(connectionString);
             var sql = @"
-                INSERT INTO ftc_pnsjt (tabla, trans, idPaisNegocioSistema, ip, responsable)
-                VALUES (@Tabla, @Trans, @IdPaisNegocioSistema, @Ip, @Responsable);";
+        INSERT INTO ftc_pnsjt (tabla, trans, idPaisNegocioSistema, ip, responsable, infomatrizperfil)
+        VALUES (@Tabla, @Trans, @IdPaisNegocioSistema, @Ip, @Responsable, @infomatrizperfil);";
             await db.ExecuteAsync(sql, pnsjt);
         }
 
@@ -505,27 +505,28 @@ namespace ABM.Servicios
         {
             using var db = new SqlConnection(connectionString);
             var sql = @"
-        SELECT
-            pns.idPaisNegocioSistema,
-            pns.idPais,
-            pa.pais AS NombrePais,
-            pns.idNegocio,
-            n.negocio AS NombreNegocio,
-            pns.idSistema,
-            s.sistema AS NombreSistema,
-            pns.estado,
-            jt.Id_pns,
-            jt.tabla,
-            jt.trans,
-            jt.ip,
-            jt.responsable
-        FROM ftc_pais_negocio_sistema pns
-        JOIN ftc_pais pa ON pns.idPais = pa.idPais
-        JOIN ftc_negocio n ON pns.idNegocio = n.idNegocio
-        JOIN ftc_sistema s ON pns.idSistema = s.idSistema
-        INNER JOIN ftc_pnsjt jt ON pns.idPaisNegocioSistema = jt.idPaisNegocioSistema 
-        WHERE pns.estado = '1'
-        ORDER BY pns.idPaisNegocioSistema DESC;";
+    SELECT
+        pns.idPaisNegocioSistema,
+        pns.idPais,
+        pa.pais AS NombrePais,
+        pns.idNegocio,
+        n.negocio AS NombreNegocio,
+        pns.idSistema,
+        s.sistema AS NombreSistema,
+        pns.estado,
+        jt.Id_pns,
+        jt.tabla,
+        jt.trans,
+        jt.ip,
+        jt.responsable,
+        jt.infomatrizperfil
+    FROM ftc_pais_negocio_sistema pns
+    JOIN ftc_pais pa ON pns.idPais = pa.idPais
+    JOIN ftc_negocio n ON pns.idNegocio = n.idNegocio
+    JOIN ftc_sistema s ON pns.idSistema = s.idSistema
+    INNER JOIN ftc_pnsjt jt ON pns.idPaisNegocioSistema = jt.idPaisNegocioSistema 
+    WHERE pns.estado = '1'
+    ORDER BY pns.idPaisNegocioSistema DESC;";
             return await db.QueryAsync<CrucePNSViewModel>(sql);
         }
 
@@ -533,20 +534,21 @@ namespace ABM.Servicios
         {
             using var db = new SqlConnection(connectionString);
             var sql = @"
-                SELECT
-                    pns.idPaisNegocioSistema,
-                    pns.idPais,
-                    pns.idNegocio,
-                    pns.idSistema,
-                    pns.estado,
-                    jt.Id_pns, 
-                    jt.tabla,
-                    jt.trans,
-                    jt.ip,
-                    jt.responsable
-                FROM ftc_pais_negocio_sistema pns
-                LEFT JOIN ftc_pnsjt jt ON pns.idPaisNegocioSistema = jt.idPaisNegocioSistema
-                WHERE pns.idPaisNegocioSistema = @idPaisNegocioSistema;";
+        SELECT
+            pns.idPaisNegocioSistema,
+            pns.idPais,
+            pns.idNegocio,
+            pns.idSistema,
+            pns.estado,
+            jt.Id_pns, 
+            jt.tabla,
+            jt.trans,
+            jt.ip,
+            jt.responsable,
+            jt.infomatrizperfil AS InfoMatrizPerfil
+        FROM ftc_pais_negocio_sistema pns
+        LEFT JOIN ftc_pnsjt jt ON pns.idPaisNegocioSistema = jt.idPaisNegocioSistema
+        WHERE pns.idPaisNegocioSistema = @idPaisNegocioSistema;";
             return await db.QueryFirstOrDefaultAsync<CrucePNSViewModel>(sql, new { idPaisNegocioSistema });
         }
 
@@ -574,12 +576,13 @@ namespace ABM.Servicios
         {
             using var db = new SqlConnection(connectionString);
             var sql = @" 
-                UPDATE ftc_pnsjt
-                SET tabla = @Tabla,
-                    trans = @Trans,
-                    ip = @Ip,
-                    responsable = @Responsable
-                WHERE Id_pns = @Id_pns;";
+        UPDATE ftc_pnsjt
+        SET tabla = @Tabla,
+            trans = @Trans,
+            ip = @Ip,
+            responsable = @Responsable,
+            infomatrizperfil = @infomatrizperfil
+        WHERE Id_pns = @Id_pns;";
             var affectedRows = await db.ExecuteAsync(sql, pnsjt);
             return affectedRows > 0;
         }
