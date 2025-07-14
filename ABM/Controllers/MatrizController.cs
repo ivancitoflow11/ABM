@@ -53,7 +53,6 @@ namespace ABM.Controllers
 
             if (idPaisSesion == null || idNegocioSesion == null)
             {
-                // Considera redirigir a una página para seleccionar el contexto
                 return View(new List<Models.MatrizDisponible>());
             }
 
@@ -88,7 +87,7 @@ namespace ABM.Controllers
             ViewData["Negocio"] = primerRegistro.Negocio;
             ViewData["Sistema"] = primerRegistro.Sistema;
 
-            // --- INICIA LÓGICA DE FIRMA CORREGIDA ---
+            // --- INICIO LÓGICA DE FIRMA CORREGIDA ---
             var idUsuario = ObtenerIdUsuarioActual();
             if (idUsuario > 0)
             {
@@ -101,13 +100,12 @@ namespace ABM.Controllers
                 int idPaisDb;
                 using (var connection = new SqlConnection(_repositorioMatriz.GetConnectionString()))
                 {
-                    // Hacemos la búsqueda más segura, ignorando espacios y mayúsculas/minúsculas.
                     idPaisDb = await connection.QuerySingleOrDefaultAsync<int>(
                         "SELECT idPais FROM ftc_pais WHERE UPPER(TRIM(pais)) = UPPER(TRIM(@nombrePais))",
                         new { nombrePais = idPais });
                 }
 
-                // Solo continuamos si encontramos el ID del país y el usuario es responsable.
+                // continuamos si encontramos el ID del país y el usuario es responsable.
                 if (idPaisDb > 0 && esResponsable)
                 {
                     var firmaExistente = await _repositorioMatriz.ObtenerFirmaExistente(idUsuario, idPaisDb, idNegocio, idSistema);
@@ -126,13 +124,13 @@ namespace ABM.Controllers
                 ViewBag.PuedeFirmar = false;
                 ViewBag.FirmaExistente = null;
             }
-            // --- TERMINA LÓGICA DE FIRMA ---
+            // --- FIN LÓGICA DE FIRMA ---
 
             return View(datosMatriz);
         }
 
         [HttpPost]
-        [ValidateAntiForgeryToken] // Buena práctica para seguridad
+        [ValidateAntiForgeryToken] 
         public async Task<IActionResult> FirmarMatriz(int idPais, int idNegocio, int idSistema, string comentario)
         {
             var idUsuario = ObtenerIdUsuarioActual();
@@ -166,8 +164,6 @@ namespace ABM.Controllers
             {
                 return Json(new { success = false, message = "Error de autenticación." });
             }
-
-            // Aquí podrías añadir validaciones extra, ej: solo el que firmó o un admin puede borrar.
 
             var resultado = await _repositorioMatriz.EliminarFirmaAsync(idFirma);
             if (resultado)

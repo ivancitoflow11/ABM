@@ -41,6 +41,7 @@ namespace ABM.Controllers
             return View(model);
         }
         [HttpGet]
+        [Monitoreo("KPI_Efectividad_BU", "SELECT", "seleccionarPeriodo")]
         public async Task<JsonResult> ObtenerMesesPorAnio(int anio)
         {
             var meses = await repositorioKPI.ObtenerMesesDisponiblesPorAnio(anio);

@@ -158,7 +158,7 @@ namespace ABM.Controllers
         [Monitoreo("LOGIN", "SELECT", "enviarOtc")]
         public async Task<IActionResult> EnviarOTC()
         {
-            // Recupera el id del usuario (puedes obtenerlo desde TempData, Session o un parámetro seguro)
+            // Recupera el id del usuario
             if (TempData["idUsuario"] == null)
             {
                 return Json(new { success = false, message = "Usuario no encontrado." });
@@ -190,7 +190,6 @@ namespace ABM.Controllers
             // Envía el código OTC por correo
             await EnviarCorreoOTC(usuario.correo, codigoOTC);
 
-            // Opcional: Reestablece TempData["idUsuario"] si lo necesitas en otros flujos
             TempData["idUsuario"] = usuario.idUsuario;
 
             return Json(new { success = true });
@@ -416,19 +415,17 @@ namespace ABM.Controllers
 
                     await smtp.SendMailAsync(mensaje);
                 }
-                // Opcional: Registrar éxito
+
                 // _logger.LogInformation($"Correo de restablecimiento enviado a {correoDestino}");
             }
             catch (Exception ex)
             {
-                // Opcional: Registrar el error
                 Console.WriteLine($"Error al enviar correo de restablecimiento a {correoDestino}: {ex.ToString()}");
                 // _logger.LogError(ex, $"Error al enviar correo de restablecimiento a {correoDestino}");
-                // Considera cómo quieres manejar las excepciones (re-lanzar, notificar, etc.)
             }
         }
 
-		// Podrías tener un método de acción para probar esto, por ejemplo:
+
 		// public async Task<IActionResult> TestEnviarCorreo()
 		// {
 		//     await EnviarCorreoRestablecimiento("destinatario@ejemplo.com", "http://tusitio.com/restablecer?token=abcdef", "NombreUsuarioPrueba");
@@ -470,9 +467,8 @@ namespace ABM.Controllers
             if (usuario == null || usuario.ResetPasswordTokenExpiry < DateTime.UtcNow)
             {
                 ModelState.AddModelError("", "El enlace de restablecimiento no es válido o ha expirado. Por favor, solicita uno nuevo.");
-                // Considera limpiar el ViewData["MensajeError"] si prefieres el error del ModelState.
                 // ViewData["MensajeError"] = "El enlace de restablecimiento no es válido o ha expirado. Por favor, solicita uno nuevo.";
-                // return View("ErrorToken"); // O devuelve la misma vista con el error
+                // return View("ErrorToken"); 
                 return View(model);
             }
 

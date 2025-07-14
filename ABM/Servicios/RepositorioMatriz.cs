@@ -7,7 +7,7 @@ using System.Data;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Logging; // <-- AÑADIR ESTE USING
+using Microsoft.Extensions.Logging; 
 using Microsoft.AspNetCore.Hosting;
 
 namespace ABM.Servicios
@@ -110,7 +110,7 @@ namespace ABM.Servicios
             return new FirmaReporteViewModel
             {
                 FirmaInfo = firmaInfo,
-                FirmaUsuarioBase64 = firmaEnBase64, // <-- Le pasamos la imagen ya convertida
+                FirmaUsuarioBase64 = firmaEnBase64, // imagen ya convertida
                 DetallesFirma = detalles
             };
         }
@@ -137,14 +137,12 @@ namespace ABM.Servicios
                 ORDER BY 
                     f.fechaFirma DESC;";
 
-            // Nota: Asegúrate que las propiedades en tu modelo Firma coincidan (ej. idFirma vs IdFirma)
             return await connection.QueryAsync<Firma>(query);
         }
         private IDbConnection Connection => new SqlConnection(_connectionString);
 
         private int ObtenerIdUsuarioActual()
         {
-            // OJO: Asegúrate que el claim se llame 'idUsuario' y no el ClaimTypes.NameIdentifier estándar
             var idClaim = _httpContextAccessor.HttpContext.User.FindFirst("idUsuario")?.Value ?? _httpContextAccessor.HttpContext.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
             return int.Parse(idClaim ?? "0");
         }
@@ -246,7 +244,6 @@ namespace ABM.Servicios
 
             try
             {
-                // NOTA: Asegúrate de tener un modelo 'Usuario.cs' con la propiedad 'ID_gerencia'
                 var usuario = await connection.QuerySingleOrDefaultAsync<Usuario>(
                     "SELECT ID_gerencia FROM ftc_usuario WHERE idUsuario = @idUsuario",
                     new { idUsuario }, transaction);

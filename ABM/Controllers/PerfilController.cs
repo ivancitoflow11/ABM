@@ -7,7 +7,8 @@ using Microsoft.AspNetCore.Hosting;
 using System.IO;             
 using System.Threading.Tasks;    
 using Microsoft.Extensions.Logging; 
-using System;                    
+using System;
+using ABM.Filters;
 
 namespace ABM.Controllers
 {
@@ -44,9 +45,10 @@ namespace ABM.Controllers
         }
 
 
-		[Authorize] // Solo usuarios logeados pueden acceder
+		[Authorize] 
 		[HttpGet]
-		public IActionResult CambiarPasswordUsuarioLogeado()
+        [Monitoreo("Perfil", "GET", "CambiarPasswordUsuarioLogeado")]
+        public IActionResult CambiarPasswordUsuarioLogeado()
 		{
 			return View(new CambiarPasswordLogeadoViewModel());
 		}
@@ -54,7 +56,8 @@ namespace ABM.Controllers
 		[Authorize]
 		[HttpPost]
 		[ValidateAntiForgeryToken]
-		public async Task<IActionResult> CambiarPasswordUsuarioLogeado(CambiarPasswordLogeadoViewModel viewModel)
+        [Monitoreo("Perfil", "UPDATE", "CambiarPasswordUsuarioLogeado")]
+        public async Task<IActionResult> CambiarPasswordUsuarioLogeado(CambiarPasswordLogeadoViewModel viewModel)
 		{
 			if (!ModelState.IsValid)
 			{
@@ -114,6 +117,7 @@ namespace ABM.Controllers
 		}
 
 		[HttpGet]
+        [Monitoreo("AjustesPerfil", "GET", "verAjustesdelPerfil")]
         public async Task<IActionResult> AjustesPerfil()
         {
             var usuario = await _repositorioUsuarios.ObtenerDatosUsuarioPerfilLogeado();
@@ -123,8 +127,8 @@ namespace ABM.Controllers
                 // Esto podría pasar si la sesión expiró o el usuario fue eliminado
                 _logger.LogWarning($"No se pudieron cargar los datos del perfil para el usuario ID: {GetCurrentUserIdInt()} (o ID no encontrado). Redirigiendo a Login.");
                 TempData["ErrorMessage"] = "No se pudieron cargar los datos del perfil. Por favor, inicie sesión nuevamente.";
-                // Considera redirigir a una acción de Logout o directamente a Login
-                return RedirectToAction("Login", "Acceso"); // Ajusta "Acceso" si tu controlador de login es diferente
+
+                return RedirectToAction("Login", "Acceso"); 
             }
             return View(usuario);
         }
@@ -133,6 +137,7 @@ namespace ABM.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Monitoreo("AjustesPerfil", "UPDATE", "actualizarPerfil")]
         public async Task<IActionResult> AjustesPerfil(Usuario usuarioDesdeVista, IFormFile fotoPerfilFile)
         {
             int currentUserId = GetCurrentUserIdInt();
@@ -163,7 +168,6 @@ namespace ABM.Controllers
             usuarioDesdeVista.usuario = usuarioBd.usuario;
             usuarioDesdeVista.rut = usuarioBd.rut;
             usuarioDesdeVista.idRol = usuarioBd.idRol;
-            // ... otros campos importantes que no se editan en este formulario
 
             if (ModelState.IsValid) // Valida el modelo `usuarioDesdeVista` con los datos del formulario
             {
@@ -172,7 +176,7 @@ namespace ABM.Controllers
                 if (fotoPerfilFile != null && fotoPerfilFile.Length > 0)
                 {
                     // 1. Validación del archivo
-                    var allowedExtensions = new[] { ".jpg", ".jpeg", ".png" }; // GIF no está en tu ejemplo de vista
+                    var allowedExtensions = new[] { ".jpg", ".jpeg", ".png" }; 
                     var extension = Path.GetExtension(fotoPerfilFile.FileName).ToLowerInvariant();
                     long maxFileSize = 5 * 1024 * 1024; // 5MB (5 * 1024 KB * 1024 Bytes)
 
@@ -187,7 +191,7 @@ namespace ABM.Controllers
                     else
                     {
                         // 2. Eliminar foto antigua (opcional pero recomendado si no es la por defecto)
-                        if (!string.IsNullOrEmpty(usuarioBd.FotoUrl) && usuarioBd.FotoUrl != "avatar_default.png") // Asume que "avatar_default.png" es tu imagen por defecto
+                        if (!string.IsNullOrEmpty(usuarioBd.FotoUrl) && usuarioBd.FotoUrl != "avatar_default.png") 
                         {
                             var oldImagePath = Path.Combine(_webHostEnvironment.WebRootPath, "imagenes", "perfil", usuarioBd.FotoUrl);
                             if (System.IO.File.Exists(oldImagePath))
@@ -250,7 +254,7 @@ namespace ABM.Controllers
                 usuarioBd.nombre = usuarioDesdeVista.nombre;
                 usuarioBd.apellidos = usuarioDesdeVista.apellidos;
                 usuarioBd.telefono = usuarioDesdeVista.telefono;
-                usuarioBd.FechaNacimiento = usuarioDesdeVista.FechaNacimiento; // Asegúrate que este campo exista en tu tabla y modelo
+                usuarioBd.FechaNacimiento = usuarioDesdeVista.FechaNacimiento; 
                 usuarioBd.FotoUrl = nombreArchivoUnicoParaGuardar; // Actualizar con el nuevo nombre de archivo (o el original si no se cambió)
 
                 bool actualizacionExitosa = await _repositorioUsuarios.ActualizarDatosPerfil(usuarioBd);
