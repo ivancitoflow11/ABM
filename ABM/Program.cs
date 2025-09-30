@@ -63,6 +63,7 @@ builder.Services.AddTransient<IRepositorioGlosaNegocios, RepositorioGlosaNegocio
 builder.Services.AddTransient<IRepositorioKPI, RepositorioKPI>();
 builder.Services.AddTransient<IRepositorioMatriz, RepositorioMatriz>();
 builder.Services.AddTransient<IRepositorioBuscador, RepositorioBuscador>();
+builder.Services.AddTransient<IRepositorioConsultaUsuario, RepositorioConsultaUsuario>();
 builder.Services.AddAutoMapper(typeof(Program));
 
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)

@@ -1,0 +1,265 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Consulta de Usuarios</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* --- Variables de Color --- */
+        :root {
+            --bg-color: #f4f7f9;
+            --card-bg-color: #ffffff;
+            --primary-text-color: #2d3748;
+            --secondary-text-color: #718096;
+            --border-color: #e2e8f0;
+            --accent-color: #4a90e2;
+            --success-color: #38a169;
+            --danger-color: #ef4444; /* Color rojo para estados inactivos */
+            --warning-color: #f59e0b; /* Color amarillo para alertas */
+            --shadow-color: rgba(0, 0, 0, 0.05);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--primary-text-color);
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            padding-top: 50px;
+        }
+
+        .main-container {
+            max-width: 900px;
+            width: 100%;
+            padding: 0 20px;
+        }
+
+        h1 {
+            font-size: 24px;
+            font-weight: 600;
+            color: var(--primary-text-color);
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        /* --- Barra de Búsqueda --- */
+        .search-wrapper {
+            position: relative;
+            margin-bottom: 30px;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 12px 20px 12px 45px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            font-size: 16px;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            box-sizing: border-box;
+        }
+
+            .search-input:focus {
+                outline: none;
+                border-color: var(--accent-color);
+                box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.2);
+            }
+
+        .search-icon, .clear-icon {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--secondary-text-color);
+            cursor: pointer;
+        }
+
+        .search-icon {
+            left: 15px;
+        }
+
+        .clear-icon {
+            right: 15px;
+        }
+
+        /* --- Tarjetas de Información --- */
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .info-card {
+            background-color: var(--card-bg-color);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 12px var(--shadow-color);
+            border: 1px solid var(--border-color);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+            .info-card:hover {
+                transform: translateY(-3px);
+                box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+            }
+
+        .card-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--secondary-text-color);
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .info-card p, .info-card li {
+            font-size: 15px;
+            margin-bottom: 8px;
+            color: var(--primary-text-color);
+        }
+
+            .info-card p strong, .info-card li strong {
+                font-weight: 500;
+            }
+
+        .info-card ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .status-list li {
+            display: flex;
+            align-items: center;
+        }
+
+        /* --- Círculos de Estado (Dots) --- */
+        .status-dot {
+            height: 8px;
+            width: 8px;
+            border-radius: 50%;
+            margin-right: 10px;
+            flex-shrink: 0;
+        }
+
+        .dot-success {
+            background-color: var(--success-color);
+        }
+
+        .dot-danger {
+            background-color: var(--danger-color);
+        }
+        /* NUEVA CLASE PARA PUNTOS ROJOS */
+
+        /* --- Mensaje de Estado / Alerta --- */
+        .status-message {
+            background-color: var(--card-bg-color);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            font-weight: 500;
+            box-shadow: 0 4px 12px var(--shadow-color);
+            margin-bottom: 30px;
+        }
+
+        /* NUEVA CLASE MODIFICADORA PARA LA ALERTA */
+        .status-message--warning {
+            color: var(--warning-color);
+            border-color: var(--warning-color);
+        }
+
+        .status-message .fas {
+            margin-right: 10px;
+            font-size: 20px;
+        }
+
+        /* --- Botón --- */
+        .action-button {
+            width: 100%;
+            max-width: 300px;
+            margin: 0 auto;
+            display: block;
+            padding: 12px 20px;
+            font-size: 16px;
+            font-weight: 600;
+            color: #fff;
+            background-color: var(--secondary-text-color);
+            border: none;
+            border-radius: 8px;
+            cursor: not-allowed;
+            opacity: 0.7;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <br />
+    <div class="main-container">
+        <h1>Ingrese Rut o Correo</h1>
+
+        <div class="search-wrapper">
+            <i class="fas fa-search search-icon"></i>
+            <input type="text" class="search-input" id="searchInput" placeholder="Buscar..." value="Juan Lobos Cisterna">
+            <i class="fas fa-times clear-icon" id="clearSearch"></i>
+        </div>
+
+        <div class="info-grid">
+            <div class="info-card">
+                <h2 class="card-title">Datos del Usuario</h2>
+                <p><strong>NOMBRE:</strong> Juan Lobos Cisterna</p>
+                <p><strong>CORREO:</strong> juanlobos@falabella.com</p>
+            </div>
+
+            <div class="info-card">
+                <h2 class="card-title">Estados</h2>
+                <ul class="status-list">
+                    <li><span class="status-dot dot-success"></span><strong>SPR:</strong> ACTIVO</li>
+                    <li><span class="status-dot dot-danger"></span><strong>EMP.CENTRAL:</strong> FINIQUITADO</li>
+                    <li><span class="status-dot dot-danger"></span><strong>AD:</strong> FINIQUITADO</li>
+                </ul>
+            </div>
+
+            <div class="info-card">
+                <h2 class="card-title">Sistemas</h2>
+                <ul>
+                    <li>OMS</li>
+                    <li>FALANET</li>
+                    <li>SAB</li>
+                    <li>WMOS</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="status-message status-message--warning">
+            <i class="fas fa-triangle-exclamation"></i>
+            <span>El usuario presenta finiquito pero sigue activo. ¡Favor de reportar al usuario con su respectivo encargado!</span>
+        </div>
+
+        <button class="action-button">
+            Enviar Correo Para Dar De Baja
+        </button>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const searchInput = document.getElementById('searchInput');
+            const clearSearch = document.getElementById('clearSearch');
+
+            clearSearch.addEventListener('click', function() {
+                searchInput.value = '';
+                searchInput.focus();
+            });
+        });
+    </script>
+</body>
+</html>
