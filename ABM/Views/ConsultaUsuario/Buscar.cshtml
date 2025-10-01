@@ -1,0 +1,347 @@
+﻿@model ABM.ViewModels.ConsultaUsuarioViewModel
+
+@{
+    ViewData["Title"] = "Consulta Usuario";
+}
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"]</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+
+    <style>
+        :root {
+            --bg-color: #f4f7f9;
+            --card-bg: #fff;
+            --text: #2d3748;
+            --muted: #718096;
+            --border: #e2e8f0;
+            --accent: #4a90e2;
+            --success: #38a169;
+            --shadow: rgba(0,0,0,.05);
+            --active: #e9f2ff;
+        }
+
+        body {
+            font-family: 'Inter',sans-serif;
+            margin: 0;
+            background: var(--bg-color);
+            color: var(--text);
+            padding: 30px 24px 40px;
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 24px;
+            font-weight: 600;
+            margin: 0 0 24px;
+        }
+
+        /* Search */
+        .search-wrapper {
+            position: relative;
+            width: min(1100px, 92vw);
+            margin: 0 auto 18px;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 12px 42px;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            font-size: 16px;
+            box-sizing: border-box;
+            transition: box-shadow .2s,border-color .2s;
+            background: #fff;
+        }
+
+            .search-input:focus {
+                outline: none;
+                border-color: var(--accent);
+                box-shadow: 0 0 0 3px rgba(74,144,226,.2);
+            }
+
+        .search-icon, .clear-icon {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--muted);
+            cursor: pointer
+        }
+
+        .search-icon {
+            left: 14px
+        }
+
+        .clear-icon {
+            right: 14px
+        }
+
+        /* Autocomplete */
+        .autocomplete-list {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            width: 100%;
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            margin-top: 6px;
+            list-style: none;
+            padding: 0;
+            box-shadow: 0 8px 20px var(--shadow);
+            z-index: 20;
+            max-height: 380px;
+            overflow: auto;
+        }
+
+            .autocomplete-list li {
+                padding: 12px 14px;
+                font-size: 15px;
+                cursor: pointer
+            }
+
+                .autocomplete-list li:hover {
+                    background: #f0f4f8
+                }
+
+                .autocomplete-list li.active {
+                    background: var(--active)
+                }
+
+                .autocomplete-list li.no-results {
+                    color: var(--muted);
+                    cursor: default
+                }
+
+            .autocomplete-list mark {
+                background: #ffed9f;
+                border-radius: 3px;
+                padding: 0 2px
+            }
+
+        /* Cards grid */
+        .cards-wrap {
+            width: min(1100px, 92vw);
+            margin: 8px auto 20px;
+        }
+
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            box-shadow: 0 4px 12px var(--shadow);
+            padding: 22px;
+        }
+
+        .card-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: .5px;
+            margin: 0 0 14px;
+        }
+
+        .card p {
+            margin: 8px 0;
+            font-size: 15px
+        }
+
+        .pill {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 600;
+            border: 1px solid
+        }
+
+        .pill--ok {
+            background: #e6ffed;
+            border-color: #c6f6d5;
+            color: #2f855a
+        }
+
+        .pill--muted {
+            background: #edf2f7;
+            border-color: #e2e8f0;
+            color: #4a5568
+        }
+
+        /* Full-width status band */
+        .status-band {
+            width: min(1100px, 92vw);
+            margin: 8px auto 0;
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            box-shadow: 0 4px 12px var(--shadow);
+            padding: 16px 18px;
+            color: var(--success);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 600
+        }
+    </style>
+</head>
+<body>
+    <br />
+    <br />
+    <h1>Ingrese Rut o Correo</h1>
+
+    <form asp-action="Buscar" method="post" class="search-wrapper" autocomplete="off">
+        @Html.AntiForgeryToken()
+        <i class="fas fa-search search-icon"></i>
+        <input id="searchInput" name="Input" class="search-input" placeholder="Buscar por nombre, correo o RUT…" value="@Model.Input" autocomplete="off" />
+        <i class="fas fa-times clear-icon" id="clearSearch" title="Limpiar"></i>
+        <ul id="autocomplete-results" class="autocomplete-list" role="listbox" aria-label="Sugerencias"></ul>
+    </form>
+
+    @if (Model.Usuario != null)
+    {
+        <div class="cards-wrap">
+            <div class="cards-grid">
+                <!-- Card 1: Datos del Usuario -->
+                <div class="card">
+                    <h2 class="card-title">Datos del Usuario</h2>
+                    <p><strong>Nombre:</strong> @Model.Usuario.Nombre</p>
+                    <p><strong>Correo:</strong> @Model.Usuario.Correo</p>
+                    <p><strong>RUT:</strong> @Model.Usuario.Rut</p>
+                </div>
+
+                <!-- Card 2: Estado AD -->
+                <div class="card">
+                    <h2 class="card-title">Estado AD</h2>
+                    @{
+                        var isActivo = (Model?.EstadoAD ?? "").ToUpper().Contains("ACTIVO");
+                        var pillClass = isActivo ? "pill pill--ok" : "pill pill--muted";
+                        var pillText = isActivo ? "ACTIVO" : (string.IsNullOrWhiteSpace(Model?.EstadoAD) ? "NO ENCONTRADO" : Model.EstadoAD);
+                    }
+                    <p><strong>AD:</strong> <span class="@pillClass">@pillText</span></p>
+                </div>
+            </div>
+        </div>
+
+        <div class="status-band">
+            <i class="fas fa-check-circle"></i>
+            El Usuario no presenta problemas.
+        </div>
+    }
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const MIN_CHARS = 3, DEBOUNCE = 200;
+            const form = document.querySelector('form.search-wrapper');
+            const input = document.getElementById('searchInput');
+            const clearBtn = document.getElementById('clearSearch');
+            const list = document.getElementById('autocomplete-results');
+
+            let activeIndex = -1, suggestions = [];
+            let ctrl = null, timer = null;
+            const cache = new Map(), CACHE_MAX = 25;
+
+            function cacheGet(k){ return cache.has(k) ? cache.get(k) : null; }
+            function cacheSet(k,v){ if(cache.size>=CACHE_MAX){ cache.delete(cache.keys().next().value);} cache.set(k,v); }
+
+            function escapeRegExp(s){ return s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'); }
+            function highlight(text, term){
+                if(!term) return text;
+                const re = new RegExp('(' + escapeRegExp(term) + ')','ig');
+                return text.replace(re,'<mark>$1</mark>');
+            }
+
+            function setActive(i){
+                [...list.children].forEach(li=>li.classList.remove('active'));
+                activeIndex = i;
+                if(i>=0 && list.children[i]) list.children[i].classList.add('active');
+            }
+
+            function showSpinner(){
+                list.innerHTML = '';
+                const li = document.createElement('li');
+                li.innerHTML = '<span style="display:inline-block;width:16px;height:16px;border:2px solid #e2e8f0;border-top-color:#4a90e2;border-radius:50%;animation:spin .8s linear infinite;vertical-align:-3px;margin-right:8px"></span>Buscando…';
+                li.style.color = '#718096';
+                li.style.display = 'flex'; li.style.alignItems = 'center';
+                list.appendChild(li);
+            }
+
+            function render(items, term){
+                list.innerHTML=''; activeIndex=-1; suggestions = items || [];
+                if(!items || !items.length){
+                    const li = document.createElement('li');
+                    li.className = 'no-results'; li.textContent = 'Sin resultados';
+                    list.appendChild(li); return;
+                }
+                items.forEach((it,idx)=>{
+                    const li = document.createElement('li');
+                    li.innerHTML = highlight(`${it.nombre} (${it.correo})`, term);
+                    li.addEventListener('mouseenter',()=>setActive(idx));
+                    li.addEventListener('mouseleave',()=>setActive(-1));
+                    li.addEventListener('click',()=>select(idx));
+                    list.appendChild(li);
+                });
+            }
+
+            function select(idx){
+                if(idx<0 || idx>=suggestions.length) return;
+                const it = suggestions[idx];
+                // Enviamos el CORREO para que el SP haga TOP 1 preciso
+                input.value = it.correo;
+                list.innerHTML = '';
+                form.submit();
+            }
+
+            // input handlers
+            input.addEventListener('input', ()=>{
+                const term = input.value.trim();
+                if(timer) clearTimeout(timer);
+                timer = setTimeout(()=>{
+                    if(term.length < MIN_CHARS){ list.innerHTML=''; suggestions=[]; activeIndex=-1; return; }
+                    const key = term.toLowerCase();
+                    const hit = cacheGet(key);
+                    if(hit){ render(hit, term); return; }
+
+                    if(ctrl) ctrl.abort();
+                    ctrl = new AbortController();
+                    showSpinner();
+                    fetch(`/ConsultaUsuario/Autocomplete?term=${encodeURIComponent(term)}`, { signal: ctrl.signal })
+                        .then(r=>r.json())
+                        .then(data=>{ cacheSet(key, data||[]); render(data||[], term); })
+                        .catch(()=>{/* abortado */});
+                }, DEBOUNCE);
+            });
+
+            input.addEventListener('keydown', e=>{
+                const n = list.children.length; if(!n) return;
+                if(e.key==='ArrowDown'){ e.preventDefault(); setActive((activeIndex+1)%n); }
+                else if(e.key==='ArrowUp'){ e.preventDefault(); setActive((activeIndex-1+n)%n); }
+                else if(e.key==='Enter' && activeIndex>=0){ e.preventDefault(); select(activeIndex); }
+                else if(e.key==='Escape'){ list.innerHTML=''; activeIndex=-1; }
+            });
+
+            // clear & click-outside
+            clearBtn.addEventListener('click', ()=>{
+                input.value=''; list.innerHTML=''; suggestions=[]; activeIndex=-1; input.focus();
+            });
+            document.addEventListener('click', e=>{
+                if(!e.target.closest('.search-wrapper')){ list.innerHTML=''; activeIndex=-1; }
+            });
+        });
+    </script>
+</body>
+</html>

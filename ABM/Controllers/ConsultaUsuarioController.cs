@@ -1,45 +1,52 @@
-﻿using System.Linq;
-using System.Threading.Tasks;
-using ABM.Models;
+﻿using Microsoft.AspNetCore.Mvc;
+using ABM.ViewModels;
 using ABM.Servicios;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
+using System.Threading.Tasks;
 
 namespace ABM.Controllers
 {
-    [Authorize]
     public class ConsultaUsuarioController : Controller
     {
-        private readonly IRepositorioConsultaUsuario _repo;
+        private readonly IRepositorioConsultaUsuario _repositorio;
 
-        public ConsultaUsuarioController(IRepositorioConsultaUsuario repo)
+        public ConsultaUsuarioController(IRepositorioConsultaUsuario repositorio)
         {
-            _repo = repo;
+            _repositorio = repositorio;
         }
 
         [HttpGet]
-        public IActionResult Index()
+        public IActionResult Buscar()
         {
-            return View(new ConsultaUsuarioViewModel());
+            var vm = new ConsultaUsuarioViewModel();
+            return View(vm);
         }
 
         [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Buscar(string input)
+        public async Task<IActionResult> Buscar(ConsultaUsuarioViewModel vm)
         {
-            var vm = new ConsultaUsuarioViewModel { Input = input };
+            if (!string.IsNullOrWhiteSpace(vm.Input))
+            {
+                vm.Usuario = await _repositorio.ObtenerDatosBasicos(vm.Input);
 
-            vm.DatosBasicos = await _repo.ObtenerDatosBasicos(input);
-            vm.Estados = (await _repo.ObtenerEstados(input)).ToList();
+                if (vm.Usuario != null)
+                {
+                    // usa Correo y/o Rut para lookup exacto en AD
+                    vm.EstadoAD = await _repositorio.ExisteEnADPorMailORut(vm.Usuario.Correo, vm.Usuario.Rut)
+                                ? "ACTIVO"
+                                : "NO ENCONTRADO";
+                }
+            }
 
-            vm.TieneProblemas = vm.Estados.Any(e => e.NombreEstado != "FINIQUITADO" && e.Valor != "ACTIVO")
-                                || vm.Estados.Any(e => e.NombreEstado == "FINIQUITADO" && e.Valor == "SI");
-
-            vm.Mensaje = vm.DatosBasicos is null && !vm.Estados.Any()
-                ? "Sin resultados."
-                : (vm.TieneProblemas ? "El usuario presenta problemas." : "El usuario no presenta problemas.");
-
-            return View("Index", vm);
+            return View(vm);
         }
+
+
+        [HttpGet]
+        public async Task<IActionResult> Autocomplete(string term)
+        {
+            var resultados = await _repositorio.BuscarCoincidencias(term ?? "");
+            return Json(resultados);
+        }
+
     }
 }

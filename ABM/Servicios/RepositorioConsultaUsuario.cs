@@ -10,7 +10,8 @@ namespace ABM.Servicios
     public interface IRepositorioConsultaUsuario
     {
         Task<DatosBasicosUsuario?> ObtenerDatosBasicos(string input);
-        Task<IEnumerable<EstadoUsuario>> ObtenerEstados(string input);
+        Task<IEnumerable<DatosBasicosUsuario>> BuscarCoincidencias(string input);
+        Task<bool> ExisteEnADPorMailORut(string correo, string rut); // por si aún no lo tienes
     }
 
     public class RepositorioConsultaUsuario : IRepositorioConsultaUsuario
@@ -22,47 +23,61 @@ namespace ABM.Servicios
             _connectionString = configuration.GetConnectionString("CadenaSQL");
         }
 
+        // SP TOP 1 con RUT (ya lo tienes)
         public async Task<DatosBasicosUsuario?> ObtenerDatosBasicos(string input)
         {
             using var db = new SqlConnection(_connectionString);
-            // El SP ya quedó con @input en el WHERE (como me mostraste)
             return await db.QueryFirstOrDefaultAsync<DatosBasicosUsuario>(
                 "CSS_DatosBasicosUsuario",
                 new { input },
                 commandType: CommandType.StoredProcedure);
         }
 
-        public async Task<IEnumerable<EstadoUsuario>> ObtenerEstados(string input)
+        // Autocomplete: TOP 10 + relevancia + concatenado + SIN TILDES
+        public async Task<IEnumerable<DatosBasicosUsuario>> BuscarCoincidencias(string input)
         {
             using var db = new SqlConnection(_connectionString);
 
-            var estados = new List<EstadoUsuario>();
+            // IMPORTANTE: ajusta el nombre de collation si tu servidor usa otro;
+            // Latin1_General_CI_AI = Case-Insensitive, Accent-Insensitive
+            var sql = @"
+                SELECT TOP 10
+                       (NOMBRES + ' ' + APEPATERNO + ' ' + APEMATERNO) AS Nombre,
+                       CORREO,
+                       RUT
+                FROM ftc_activos_falanet
+                WHERE (
+                        (NOMBRES + ' ' + APEPATERNO + ' ' + APEMATERNO) COLLATE Latin1_General_CI_AI LIKE '%' + @input + '%' COLLATE Latin1_General_CI_AI
+                     OR NOMBRES    COLLATE Latin1_General_CI_AI LIKE '%' + @input + '%' COLLATE Latin1_General_CI_AI
+                     OR APEPATERNO COLLATE Latin1_General_CI_AI LIKE '%' + @input + '%' COLLATE Latin1_General_CI_AI
+                     OR APEMATERNO COLLATE Latin1_General_CI_AI LIKE '%' + @input + '%' COLLATE Latin1_General_CI_AI
+                     OR CORREO     COLLATE Latin1_General_CI_AI LIKE '%' + @input + '%' COLLATE Latin1_General_CI_AI
+                     OR RUT        COLLATE Latin1_General_CI_AI LIKE '%' + @input + '%' COLLATE Latin1_General_CI_AI
+                )
+                GROUP BY NOMBRES, APEPATERNO, APEMATERNO, CORREO, RUT
+                ORDER BY 
+                    CASE 
+                        WHEN NOMBRES    COLLATE Latin1_General_CI_AI LIKE @input + '%' COLLATE Latin1_General_CI_AI THEN 1
+                        WHEN APEPATERNO COLLATE Latin1_General_CI_AI LIKE @input + '%' COLLATE Latin1_General_CI_AI THEN 2
+                        WHEN APEMATERNO COLLATE Latin1_General_CI_AI LIKE @input + '%' COLLATE Latin1_General_CI_AI THEN 3
+                        ELSE 4
+                    END,
+                    NOMBRES, APEPATERNO, APEMATERNO;";
 
-            // SPR / Activos Falanet
-            var sprRow = await db.QueryFirstOrDefaultAsync(
-                "CSS_DatosEstadoActivo",
-                new { input },
-                commandType: CommandType.StoredProcedure);
-            if (sprRow != null)
-                estados.Add(new EstadoUsuario { NombreEstado = "SPR", Valor = "ACTIVO" });
+            return await db.QueryAsync<DatosBasicosUsuario>(sql, new { input });
+        }
 
-            // AD
-            var adRow = await db.QueryFirstOrDefaultAsync(
-                "CSS_DatosEstadoAD",
-                new { input },
-                commandType: CommandType.StoredProcedure);
-            if (adRow != null)
-                estados.Add(new EstadoUsuario { NombreEstado = "AD", Valor = "ACTIVO" });
-
-            // FINIQUITADO
-            var finRow = await db.QueryFirstOrDefaultAsync(
-                "CSS_DatosEstadoFiniquitado",
-                new { input },
-                commandType: CommandType.StoredProcedure);
-            if (finRow != null)
-                estados.Add(new EstadoUsuario { NombreEstado = "FINIQUITADO", Valor = "SI" });
-
-            return estados;
+        // Lookup AD exacto (recomendado para la card AD)
+        public async Task<bool> ExisteEnADPorMailORut(string correo, string rut)
+        {
+            using var db = new SqlConnection(_connectionString);
+            var sql = @"
+                SELECT TOP 1 1
+                FROM ftc_ad
+                WHERE (MAIL = @correo AND @correo IS NOT NULL AND @correo <> '')
+                   OR (employeeID = @rut AND @rut IS NOT NULL AND @rut <> '')";
+            var existe = await db.ExecuteScalarAsync<int?>(sql, new { correo, rut });
+            return existe.HasValue;
         }
     }
 }

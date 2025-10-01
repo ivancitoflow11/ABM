@@ -1,146 +1,35 @@
-﻿@model ABM.Models.ConsultaUsuarioViewModel
+﻿@model ABM.ViewModels.ConsultaUsuarioViewModel
 
 @{
-    ViewData["Title"] = "Consulta de Usuarios";
-    Layout = "~/Views/Shared/_Layout.cshtml";
+    ViewData["Title"] = "Consulta Usuario";
 }
 
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<h2>Consulta de Usuario</h2>
 
-<style>
-    :root {
-        --bg-color: #f4f7f9;
-        --card-bg-color: #ffffff;
-        --primary-text-color: #2d3748;
-        --secondary-text-color: #718096;
-        --border-color: #e2e8f0;
-        --accent-color: #4a90e2;
-        --success-color: #38a169;
-        --danger-color: #e53e3e;
-        --shadow-color: rgba(0, 0, 0, 0.05);
-    }
-    body { font-family: 'Inter', sans-serif; background-color: var(--bg-color); color: var(--primary-text-color); }
-    .main-container { max-width: 900px; margin: 0 auto; padding: 40px 20px; }
-    h1 { font-size: 24px; font-weight: 600; text-align: center; margin-bottom: 30px; }
+<form asp-action="Buscar" method="post">
+    <div class="form-group">
+        <label for="input">Ingrese dato (nombre, rut o correo):</label>
+        <input type="text" class="form-control" id="input" name="Input" value="@Model.Input" />
+    </div>
+    <button type="submit" class="btn btn-primary mt-2">Buscar</button>
+</form>
 
-    .search-wrapper { position: relative; margin-bottom: 30px; }
-    .search-input {
-        width: 100%; padding: 12px 20px 12px 45px; border-radius: 8px;
-        border: 1px solid var(--border-color); font-size: 16px; transition: border-color .2s, box-shadow .2s;
-    }
-    .search-input:focus { outline: none; border-color: var(--accent-color); box-shadow: 0 0 0 3px rgba(74,144,226,.2); }
-    .search-icon, .clear-icon { position: absolute; top: 50%; transform: translateY(-50%); color: var(--secondary-text-color); cursor: pointer; }
-    .search-icon { left: 15px; }
-    .clear-icon { right: 15px; }
-
-    .info-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; margin-bottom: 30px; }
-    .info-card {
-        background: var(--card-bg-color); border-radius: 12px; padding: 20px;
-        box-shadow: 0 4px 12px var(--shadow-color); border: 1px solid var(--border-color);
-        transition: transform .2s, box-shadow .2s;
-    }
-    .info-card:hover { transform: translateY(-3px); box-shadow: 0 6px 16px rgba(0,0,0,.08); }
-    .card-title { font-size: 14px; font-weight: 600; color: var(--secondary-text-color); margin-bottom: 15px; text-transform: uppercase; letter-spacing: .5px; }
-
-    .info-card p, .info-card li { font-size: 15px; margin-bottom: 8px; color: var(--primary-text-color); }
-    .info-card ul { list-style: none; padding: 0; margin: 0; }
-    .status-list li { display: flex; align-items: center; }
-    .status-dot { height: 8px; width: 8px; background: var(--success-color); border-radius: 50%; margin-right: 10px; flex-shrink: 0; }
-
-    .status-message {
-        background: var(--card-bg-color); border: 1px solid var(--border-color); border-radius: 12px;
-        padding: 20px; text-align: center; display: flex; align-items: center; justify-content: center;
-        font-size: 16px; font-weight: 500; box-shadow: 0 4px 12px var(--shadow-color); margin-bottom: 30px;
-        color: @(Model?.TieneProblemas == true ? "var(--danger-color)" : "var(--success-color)");
-    }
-    .status-message .fa-check-circle, .status-message .fa-triangle-exclamation { margin-right: 10px; font-size: 20px; }
-
-    .action-button {
-        width: 100%; max-width: 300px; margin: 0 auto; display: block; padding: 12px 20px; font-size: 16px; font-weight: 600;
-        color: #fff; background-color: var(--secondary-text-color); border: none; border-radius: 8px; cursor: not-allowed; opacity: .7; text-align: center;
-    }
-</style>
-
-<div class="main-container">
-    <h1>Ingrese Rut o Correo</h1>
-
-    <form action="@Url.Action("Buscar","ConsultaUsuario")" method="post">
-        @Html.AntiForgeryToken()
-        <div class="search-wrapper">
-            <i class="fas fa-search search-icon"></i>
-            <input type="text" class="search-input" name="input" placeholder="Buscar..." value="@Model.Input" />
-            <i class="fas fa-times clear-icon" id="clearSearch"></i>
-            <button type="submit" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0;">Buscar</button>
-        </div>
-    </form>
-
-    @if (Model?.DatosBasicos != null || (Model?.Estados?.Any() ?? false))
-    {
-        <div class="info-grid">
-            <div class="info-card">
-                <h2 class="card-title">Datos del Usuario</h2>
-                @if (Model?.DatosBasicos != null)
-                {
-                    <p><strong>NOMBRE:</strong> @Model.DatosBasicos.Nombre</p>
-                    <p><strong>CORREO:</strong> @Model.DatosBasicos.Correo</p>
-                }
-                else
-                {
-                    <p>No se encontraron datos básicos.</p>
-                }
-            </div>
-
-            <div class="info-card">
-                <h2 class="card-title">Estados</h2>
-                <ul class="status-list">
-                    @if (Model?.Estados?.Any() == true)
-                    {
-                        @foreach (var estado in Model.Estados)
-                        {
-                            <li><span class="status-dot"></span><strong>@estado.NombreEstado:</strong> @estado.Valor</li>
-                        }
-                    }
-                    else
-                    {
-                        <li>Sin estados.</li>
-                    }
-                </ul>
-            </div>
-        </div>
-
-        <div class="status-message">
-            @if (Model?.TieneProblemas == true)
-            {
-                <i class="fa-solid fa-triangle-exclamation"></i>@Model.Mensaje
-            }
-            else
-            {
-                <i class="fas fa-check-circle"></i>@Model.Mensaje
-            }
-        </div>
-
-        <button class="action-button" disabled>Enviar Correo Para Dar De Baja</button>
-    }
-    else if (!string.IsNullOrWhiteSpace(Model?.Input))
-    {
-        <div class="status-message">
-            <i class="fa-solid fa-triangle-exclamation"></i>Sin resultados.
-        </div>
-    }
-</div>
-
-<script>
-    document.addEventListener('DOMContentLoaded', function () {
-        const searchInput = document.querySelector('.search-input');
-        const clearSearch = document.getElementById('clearSearch');
-        if (clearSearch) {
-            clearSearch.addEventListener('click', function () {
-                searchInput.value = '';
-                searchInput.focus();
-            });
-        }
-    });
-</script>
+@if (Model.Usuario != null)
+{
+    <hr />
+    <h4>Resultado:</h4>
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>Nombre</th>
+                <th>Correo</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>@Model.Usuario.Nombre</td>
+                <td>@Model.Usuario.Correo</td>
+            </tr>
+        </tbody>
+    </table>
+}
