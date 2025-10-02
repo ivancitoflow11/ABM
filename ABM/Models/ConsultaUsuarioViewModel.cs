@@ -10,5 +10,6 @@
         public bool EsFiniquitado { get; set; }
         public bool SprActivo { get; set; }
         public bool EmpCentralActivo { get; set; }
+        public IEnumerable<SistemaUsuario> Sistemas { get; set; }
     }
 }

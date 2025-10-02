@@ -14,6 +14,7 @@ namespace ABM.Servicios
         Task<bool> ExisteEnADPorMailORut(string correo, string rut); 
         Task<bool> EstaFiniquitado(string input);
         Task<(bool spr, bool empCentral)> ObtenerEstadoSprEmpCentral(string input);
+        Task<IEnumerable<SistemaUsuario>> ObtenerSistemas(string input);
     }
 
     public class RepositorioConsultaUsuario : IRepositorioConsultaUsuario
@@ -25,6 +26,15 @@ namespace ABM.Servicios
             _connectionString = configuration.GetConnectionString("CadenaSQL");
         }
 
+        public async Task<IEnumerable<SistemaUsuario>> ObtenerSistemas(string input)
+        {
+            using var db = new SqlConnection(_connectionString);
+            return await db.QueryAsync<SistemaUsuario>(
+                "CSS_DatosSistemas",
+                new { input },
+                commandType: CommandType.StoredProcedure
+            );
+        }
         public async Task<(bool spr, bool empCentral)> ObtenerEstadoSprEmpCentral(string input)
         {
             using var db = new SqlConnection(_connectionString);
