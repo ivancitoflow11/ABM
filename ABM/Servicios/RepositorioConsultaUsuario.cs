@@ -11,7 +11,9 @@ namespace ABM.Servicios
     {
         Task<DatosBasicosUsuario?> ObtenerDatosBasicos(string input);
         Task<IEnumerable<DatosBasicosUsuario>> BuscarCoincidencias(string input);
-        Task<bool> ExisteEnADPorMailORut(string correo, string rut); // por si aún no lo tienes
+        Task<bool> ExisteEnADPorMailORut(string correo, string rut); 
+        Task<bool> EstaFiniquitado(string input);
+        Task<(bool spr, bool empCentral)> ObtenerEstadoSprEmpCentral(string input);
     }
 
     public class RepositorioConsultaUsuario : IRepositorioConsultaUsuario
@@ -23,6 +25,40 @@ namespace ABM.Servicios
             _connectionString = configuration.GetConnectionString("CadenaSQL");
         }
 
+        public async Task<(bool spr, bool empCentral)> ObtenerEstadoSprEmpCentral(string input)
+        {
+            using var db = new SqlConnection(_connectionString);
+
+            // El SP devuelve filas; ORIGEN = 'SPR' o 'Empleado Central'
+            var filas = await db.QueryAsync(
+                "CSS_DatosEstadoActivo",
+                new { input },
+                commandType: CommandType.StoredProcedure
+            );
+
+            bool spr = false, emp = false;
+            foreach (var f in filas)
+            {
+                var origen = (string)(f.ORIGEN ?? string.Empty);
+                if (origen.Equals("SPR", StringComparison.OrdinalIgnoreCase)) spr = true;
+                else if (origen.Equals("Empleado Central", StringComparison.OrdinalIgnoreCase)) emp = true;
+                if (spr && emp) break; // ya tenemos ambos
+            }
+
+            return (spr, emp);
+        }
+
+        public async Task<bool> EstaFiniquitado(string input)
+        {
+            using var db = new SqlConnection(_connectionString);
+            // El SP devuelve una fila (RUTDNI) si está finiquitado
+            var rut = await db.QueryFirstOrDefaultAsync<string>(
+                "CSS_DatosEstadoFiniquitado",
+                new { input },
+                commandType: CommandType.StoredProcedure
+            );
+            return !string.IsNullOrEmpty(rut);
+        }
         // SP TOP 1 con RUT (ya lo tienes)
         public async Task<DatosBasicosUsuario?> ObtenerDatosBasicos(string input)
         {

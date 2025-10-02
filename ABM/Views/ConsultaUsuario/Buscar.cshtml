@@ -182,6 +182,13 @@
             color: #4a5568
         }
 
+        .pill--danger {
+            background: #ffe6e6;
+            border-color: #feb2b2;
+            color: #c53030;
+        }
+
+
         /* Full-width status band */
         .status-band {
             width: min(1100px, 92vw);
@@ -233,7 +240,21 @@
                         var pillText = isActivo ? "ACTIVO" : (string.IsNullOrWhiteSpace(Model?.EstadoAD) ? "NO ENCONTRADO" : Model.EstadoAD);
                     }
                     <p><strong>AD:</strong> <span class="@pillClass">@pillText</span></p>
+                    <!-- 👇 NUEVO: Finiquitado -->
+                    @{
+                        var finiqClass = Model.EsFiniquitado ? "pill pill--danger" : "pill pill--muted";
+                        var finiqText = Model.EsFiniquitado ? "FINIQUITADO" : "NO FINIQUITADO";
+                    }
+                    <p><strong>FINIQUITADO:</strong> <span class="@finiqClass">@finiqText</span></p>
+                    <!-- 👇 NUEVO: SPR / Empleado Central -->
+                    @{
+                        var sprClass = Model.SprActivo ? "pill pill--ok" : "pill pill--muted";
+                        var empClass = Model.EmpCentralActivo ? "pill pill--ok" : "pill pill--muted";
+                    }
+                    <p><strong>SPR:</strong> <span class="@sprClass">@(Model.SprActivo ? "ACTIVO" : "NO ACTIVO")</span></p>
+                    <p><strong>EMP.CENTRAL:</strong> <span class="@empClass">@(Model.EmpCentralActivo ? "ACTIVO" : "NO ACTIVO")</span></p>
                 </div>
+
             </div>
         </div>
 

@@ -30,15 +30,26 @@ namespace ABM.Controllers
 
                 if (vm.Usuario != null)
                 {
-                    // usa Correo y/o Rut para lookup exacto en AD
+                    // AD (ya lo tenías)
                     vm.EstadoAD = await _repositorio.ExisteEnADPorMailORut(vm.Usuario.Correo, vm.Usuario.Rut)
-                                ? "ACTIVO"
-                                : "NO ENCONTRADO";
+                                ? "ACTIVO" : "NO ENCONTRADO";
+
+                    // Finiquitado (ya lo tenías)
+                    var claveFiniq = string.IsNullOrWhiteSpace(vm.Usuario.Rut) ? vm.Input : vm.Usuario.Rut;
+                    vm.EsFiniquitado = await _repositorio.EstaFiniquitado(claveFiniq);
+
+                    // 👇 SPR / Emp. Central
+                    var claveSpr = !string.IsNullOrWhiteSpace(vm.Usuario.Rut) ? vm.Usuario.Rut
+                                  : (!string.IsNullOrWhiteSpace(vm.Usuario.Correo) ? vm.Usuario.Correo : vm.Input);
+
+                    var (spr, emp) = await _repositorio.ObtenerEstadoSprEmpCentral(claveSpr);
+                    vm.SprActivo = spr;
+                    vm.EmpCentralActivo = emp;
                 }
             }
-
             return View(vm);
         }
+
 
 
         [HttpGet]
