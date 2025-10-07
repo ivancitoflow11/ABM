@@ -15,6 +15,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
     <style>
         :root {
@@ -61,24 +62,24 @@
             transition: box-shadow .2s, border-color .2s;
         }
 
-        .search-box:focus-within {
-            border-color: var(--accent);
-            box-shadow: 0 0 0 3px rgba(74,144,226,.2);
-        }
+            .search-box:focus-within {
+                border-color: var(--accent);
+                box-shadow: 0 0 0 3px rgba(74,144,226,.2);
+            }
 
-        .search-box i.fa-search {
-            color: var(--muted);
-            margin-right: 10px;
-        }
+            .search-box i.fa-search {
+                color: var(--muted);
+                margin-right: 10px;
+            }
 
-        .search-box input {
-            flex: 1;
-            border: none;
-            outline: none;
-            font-size: 16px;
-            font-family: 'Inter', sans-serif;
-            text-align: center;
-        }
+            .search-box input {
+                flex: 1;
+                border: none;
+                outline: none;
+                font-size: 16px;
+                font-family: 'Inter', sans-serif;
+                text-align: center;
+            }
 
         .clear-btn {
             background: none;
@@ -92,13 +93,13 @@
             display: none;
         }
 
-        .clear-btn:hover {
-            color: var(--text);
-        }
+            .clear-btn:hover {
+                color: var(--text);
+            }
 
-        .clear-btn.visible {
-            display: block;
-        }
+            .clear-btn.visible {
+                display: block;
+            }
 
         .autocomplete-list {
             position: relative;
@@ -115,72 +116,130 @@
             display: none;
         }
 
-        .autocomplete-list.show {
-            display: block;
-        }
+            .autocomplete-list.show {
+                display: block;
+            }
 
-        .autocomplete-list li {
-            padding: 12px 14px;
-            font-size: 15px;
+            .autocomplete-list li {
+                padding: 12px 14px;
+                font-size: 15px;
+                cursor: pointer;
+            }
+
+                .autocomplete-list li:hover,
+                .autocomplete-list li.active {
+                    background: var(--active);
+                }
+
+                .autocomplete-list li.no-results {
+                    color: var(--muted);
+                    cursor: default;
+                }
+
+            .autocomplete-list mark {
+                background: #90EE90;
+                border-radius: 3px;
+                padding: 0 2px;
+            }
+
+        .export-btn {
+            background: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 10px 20px;
+            font-size: 14px;
+            font-weight: 600;
             cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin: 16px auto;
+            transition: background .2s;
         }
 
-        .autocomplete-list li:hover,
-        .autocomplete-list li.active {
-            background: var(--active);
-        }
+            .export-btn:hover {
+                background: #c82333;
+            }
 
-        .autocomplete-list li.no-results {
-            color: var(--muted);
-            cursor: default;
-        }
+            .export-btn i {
+                font-size: 16px;
+            }
 
-        .autocomplete-list mark {
-            background: #90EE90;
-            border-radius: 3px;
-            padding: 0 2px;
-        }
-
-        .cards-wrap {
+        .content-wrap {
             width: min(1100px, 92vw);
-            margin: 8px auto 20px;
+            margin: 0 auto;
         }
 
-        .cards-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 20px;
+        #printableContent {
+            background: var(--bg-color);
+            padding: 20px;
+            border-radius: 12px;
         }
 
-        .card {
+        /* Card de Datos del Usuario - Compacta */
+        .user-card {
             background: var(--card-bg);
             border: 1px solid var(--border);
-            border-radius: 12px;
-            box-shadow: 0 4px 12px var(--shadow);
-            padding: 22px;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px var(--shadow);
+            padding: 16px 20px;
+            margin-bottom: 16px;
             text-align: left;
         }
 
-        .card-title {
-            font-size: 14px;
-            font-weight: 700;
-            color: var(--muted);
-            text-transform: uppercase;
-            letter-spacing: .5px;
-            margin: 0 0 14px;
-            text-align: center;
+            .user-card h2 {
+                font-size: 13px;
+                font-weight: 700;
+                color: var(--muted);
+                text-transform: uppercase;
+                letter-spacing: .5px;
+                margin: 0 0 12px;
+                text-align: center;
+            }
+
+            .user-card p {
+                margin: 6px 0;
+                font-size: 14px;
+            }
+
+        /* Cards de Estados - 4 en horizontal */
+        .estados-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 12px;
+            margin-bottom: 16px;
         }
 
-        .card p {
-            margin: 8px 0;
-            font-size: 15px;
+        .estado-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            box-shadow: 0 2px 8px var(--shadow);
+            padding: 14px 16px;
+            text-align: center;
+            min-height: 80px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
         }
+
+            .estado-card h3 {
+                font-size: 12px;
+                font-weight: 700;
+                color: var(--muted);
+                text-transform: uppercase;
+                letter-spacing: .5px;
+                margin: 0;
+            }
 
         .pill {
             display: inline-block;
-            padding: 4px 10px;
+            padding: 6px 12px;
             border-radius: 999px;
-            font-size: 12px;
+            font-size: 13px;
             font-weight: 600;
             border: 1px solid;
         }
@@ -209,14 +268,51 @@
             color: #b7791f;
         }
 
-        .status-band {
-            width: min(1100px, 92vw);
-            margin: 8px auto 0;
+        /* Card de Sistemas - Simplificada */
+        .sistemas-card {
             background: var(--card-bg);
             border: 1px solid var(--border);
-            border-radius: 12px;
-            box-shadow: 0 4px 12px var(--shadow);
-            padding: 16px 18px;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px var(--shadow);
+            padding: 16px 20px;
+            text-align: left;
+            margin-bottom: 16px;
+        }
+
+            .sistemas-card h2 {
+                font-size: 13px;
+                font-weight: 700;
+                color: var(--muted);
+                text-transform: uppercase;
+                letter-spacing: .5px;
+                margin: 0 0 12px;
+                text-align: center;
+            }
+
+        .sistema-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+            .sistema-item:last-child {
+                border-bottom: none;
+            }
+
+        .sistema-nombre {
+            font-weight: 600;
+            color: var(--text);
+            font-size: 14px;
+        }
+
+        .status-band {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            box-shadow: 0 2px 8px var(--shadow);
+            padding: 14px 18px;
             color: var(--success);
             display: flex;
             align-items: center;
@@ -224,12 +320,24 @@
             gap: 10px;
             font-weight: 600;
             text-align: center;
+            margin-top: 16px;
         }
 
-        .status-band.error {
-            color: #c53030;
-            border-color: #feb2b2;
-            background: #fff5f5;
+            .status-band.error {
+                color: #c53030;
+                border-color: #feb2b2;
+                background: #fff5f5;
+            }
+
+        @@media print {
+            body {
+                background: white;
+            }
+
+            .search-container,
+            .export-btn {
+                display: none !important;
+            }
         }
     </style>
 </head>
@@ -259,91 +367,108 @@
 
     @if (Model.Usuario != null)
     {
-        <div class="cards-wrap">
-            <div class="cards-grid">
-                <!-- Card 1: Datos del Usuario -->
-                <div class="card">
-                    <h2 class="card-title">Datos del Usuario</h2>
+        <button class="export-btn" onclick="exportToPDF()">
+            <i class="fas fa-file-pdf"></i>
+            Exportar a PDF
+        </button>
+
+        <div class="content-wrap">
+            <div id="printableContent">
+                <!-- Datos del Usuario - Compacto -->
+                <div class="user-card">
+                    <h2>Datos del Usuario</h2>
                     <p><strong>Nombre:</strong> @Model.Usuario.Nombre</p>
                     <p><strong>Correo:</strong> @Model.Usuario.Correo</p>
                     <p><strong>RUT:</strong> @Model.Usuario.Rut</p>
                 </div>
 
-                <!-- Card 2: Estado AD + Finiquitado + SPR/Emp.Central -->
-                <div class="card">
-                    <h2 class="card-title">Estado AD</h2>
-                    @{
-                        var adTextRaw = string.IsNullOrWhiteSpace(Model?.EstadoAD) ? "NO ENCONTRADO" : Model.EstadoAD;
-                        var adTextUpper = adTextRaw.Trim().ToUpper();
-                        var adClass = adTextUpper.Contains("ACTIVO") ? "pill pill--ok"
-                        : adTextUpper.Contains("NO ENCONTRADO") ? "pill pill--warn"
-                        : "pill pill--muted";
-                    }
-                    <p><strong>AD:</strong> <span class="@adClass">@adTextRaw</span></p>
+                <!-- Estados - 4 Cards Horizontales -->
+                <div class="estados-grid">
+                    <!-- AD -->
+                    <div class="estado-card">
+                        <h3>Active Directory</h3>
+                        @{
+                            var adTextRaw = string.IsNullOrWhiteSpace(Model?.EstadoAD) ? "NO ENCONTRADO" : Model.EstadoAD;
+                            var adTextUpper = adTextRaw.Trim().ToUpper();
+                            var adClass = adTextUpper.Contains("ACTIVO") ? "pill pill--ok"
+                            : adTextUpper.Contains("NO ENCONTRADO") ? "pill pill--warn"
+                            : "pill pill--muted";
+                        }
+                        <span class="@adClass">@adTextRaw</span>
+                    </div>
 
-                    @{
-                        var finiqText = Model.EsFiniquitado ? "FINIQUITADO" : "NO FINIQUITADO";
-                        var finiqUpper = finiqText.ToUpper();
-                        var finiqClass = finiqUpper == "FINIQUITADO" ? "pill pill--danger"
-                        : finiqUpper == "NO ENCONTRADO" ? "pill pill--warn"
-                        : "pill pill--ok";
-                    }
-                    <p><strong>FINIQUITADO:</strong> <span class="@finiqClass">@finiqText</span></p>
+                    <!-- Finiquitado -->
+                    <div class="estado-card">
+                        <h3>Finiquitado</h3>
+                        @{
+                            var finiqText = Model.EsFiniquitado ? "FINIQUITADO" : "NO FINIQUITADO";
+                            var finiqUpper = finiqText.ToUpper();
+                            var finiqClass = finiqUpper == "FINIQUITADO" ? "pill pill--danger"
+                            : finiqUpper == "NO ENCONTRADO" ? "pill pill--warn"
+                            : "pill pill--ok";
+                        }
+                        <span class="@finiqClass">@finiqText</span>
+                    </div>
 
-                    @{
-                        var sprClass = Model.SprActivo ? "pill pill--ok" : "pill pill--muted";
-                        var empClass = Model.EmpCentralActivo ? "pill pill--ok" : "pill pill--muted";
-                    }
-                    <p><strong>SPR:</strong> <span class="@sprClass">@(Model.SprActivo ? "ACTIVO" : "NO ACTIVO")</span></p>
-                    <p><strong>EMP.CENTRAL:</strong> <span class="@empClass">@(Model.EmpCentralActivo ? "ACTIVO" : "NO ACTIVO")</span></p>
+                    <!-- SPR -->
+                    <div class="estado-card">
+                        <h3>SPR</h3>
+                        @{
+                            var sprClass = Model.SprActivo ? "pill pill--ok" : "pill pill--muted";
+                        }
+                        <span class="@sprClass">@(Model.SprActivo ? "ACTIVO" : "NO ACTIVO")</span>
+                    </div>
+
+                    <!-- Emp.Central -->
+                    <div class="estado-card">
+                        <h3>Emp. Central</h3>
+                        @{
+                            var empClass = Model.EmpCentralActivo ? "pill pill--ok" : "pill pill--muted";
+                        }
+                        <span class="@empClass">@(Model.EmpCentralActivo ? "ACTIVO" : "NO ACTIVO")</span>
+                    </div>
                 </div>
 
-                <!-- Card 3: Sistemas - NUEVA -->
-                <div class="card">
-                    <h2 class="card-title">Sistemas Asignados</h2>
+                <!-- Sistemas - Simplificado -->
+                <div class="sistemas-card">
+                    <h2>Sistemas Asignados</h2>
                     @if (Model.Sistemas != null && Model.Sistemas.Any())
                     {
-                        <div style="max-height: 250px; overflow-y: auto;">
-                            @foreach (var sistema in Model.Sistemas)
-                            {
-                                <div style="margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid var(--border);">
-                                    <p style="margin: 4px 0; font-weight: 600; color: var(--accent);">@sistema.Sistema</p>
-                                    <p style="margin: 4px 0; font-size: 13px;"><strong>País:</strong> @sistema.Pais</p>
-                                    <p style="margin: 4px 0; font-size: 13px;"><strong>Negocio:</strong> @sistema.Negocio</p>
-                                    <p style="margin: 4px 0; font-size: 13px;"><strong>Cargo:</strong> @sistema.Cargospr</p>
-                                    @{
-                                        var estadoSistema = sistema.Estado?.ToUpper() == "ACTIVO" ? "pill pill--ok" : "pill pill--muted";
-                                    }
-                                    <p style="margin: 4px 0;"><span class="@estadoSistema">@sistema.Estado</span></p>
-                                </div>
-                            }
-                        </div>
+                        @foreach (var sistema in Model.Sistemas)
+                        {
+                            var estadoSistema = sistema.Estado?.ToUpper() == "ACTIVO" ? "pill pill--ok" : "pill pill--muted";
+                            <div class="sistema-item">
+                                <span class="sistema-nombre">@sistema.Sistema</span>
+                                <span class="@estadoSistema">@sistema.Estado</span>
+                            </div>
+                        }
                     }
                     else
                     {
                         <p style="color: var(--muted); text-align: center; padding: 20px 0;">Sin sistemas asignados</p>
                     }
                 </div>
+
+                @{
+                    var hayProblema = Model.EsFiniquitado && (Model.SprActivo || Model.EmpCentralActivo);
+                }
+
+                @if (hayProblema)
+                {
+                    <div class="status-band error">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        ¡ALERTA! El usuario está finiquitado pero activo en sistemas.
+                    </div>
+                }
+                else
+                {
+                    <div class="status-band">
+                        <i class="fas fa-check-circle"></i>
+                        El Usuario no presenta problemas.
+                    </div>
+                }
             </div>
         </div>
-
-        // Detectar si hay problema: finiquitado PERO activo en algo
-        var hayProblema = Model.EsFiniquitado && (Model.SprActivo || Model.EmpCentralActivo);
-
-        if (hayProblema)
-        {
-            <div class="status-band error">
-                <i class="fas fa-exclamation-triangle"></i>
-                ¡ALERTA! El usuario está finiquitado pero activo en sistemas.
-            </div>
-        }
-        else
-        {
-            <div class="status-band">
-                <i class="fas fa-check-circle"></i>
-                El Usuario no presenta problemas.
-            </div>
-        }
     }
 
     <script>
@@ -373,7 +498,7 @@
             toggleClearBtn();
             searchInput.focus();
 
-            if (document.querySelector('.cards-wrap')) {
+            if (document.querySelector('.content-wrap')) {
                 window.location.href = '/ConsultaUsuario/Buscar';
             }
         });
@@ -484,6 +609,20 @@
                 autocompleteList.classList.remove('show');
             }
         });
+
+        // Función para exportar a PDF
+        function exportToPDF() {
+            const element = document.getElementById('printableContent');
+            const opt = {
+                margin: 10,
+                filename: 'consulta_usuario.pdf',
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2 },
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            };
+
+            html2pdf().set(opt).from(element).save();
+        }
 
         toggleClearBtn();
     </script>
