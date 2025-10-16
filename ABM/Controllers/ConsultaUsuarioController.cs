@@ -21,7 +21,7 @@ namespace ABM.Controllers
             return View(vm);
         }
 
-        [HttpPost]
+
         [HttpPost]
         public async Task<IActionResult> Buscar(ConsultaUsuarioViewModel vm)
         {
@@ -37,25 +37,29 @@ namespace ABM.Controllers
 
                 if (vm.Usuario != null)
                 {
-                    vm.EstadoAD = await _repositorio.ExisteEnADPorMailORut(vm.Usuario.Correo, vm.Usuario.Rut)
-                                ? "ACTIVO" : "NO ENCONTRADO";
+                    // 👇 MODIFICADO - Obtener datos completos de AD
+                    var datosAD = await _repositorio.ObtenerDatosAD(vm.Usuario.Correo, vm.Usuario.Rut);
+                    vm.EstadoAD = datosAD != null ? "ACTIVO" : "NO ENCONTRADO";
+                    vm.UltimoLoginAD = datosAD?.ultimo_login;
 
                     var claveFiniq = string.IsNullOrWhiteSpace(vm.Usuario.Rut) ? vm.Input : vm.Usuario.Rut;
-                    vm.EsFiniquitado = await _repositorio.EstaFiniquitado(claveFiniq);
+
+                    var datosFiniquito = await _repositorio.ObtenerDatosFiniquito(claveFiniq);
+                    vm.EsFiniquitado = datosFiniquito != null;
+                    vm.FechaFiniquito = datosFiniquito?.fecfiniquito;
 
                     var claveSpr = !string.IsNullOrWhiteSpace(vm.Usuario.Rut) ? vm.Usuario.Rut
                                   : (!string.IsNullOrWhiteSpace(vm.Usuario.Correo) ? vm.Usuario.Correo : vm.Input);
+
                     var (spr, emp) = await _repositorio.ObtenerEstadoSprEmpCentral(claveSpr);
                     vm.SprActivo = spr;
                     vm.EmpCentralActivo = emp;
 
-                    // 👇 NUEVO - Obtener sistemas
                     vm.Sistemas = await _repositorio.ObtenerSistemas(claveSpr);
                 }
             }
             return View(vm);
         }
-
 
 
         [HttpGet]

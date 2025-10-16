@@ -11,8 +11,8 @@ namespace ABM.Servicios
     {
         Task<DatosBasicosUsuario?> ObtenerDatosBasicos(string input);
         Task<IEnumerable<DatosBasicosUsuario>> BuscarCoincidencias(string input);
-        Task<bool> ExisteEnADPorMailORut(string correo, string rut); 
-        Task<bool> EstaFiniquitado(string input);
+        Task<DatosAD?> ObtenerDatosAD(string correo, string rut);
+        Task<DatosFiniquito?> ObtenerDatosFiniquito(string input);
         Task<(bool spr, bool empCentral)> ObtenerEstadoSprEmpCentral(string input);
         Task<IEnumerable<SistemaUsuario>> ObtenerSistemas(string input);
     }
@@ -57,17 +57,24 @@ namespace ABM.Servicios
 
             return (spr, emp);
         }
-
-        public async Task<bool> EstaFiniquitado(string input)
+        public async Task<DatosAD?> ObtenerDatosAD(string correo, string rut)
         {
             using var db = new SqlConnection(_connectionString);
-            // El SP devuelve una fila (RUTDNI) si está finiquitado
-            var rut = await db.QueryFirstOrDefaultAsync<string>(
+            return await db.QueryFirstOrDefaultAsync<DatosAD>(
+                "CSS_DatosUltimoLoginAD",
+                new { correo, rut },
+                commandType: CommandType.StoredProcedure
+            );
+        }
+
+        public async Task<DatosFiniquito?> ObtenerDatosFiniquito(string input)
+        {
+            using var db = new SqlConnection(_connectionString);
+            return await db.QueryFirstOrDefaultAsync<DatosFiniquito>(
                 "CSS_DatosEstadoFiniquitado",
                 new { input },
                 commandType: CommandType.StoredProcedure
             );
-            return !string.IsNullOrEmpty(rut);
         }
         // SP TOP 1 con RUT (ya lo tienes)
         public async Task<DatosBasicosUsuario?> ObtenerDatosBasicos(string input)

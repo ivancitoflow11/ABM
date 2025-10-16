@@ -395,6 +395,13 @@
                             : "pill pill--muted";
                         }
                         <span class="@adClass">@adTextRaw</span>
+
+                        @if (adTextUpper.Contains("ACTIVO") && !string.IsNullOrWhiteSpace(Model.UltimoLoginAD))
+                        {
+                            <p style="font-size: 12px; color: var(--muted); margin-top: 8px;">
+                                Último acceso: @Model.UltimoLoginAD
+                            </p>
+                        }
                     </div>
 
                     <!-- Finiquitado -->
@@ -408,6 +415,13 @@
                             : "pill pill--ok";
                         }
                         <span class="@finiqClass">@finiqText</span>
+
+                        @if (Model.EsFiniquitado && Model.FechaFiniquito.HasValue)
+                        {
+                            <p style="font-size: 12px; color: var(--muted); margin-top: 8px;">
+                                Fecha Finiquito: @Model.FechaFiniquito.Value.ToString("dd/MM/yyyy")
+                            </p>
+                        }
                     </div>
 
                     <!-- SPR -->
