@@ -1,10 +1,11 @@
-﻿using ABM.Models;
+﻿using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using ABM.Filters;
+using ABM.Models;
 using ABM.Servicios;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace ABM.Controllers
 {
@@ -20,11 +21,13 @@ namespace ABM.Controllers
 
 
         [HttpGet]
+        [Monitoreo("Buscador", "SELECT", "verPaginaBuscador")]
         public IActionResult Index()
         {
             return View();
         }
         [HttpGet]
+        [Monitoreo("BuscadorPasoSap", "SELECT", "buscarUsuariosEnPasoSap")]
         public async Task<IActionResult> BuscadorPasoSap(string rutODni, string nombreCompleto, string correoUsuario)
         {
             ViewBag.RutODni = rutODni;
@@ -47,6 +50,7 @@ namespace ABM.Controllers
             return PartialView("_BuscadorPasoSap", resultados);
         }
         [HttpGet]
+        [Monitoreo("BuscadorFiniquitados", "SELECT", "buscarUsuariosFiniquitados")]
         public async Task<IActionResult> BuscadorFiniquitados(string rutDni, string nombreUsuario, string mailUsuario)
         {
             // Obtenemos los datos de la sesión, como en tus otros controladores
@@ -86,6 +90,7 @@ namespace ABM.Controllers
             return PartialView("_BuscadorFiniquitados", resultados);
         }
         [HttpGet]
+        [Monitoreo("BuscadorAd", "SELECT", "buscarUsuariosEnAd")]
         public async Task<IActionResult> BuscadorAd(string employeeId, string displayName, string mail)
         {
             ViewBag.EmployeeId = employeeId;
@@ -113,6 +118,7 @@ namespace ABM.Controllers
 
         // Reemplaza este método en tu BuscadorController.cs
         [HttpGet]
+        [Monitoreo("BuscadorFalanet", "SELECT", "buscarUsuariosEnFalanet")]
         public async Task<IActionResult> BuscadorFalanet(string rut, string nombreCompleto, string correo)
         {
             ViewBag.Rut = rut;
@@ -136,6 +142,7 @@ namespace ABM.Controllers
         }
         // Añade este método a tu BuscadorController.cs
         [HttpGet]
+        [Monitoreo("BuscadorAgrupaActivos", "SELECT", "buscarUsuariosEnAgrupaActivos")]
         public async Task<IActionResult> BuscadorAgrupaActivos(string rutDni, string nombreUsuario, string mailUsuario)
         {
             ViewBag.RutDni = rutDni;

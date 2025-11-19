@@ -1,10 +1,13 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using ABM.ViewModels;
+﻿using System.Threading.Tasks;
+using ABM.Filters;
 using ABM.Servicios;
-using System.Threading.Tasks;
+using ABM.ViewModels;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 
 namespace ABM.Controllers
 {
+    [Authorize]
     public class ConsultaUsuarioController : Controller
     {
         private readonly IRepositorioConsultaUsuario _repositorio;
@@ -15,6 +18,7 @@ namespace ABM.Controllers
         }
 
         [HttpGet]
+        [Monitoreo("ConsultaUsuario", "SELECT", "verFormularioBusquedaUsuario")]
         public IActionResult Buscar()
         {
             var vm = new ConsultaUsuarioViewModel();
@@ -23,6 +27,7 @@ namespace ABM.Controllers
 
 
         [HttpPost]
+        [Monitoreo("ConsultaUsuario", "SELECT", "buscarDatosUsuario")]
         public async Task<IActionResult> Buscar(ConsultaUsuarioViewModel vm)
         {
             if (!string.IsNullOrWhiteSpace(vm.Input))
@@ -63,6 +68,7 @@ namespace ABM.Controllers
 
 
         [HttpGet]
+        [Monitoreo("ConsultaUsuario", "SELECT", "autocompleteUsuarios")]
         public async Task<IActionResult> Autocomplete(string term)
         {
             var resultados = await _repositorio.BuscarCoincidencias(term ?? "");

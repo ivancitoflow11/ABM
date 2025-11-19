@@ -1,17 +1,18 @@
-﻿using ABM.Models;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Authorization;
-using ABM.Servicios; 
-using System;
-using Microsoft.AspNetCore.Http;
-using System.Security.Claims;
-using System.Threading.Tasks;
+﻿using System;
 using System.Collections.Generic;
+using System.Data.SqlTypes;
 using System.IO;
 using System.Linq;
-using System.Text.RegularExpressions;
-using System.Data.SqlTypes;
+using System.Security.Claims;
 using System.Text.Json;
+using System.Text.RegularExpressions;
+using System.Threading.Tasks;
+using ABM.Filters;
+using ABM.Models;
+using ABM.Servicios; 
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 
 namespace ABM.Controllers
 {
@@ -30,8 +31,9 @@ namespace ABM.Controllers
             _repositorioMatrizDiaria = repositorioMatrizDiaria;
             _repositorioUsuarios = repositorioUsuarios; 
         }
-
+        [Monitoreo("Excepciones", "SELECT", "verPaginaExcepciones")]
         public async Task<IActionResult> Index()
+
         {
             var idPaisSesion = HttpContext.Session.GetInt32("IdPais");
             var idNegocioSesion = HttpContext.Session.GetInt32("IdNegocio");
@@ -55,6 +57,7 @@ namespace ABM.Controllers
 
         [HttpGet]
         [Route("Excepciones/ListaExcepciones")]
+        [Monitoreo("Excepciones", "SELECT", "verListaExcepciones")]
         public async Task<IActionResult> ListaExcepciones()
         {
             var idPaisSesion = HttpContext.Session.GetInt32("IdPais");
@@ -86,6 +89,7 @@ namespace ABM.Controllers
         }
 
         [HttpPost]
+        [Monitoreo("Excepciones", "INSERT", "guardarListaExcepciones")]
         public async Task<IActionResult> GuardarListaExcepciones(string IdsCarga,
             string Comentario, IFormFile Archivo,
             int IdTipoMotivo, DateTime FechaHasta, string Estado)
@@ -236,6 +240,7 @@ namespace ABM.Controllers
         }
 
         [HttpPost]
+        [Monitoreo("Excepciones", "INSERT", "guardarExcepcionConEnvioCorreo")]
         public async Task<IActionResult> GuardarExcepcionConEnvioCorreo(int idCarga, string observaciones, string correoEnvio)
         {
             if (!HttpContext.User.Identity.IsAuthenticated)
@@ -263,12 +268,14 @@ namespace ABM.Controllers
         }
 
         [HttpGet]
+        [Monitoreo("ExcepcionesHistoricos", "SELECT", "verPaginaHistoricosExcepciones")]
         public IActionResult Historicos()
         {
             return View();
         }
 
         [HttpGet]
+        [Monitoreo("ExcepcionesNotificadas", "SELECT", "verExcepcionesNotificadas")]
         public async Task<IActionResult> ExcepcionesNotificadas()
         {
             Console.WriteLine("Llamada a _repositorioMatrizDiaria.ObtenerExcepcionesNotificadas COMENTADA - VERIFICAR EXISTENCIA");
@@ -277,6 +284,7 @@ namespace ABM.Controllers
         }
 
         [HttpPost]
+        [Monitoreo("ExcepcionesHistoricos", "SELECT", "obtenerListaExcepcionesHistoricos")]
         public async Task<IActionResult> ListaExcepcionesHistoricos()
         {
             try
@@ -375,6 +383,7 @@ namespace ABM.Controllers
         }
 
         [HttpPost]
+        [Monitoreo("ExcepcionesPorVencer", "SELECT", "obtenerExcepcionesPorVencer")]
         public async Task<IActionResult> ObtenerListaExcepcionesPorVencer()
         {
             try

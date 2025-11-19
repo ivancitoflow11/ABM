@@ -268,18 +268,27 @@
             color: #b7791f;
         }
 
-        /* Card de Sistemas - Simplificada */
-        .sistemas-card {
+        /* 👇 NUEVO - Grid para cards lado a lado */
+        .dual-cards-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+
+
+
+        /* Card de Sistemas y Negocios */
+        .sistemas-card, .negocios-card {
             background: var(--card-bg);
             border: 1px solid var(--border);
             border-radius: 10px;
             box-shadow: 0 2px 8px var(--shadow);
             padding: 16px 20px;
             text-align: left;
-            margin-bottom: 16px;
         }
 
-            .sistemas-card h2 {
+            .sistemas-card h2, .negocios-card h2 {
                 font-size: 13px;
                 font-weight: 700;
                 color: var(--muted);
@@ -293,7 +302,7 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 10px 0;
+            padding: 12px 0;
             border-bottom: 1px solid var(--border);
         }
 
@@ -301,11 +310,42 @@
                 border-bottom: none;
             }
 
+            .sistema-item > div {
+                flex: 1;
+            }
+
         .sistema-nombre {
             font-weight: 600;
             color: var(--text);
             font-size: 14px;
         }
+
+        /* Items de negocios - mismo estilo que sistemas */
+        .negocio-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+            .negocio-item:last-child {
+                border-bottom: none;
+            }
+
+        .negocio-nombre {
+            font-weight: 600;
+            color: var(--text);
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+            .negocio-nombre i {
+                color: var(--accent);
+                font-size: 13px;
+            }
 
         .status-band {
             background: var(--card-bg);
@@ -419,7 +459,7 @@
                         @if (Model.EsFiniquitado && Model.FechaFiniquito.HasValue)
                         {
                             <p style="font-size: 12px; color: var(--muted); margin-top: 8px;">
-                                Fecha Finiquito: @Model.FechaFiniquito.Value.ToString("dd/MM/yyyy")
+                                Fecha: @Model.FechaFiniquito.Value.ToString("dd/MM/yyyy")
                             </p>
                         }
                     </div>
@@ -443,24 +483,54 @@
                     </div>
                 </div>
 
-                <!-- Sistemas - Simplificado -->
-                <div class="sistemas-card">
-                    <h2>Sistemas Asignados</h2>
-                    @if (Model.Sistemas != null && Model.Sistemas.Any())
-                    {
-                        @foreach (var sistema in Model.Sistemas)
+                <!-- 👇 NUEVO - Grid con dos cards lado a lado -->
+                <div class="dual-cards-grid">
+                    <!-- Card de Negocios -->
+                    <div class="negocios-card">
+                        <h2>Negocios Asignados</h2>
+                        @if (Model.NegociosUnicos != null && Model.NegociosUnicos.Any())
                         {
-                            var estadoSistema = sistema.Estado?.ToUpper() == "ACTIVO" ? "pill pill--ok" : "pill pill--muted";
-                            <div class="sistema-item">
-                                <span class="sistema-nombre">@sistema.Sistema</span>
-                                <span class="@estadoSistema">@sistema.Estado</span>
-                            </div>
+                            @foreach (var negocio in Model.NegociosUnicos)
+                            {
+                                <div class="negocio-item">
+                                    <span class="negocio-nombre">
+                                        <i class="fas fa-building"></i>
+                                        @negocio
+                                    </span>
+                                    <span class="pill pill--ok">ASIGNADO</span>
+                                </div>
+                            }
                         }
-                    }
-                    else
-                    {
-                        <p style="color: var(--muted); text-align: center; padding: 20px 0;">Sin sistemas asignados</p>
-                    }
+                        else
+                        {
+                            <p style="color: var(--muted); text-align: center; padding: 20px 0;">Sin negocios asignados</p>
+                        }
+                    </div>
+
+                    <!-- Card de Sistemas -->
+                    <div class="sistemas-card">
+                        <h2>Sistemas Asignados</h2>
+                        @if (Model.Sistemas != null && Model.Sistemas.Any())
+                        {
+                            @foreach (var sistema in Model.Sistemas)
+                            {
+                                var estadoSistema = (sistema.estado ?? "").ToUpper() == "ACTIVO" ? "pill pill--ok" : "pill pill--muted";
+                                <div class="sistema-item">
+                                    <div>
+                                        <span class="sistema-nombre">@sistema.sistema</span>
+                                        <p style="font-size: 12px; color: var(--muted); margin: 4px 0 0 0;">
+                                            @sistema.NegocioPais
+                                        </p>
+                                    </div>
+                                    <span class="@estadoSistema">@sistema.estado</span>
+                                </div>
+                            }
+                        }
+                        else
+                        {
+                            <p style="color: var(--muted); text-align: center; padding: 20px 0;">Sin sistemas asignados</p>
+                        }
+                    </div>
                 </div>
 
                 @{

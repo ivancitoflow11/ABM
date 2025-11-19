@@ -1,0 +1,540 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Seguimiento de Negocios - Octubre 2025</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: white;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            max-width: 100%;
+            margin: 0 auto;
+            border: 1px solid #e5e7eb;
+        }
+
+        .header {
+            background: #ffffff;
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+            .header h1 {
+                font-size: 28px;
+                margin-bottom: 10px;
+                font-weight: 600;
+            }
+
+            .header p {
+                font-size: 14px;
+                opacity: 0.9;
+            }
+
+        .table-wrapper {
+            overflow-x: auto;
+            padding: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        th {
+            background: #10b981;
+            color: white;
+            padding: 14px 10px;
+            text-align: center;
+            font-weight: 600;
+            font-size: 12px;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            border-right: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+            th:last-child {
+                border-right: none;
+            }
+
+        .date-header {
+            font-size: 13px;
+            font-weight: 700;
+            padding: 10px;
+        }
+
+        .subheader {
+            font-size: 10px;
+            font-weight: 500;
+            opacity: 0.95;
+        }
+
+        td {
+            padding: 12px 10px;
+            text-align: center;
+            border-bottom: 1px solid #f0f0f0;
+            border-right: 1px solid #f0f0f0;
+        }
+
+            td:first-child {
+                background: #f8f9fa;
+                font-weight: 500;
+                text-align: left;
+                padding-left: 15px;
+            }
+
+            td:nth-child(2) {
+                background: #f8f9fa;
+                font-weight: 500;
+            }
+
+            td:nth-child(3) {
+                background: #f8f9fa;
+                font-weight: 500;
+                text-align: left;
+                padding-left: 15px;
+            }
+
+            td:nth-child(4) {
+                background: #f8f9fa;
+                font-weight: 500;
+            }
+
+        tr:hover td {
+            background: #f0fdf4;
+        }
+
+            tr:hover td:first-child,
+            tr:hover td:nth-child(2),
+            tr:hover td:nth-child(3),
+            tr:hover td:nth-child(4) {
+                background: #dcfce7;
+            }
+
+        .finiquitado {
+            background: #fee2e2;
+            color: #991b1b;
+            font-weight: 600;
+            border-radius: 4px;
+        }
+
+        .no-encontrado {
+            background: #f3f4f6;
+            color: #6b7280;
+            font-weight: 500;
+        }
+
+        .footer {
+            background: #f8f9fa;
+            padding: 20px;
+            text-align: center;
+            color: #6b7280;
+            font-size: 12px;
+            border-top: 2px solid #e5e7eb;
+        }
+
+
+
+        table {
+            font-size: 11px;
+        }
+
+        th, td {
+            padding: 8px 5px;
+        }
+
+        }
+    </style>
+</head>
+<body>
+    <br />
+    <br />
+    <div class="container">
+        <div class="header">
+            <h1> Seguimiento de Negocios</h1>
+            <p style="color:black">Período: 13 de Octubre - 20 de Octubre 2025</p>
+        </div>
+
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th rowspan="2">Tipo de<br>Negocio</th>
+                        <th rowspan="2">País</th>
+                        <th rowspan="2">Negocio</th>
+                        <th rowspan="2">Sistema</th>
+                        <th colspan="2" class="date-header">13-10-2025</th>
+                        <th colspan="2" class="date-header">14-10-2025</th>
+                        <th colspan="2" class="date-header">15-10-2025</th>
+                        <th colspan="2" class="date-header">16-10-2025</th>
+                        <th colspan="2" class="date-header">17-10-2025</th>
+                        <th colspan="2" class="date-header">20-10-2025</th>
+                    </tr>
+                    <tr>
+                        <th class="subheader">Finiqu<br>itad</th>
+                        <th class="subheader">No<br>Encon<br>trad</th>
+                        <th class="subheader">Finiqu<br>itad</th>
+                        <th class="subheader">No<br>Encon<br>trad</th>
+                        <th class="subheader">Finiqu<br>itad</th>
+                        <th class="subheader">No<br>Encon<br>trad</th>
+                        <th class="subheader">Finiqu<br>itad</th>
+                        <th class="subheader">No<br>Encon<br>trad</th>
+                        <th class="subheader">Finiqu<br>itad</th>
+                        <th class="subheader">No<br>Encon<br>trad</th>
+                        <th class="subheader">Finiqu<br>itad</th>
+                        <th class="subheader">No<br>Encon<br>trad</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>No Financiero</td>
+                        <td>CHILE</td>
+                        <td>TOTTUS</td>
+                        <td>AD</td>
+                        <td class="finiquitado">116</td>
+                        <td class="no-encontrado">35</td>
+                        <td class="finiquitado">115</td>
+                        <td class="no-encontrado">35</td>
+                        <td class="finiquitado">116</td>
+                        <td class="no-encontrado">34</td>
+                        <td class="finiquitado">135</td>
+                        <td class="no-encontrado">39</td>
+                        <td class="finiquitado">116</td>
+                        <td class="no-encontrado">34</td>
+                        <td class="finiquitado">115</td>
+                        <td class="no-encontrado">32</td>
+                    </tr>
+                    <tr>
+                        <td>No Financiero</td>
+                        <td>CHILE</td>
+                        <td>TECNOLOGIA CORPORATIVA</td>
+                        <td>AD</td>
+                        <td class="finiquitado">89</td>
+                        <td class="no-encontrado">229</td>
+                        <td class="finiquitado">88</td>
+                        <td class="no-encontrado">226</td>
+                        <td class="finiquitado">87</td>
+                        <td class="no-encontrado">225</td>
+                        <td class="finiquitado">87</td>
+                        <td class="no-encontrado">225</td>
+                        <td class="finiquitado">88</td>
+                        <td class="no-encontrado">223</td>
+                        <td class="finiquitado">86</td>
+                        <td class="no-encontrado">223</td>
+                    </tr>
+                    <tr>
+                        <td>No Financiero</td>
+                        <td>CHILE</td>
+                        <td>SODIMAC</td>
+                        <td>AD</td>
+                        <td class="finiquitado">282</td>
+                        <td class="no-encontrado">199</td>
+                        <td class="finiquitado">283</td>
+                        <td class="no-encontrado">199</td>
+                        <td class="finiquitado">284</td>
+                        <td class="no-encontrado">201</td>
+                        <td class="finiquitado">294</td>
+                        <td class="no-encontrado">199</td>
+                        <td class="finiquitado">286</td>
+                        <td class="no-encontrado">200</td>
+                        <td class="finiquitado">286</td>
+                        <td class="no-encontrado">201</td>
+                    </tr>
+                    <tr>
+                        <td>No Financiero</td>
+                        <td>CHILE</td>
+                        <td>SIN NEGOCIO</td>
+                        <td>AD</td>
+                        <td class="finiquitado">17</td>
+                        <td class="no-encontrado">122</td>
+                        <td class="finiquitado">17</td>
+                        <td class="no-encontrado">122</td>
+                        <td class="finiquitado">17</td>
+                        <td class="no-encontrado">122</td>
+                        <td class="finiquitado">17</td>
+                        <td class="no-encontrado">123</td>
+                        <td class="finiquitado">17</td>
+                        <td class="no-encontrado">121</td>
+                        <td class="finiquitado">17</td>
+                        <td class="no-encontrado">121</td>
+                    </tr>
+                    <tr>
+                        <td>No Financiero</td>
+                        <td>CHILE</td>
+                        <td>SERV_INFRAESTRUCTURA</td>
+                        <td>AD</td>
+                        <td class="finiquitado">0</td>
+                        <td class="no-encontrado">1</td>
+                        <td class="finiquitado">0</td>
+                        <td class="no-encontrado">1</td>
+                        <td class="finiquitado">0</td>
+                        <td class="no-encontrado">1</td>
+                        <td class="finiquitado">0</td>
+                        <td class="no-encontrado">1</td>
+                        <td class="finiquitado">0</td>
+                        <td class="no-encontrado">1</td>
+                        <td class="finiquitado">0</td>
+                        <td class="no-encontrado">1</td>
+                    </tr>
+                    <tr>
+                        <td>No Financiero</td>
+                        <td>CHILE</td>
+                        <td>SAGA FALABELLA</td>
+                        <td>AD</td>
+                        <td class="finiquitado">0</td>
+                        <td class="no-encontrado">0</td>
+                        <td class="finiquitado">0</td>
+                        <td class="no-encontrado">0</td>
+                        <td class="finiquitado">0</td>
+                        <td class="no-encontrado">0</td>
+                        <td class="finiquitado">0</td>
+                        <td class="no-encontrado">0</td>
+                        <td class="finiquitado">0</td>
+                        <td class="no-encontrado">0</td>
+                        <td class="finiquitado">0</td>
+                        <td class="no-encontrado">0</td>
+                    </tr>
+                    <tr>
+                        <td>No Financiero</td>
+                        <td>CHILE</td>
+                        <td>SACI</td>
+                        <td>AD</td>
+                        <td class="finiquitado">5</td>
+                        <td class="no-encontrado">8</td>
+                        <td class="finiquitado">5</td>
+                        <td class="no-encontrado">8</td>
+                        <td class="finiquitado">5</td>
+                        <td class="no-encontrado">8</td>
+                        <td class="finiquitado">5</td>
+                        <td class="no-encontrado">8</td>
+                        <td class="finiquitado">5</td>
+                        <td class="no-encontrado">8</td>
+                        <td class="finiquitado">5</td>
+                        <td class="no-encontrado">8</td>
+                    </tr>
+                    <tr>
+                        <td>No Financiero</td>
+                        <td>CHILE</td>
+                        <td>RENTAS</td>
+                        <td>AD</td>
+                        <td class="finiquitado">1</td>
+                        <td class="no-encontrado">0</td>
+                        <td class="finiquitado">1</td>
+                        <td class="no-encontrado">0</td>
+                        <td class="finiquitado">1</td>
+                        <td class="no-encontrado">0</td>
+                        <td class="finiquitado">1</td>
+                        <td class="no-encontrado">0</td>
+                        <td class="finiquitado">1</td>
+                        <td class="no-encontrado">0</td>
+                        <td class="finiquitado">1</td>
+                        <td class="no-encontrado">0</td>
+                    </tr>
+                    <tr>
+                        <td>No Financiero</td>
+                        <td>CHILE</td>
+                        <td>OPLAZA</td>
+                        <td>AD</td>
+                        <td class="finiquitado">2</td>
+                        <td class="no-encontrado">3</td>
+                        <td class="finiquitado">2</td>
+                        <td class="no-encontrado">3</td>
+                        <td class="finiquitado">2</td>
+                        <td class="no-encontrado">3</td>
+                        <td class="finiquitado">4</td>
+                        <td class="no-encontrado">11</td>
+                        <td class="finiquitado">2</td>
+                        <td class="no-encontrado">3</td>
+                        <td class="finiquitado">2</td>
+                        <td class="no-encontrado">3</td>
+                    </tr>
+                    <tr>
+                        <td>No Financiero</td>
+                        <td>CHILE</td>
+                        <td>NO IDENTIFICADO</td>
+                        <td>AD</td>
+                        <td class="finiquitado">4</td>
+                        <td class="no-encontrado">1</td>
+                        <td class="finiquitado">4</td>
+                        <td class="no-encontrado">1</td>
+                        <td class="finiquitado">4</td>
+                        <td class="no-encontrado">1</td>
+                        <td class="finiquitado">4</td>
+                        <td class="no-encontrado">1</td>
+                        <td class="finiquitado">4</td>
+                        <td class="no-encontrado">1</td>
+                        <td class="finiquitado">4</td>
+                        <td class="no-encontrado">1</td>
+                    </tr>
+                    <tr>
+                        <td>No Financiero</td>
+                        <td>CHILE</td>
+                        <td>MOVIL</td>
+                        <td>AD</td>
+                        <td class="finiquitado">0</td>
+                        <td class="no-encontrado">0</td>
+                        <td class="finiquitado">0</td>
+                        <td class="no-encontrado">0</td>
+                        <td class="finiquitado">0</td>
+                        <td class="no-encontrado">0</td>
+                        <td class="finiquitado">0</td>
+                        <td class="no-encontrado">0</td>
+                        <td class="finiquitado">0</td>
+                        <td class="no-encontrado">0</td>
+                        <td class="finiquitado">0</td>
+                        <td class="no-encontrado">0</td>
+                    </tr>
+                    <tr>
+                        <td>No Financiero</td>
+                        <td>CHILE</td>
+                        <td>LINIO</td>
+                        <td>AD</td>
+                        <td class="finiquitado">0</td>
+                        <td class="no-encontrado">1</td>
+                        <td class="finiquitado">0</td>
+                        <td class="no-encontrado">1</td>
+                        <td class="finiquitado">0</td>
+                        <td class="no-encontrado">1</td>
+                        <td class="finiquitado">0</td>
+                        <td class="no-encontrado">1</td>
+                        <td class="finiquitado">0</td>
+                        <td class="no-encontrado">1</td>
+                        <td class="finiquitado">0</td>
+                        <td class="no-encontrado">1</td>
+                    </tr>
+                    <tr>
+                        <td>No Financiero</td>
+                        <td>CHILE</td>
+                        <td>IMPERIAL</td>
+                        <td>AD</td>
+                        <td class="finiquitado">1</td>
+                        <td class="no-encontrado">135</td>
+                        <td class="finiquitado">1</td>
+                        <td class="no-encontrado">135</td>
+                        <td class="finiquitado">1</td>
+                        <td class="no-encontrado">135</td>
+                        <td class="finiquitado">1</td>
+                        <td class="no-encontrado">135</td>
+                        <td class="finiquitado">2</td>
+                        <td class="no-encontrado">135</td>
+                        <td class="finiquitado">2</td>
+                        <td class="no-encontrado">135</td>
+                    </tr>
+                    <tr>
+                        <td>No Financiero</td>
+                        <td>CHILE</td>
+                        <td>IKEA</td>
+                        <td>AD</td>
+                        <td class="finiquitado">103</td>
+                        <td class="no-encontrado">233</td>
+                        <td class="finiquitado">102</td>
+                        <td class="no-encontrado">233</td>
+                        <td class="finiquitado">104</td>
+                        <td class="no-encontrado">237</td>
+                        <td class="finiquitado">110</td>
+                        <td class="no-encontrado">233</td>
+                        <td class="finiquitado">103</td>
+                        <td class="no-encontrado">235</td>
+                        <td class="finiquitado">102</td>
+                        <td class="no-encontrado">236</td>
+                    </tr>
+                    <tr>
+                        <td>No Financiero</td>
+                        <td>CHILE</td>
+                        <td>FALABELLA.COM</td>
+                        <td>AD</td>
+                        <td class="finiquitado">0</td>
+                        <td class="no-encontrado">502</td>
+                        <td class="finiquitado">0</td>
+                        <td class="no-encontrado">498</td>
+                        <td class="finiquitado">0</td>
+                        <td class="no-encontrado">498</td>
+                        <td class="finiquitado">0</td>
+                        <td class="no-encontrado">499</td>
+                        <td class="finiquitado">0</td>
+                        <td class="no-encontrado">498</td>
+                        <td class="finiquitado">0</td>
+                        <td class="no-encontrado">497</td>
+                    </tr>
+                    <tr>
+                        <td>No Financiero</td>
+                        <td>CHILE</td>
+                        <td>FALABELLA SPA</td>
+                        <td>AD</td>
+                        <td class="finiquitado">5</td>
+                        <td class="no-encontrado">35</td>
+                        <td class="finiquitado">6</td>
+                        <td class="no-encontrado">35</td>
+                        <td class="finiquitado">7</td>
+                        <td class="no-encontrado">33</td>
+                        <td class="finiquitado">6</td>
+                        <td class="no-encontrado">33</td>
+                        <td class="finiquitado">7</td>
+                        <td class="no-encontrado">33</td>
+                        <td class="finiquitado">7</td>
+                        <td class="no-encontrado">33</td>
+                    </tr>
+                    <tr>
+                        <td>No Financiero</td>
+                        <td>CHILE</td>
+                        <td>FALABELLA CORPORATIVO PERU</td>
+                        <td>AD</td>
+                        <td class="finiquitado">0</td>
+                        <td class="no-encontrado">0</td>
+                        <td class="finiquitado">0</td>
+                        <td class="no-encontrado">0</td>
+                        <td class="finiquitado">0</td>
+                        <td class="no-encontrado">0</td>
+                        <td class="finiquitado">0</td>
+                        <td class="no-encontrado">0</td>
+                        <td class="finiquitado">0</td>
+                        <td class="no-encontrado">0</td>
+                        <td class="finiquitado">0</td>
+                        <td class="no-encontrado">0</td>
+                    </tr>
+                    <tr>
+                        <td>No Financiero</td>
+                        <td>CHILE</td>
+                        <td>FALABELLA</td>
+                        <td>AD</td>
+                        <td class="finiquitado">632</td>
+                        <td class="no-encontrado">2667</td>
+                        <td class="finiquitado">629</td>
+                        <td class="no-encontrado">2673</td>
+                        <td class="finiquitado">632</td>
+                        <td class="no-encontrado">2674</td>
+                        <td class="finiquitado">641</td>
+                        <td class="no-encontrado">2704</td>
+                        <td class="finiquitado">630</td>
+                        <td class="no-encontrado">2660</td>
+                        <td class="finiquitado">626</td>
+                        <td class="no-encontrado">2662</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="footer">
+            <p><strong>Sistema AD</strong> | Seguimiento de Negocios No Financieros</p>
+            <p>Reporte generado automáticamente</p>
+        </div>
+    </div>
+</body>
+</html>

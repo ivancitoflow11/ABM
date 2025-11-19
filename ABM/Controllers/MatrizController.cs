@@ -1,5 +1,7 @@
 ﻿using System.Linq;
+using System.Security.Claims;
 using System.Threading.Tasks;
+using ABM.Filters;
 using ABM.Servicios;
 using Dapper;
 using Microsoft.AspNetCore.Authorization; 
@@ -7,7 +9,6 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient; 
 using Microsoft.Extensions.Logging;
-using System.Security.Claims;
 using Rotativa.AspNetCore;
 
 
@@ -30,6 +31,7 @@ namespace ABM.Controllers
             var idClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             return int.Parse(idClaim ?? "0");
         }
+        [Monitoreo("MatrizFirma", "SELECT", "descargarPdfFirma")]
         public async Task<IActionResult> DescargarPdfFirma(int idFirma)
         {
             var modelo = await _repositorioMatriz.ObtenerDatosParaReporteFirma(idFirma);
@@ -46,6 +48,7 @@ namespace ABM.Controllers
             };
         }
         [HttpGet]
+        [Monitoreo("Matriz", "SELECT", "verMatricesDisponibles")]
         public async Task<IActionResult> Index()
         {
             var idPaisSesion = HttpContext.Session.GetInt32("IdPais");
@@ -65,6 +68,7 @@ namespace ABM.Controllers
         }
 
         [HttpGet]
+        [Monitoreo("Matriz", "SELECT", "verDetalleMatriz")]
         public async Task<IActionResult> Detalle(int idSistema, string idPais, int idNegocio)
         {
             if (idSistema <= 0 || string.IsNullOrEmpty(idPais) || idNegocio <= 0)
@@ -130,7 +134,8 @@ namespace ABM.Controllers
         }
 
         [HttpPost]
-        [ValidateAntiForgeryToken] 
+        [ValidateAntiForgeryToken]
+        [Monitoreo("MatrizFirma", "INSERT", "firmarMatriz")]
         public async Task<IActionResult> FirmarMatriz(int idPais, int idNegocio, int idSistema, string comentario)
         {
             var idUsuario = ObtenerIdUsuarioActual();
@@ -157,6 +162,7 @@ namespace ABM.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Monitoreo("MatrizFirma", "DELETE", "eliminarFirma")]
         public async Task<IActionResult> EliminarFirma(int idFirma)
         {
             var idUsuario = ObtenerIdUsuarioActual();

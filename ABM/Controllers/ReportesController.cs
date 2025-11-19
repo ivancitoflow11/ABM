@@ -244,15 +244,6 @@ namespace ABM.Controllers
         }
 
 
-            public IActionResult MOCKUP()
-            {
-                return View();
-            }
-        public IActionResult MOCKUP2()
-        {
-            return View();
-        }
-
 
 
         [HttpGet]

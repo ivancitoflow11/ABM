@@ -1,4 +1,9 @@
-﻿// En la carpeta Controllers/CargarArchivosADController.cs
+﻿
+using System;
+using System.IO;
+using System.Linq;
+using System.Threading.Tasks;
+using ABM.Filters;
 using ABM.Models;
 using ABM.Servicios;
 using Microsoft.AspNetCore.Authorization;
@@ -6,10 +11,6 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using System;
-using System.IO;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace ABM.Controllers
 {
@@ -28,6 +29,7 @@ namespace ABM.Controllers
 
 
         [HttpGet]
+        [Monitoreo("CargarArchivosAD", "SELECT", "verPaginaCargarArchivosAD")]
         public async Task<IActionResult> Index()
         {
             var viewModel = new CargarArchivosViewModel();
@@ -46,6 +48,7 @@ namespace ABM.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
         [RequestSizeLimit(524288000)]
+        [Monitoreo("CargarArchivosAD", "INSERT", "cargarArchivoAD")]
         public async Task<IActionResult> Cargar(CargarArchivosViewModel viewModel, IFormFile archivo)
         {
             if (archivo == null || archivo.Length == 0)
@@ -116,6 +119,7 @@ namespace ABM.Controllers
 
 
         [HttpGet]
+        [Monitoreo("NegociosPorPais", "SELECT", "obtenerNegociosPorPais")]
         public async Task<JsonResult> GetNegociosPorPais(string pais)
         {
             if (string.IsNullOrEmpty(pais))
@@ -128,6 +132,7 @@ namespace ABM.Controllers
 
 
         [HttpGet]
+        [Monitoreo("CargarArchivosAD", "SELECT", "descargarArchivoAD")]
         public IActionResult DescargarArchivo(string nombreArchivo)
         {
             if (string.IsNullOrEmpty(nombreArchivo))

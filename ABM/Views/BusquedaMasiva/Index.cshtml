@@ -1,0 +1,663 @@
+﻿@model ABM.ViewModels.BusquedaMasivaViewModel
+
+@{
+    ViewData["Title"] = "Búsqueda Masiva de Usuarios";
+}
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"]</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+    <style>
+        :root {
+            --bg-color: #f4f7f9;
+            --card-bg: #fff;
+            --text: #2d3748;
+            --muted: #718096;
+            --border: #e2e8f0;
+            --accent: #4a90e2;
+            --success: #38a169;
+            --danger: #c53030;
+            --warning: #d69e2e;
+            --shadow: rgba(0,0,0,.05);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            background: var(--bg-color);
+            color: var(--text);
+            padding: 30px 24px 40px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 28px;
+            font-weight: 600;
+            margin: 0 0 32px;
+            color: var(--text);
+        }
+
+        .upload-card {
+            background: var(--card-bg);
+            border: 2px dashed var(--border);
+            border-radius: 12px;
+            padding: 40px;
+            text-align: center;
+            margin-bottom: 24px;
+            transition: all 0.3s;
+        }
+
+            .upload-card:hover {
+                border-color: var(--accent);
+                box-shadow: 0 4px 12px var(--shadow);
+            }
+
+        .upload-icon {
+            font-size: 48px;
+            color: var(--accent);
+            margin-bottom: 16px;
+        }
+
+        .upload-card h3 {
+            font-size: 18px;
+            margin: 0 0 8px;
+            color: var(--text);
+        }
+
+        .upload-card p {
+            color: var(--muted);
+            margin: 0 0 24px;
+            font-size: 14px;
+        }
+
+        .file-input-wrapper {
+            position: relative;
+            display: inline-block;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .file-label {
+            background: var(--accent);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+            .file-label:hover {
+                background: #3a7bc8;
+            }
+
+        .file-name {
+            margin-top: 16px;
+            color: var(--text);
+            font-weight: 500;
+        }
+
+        .btn-process {
+            background: var(--success);
+            color: white;
+            border: none;
+            padding: 12px 32px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 16px;
+            transition: background 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+            .btn-process:hover {
+                background: #2f855a;
+            }
+
+            .btn-process:disabled {
+                background: var(--muted);
+                cursor: not-allowed;
+            }
+
+        .btn-export {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 10px 24px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+
+            .btn-export:hover {
+                background: #c82333;
+            }
+
+        .info-card {
+            background: #e6f7ff;
+            border: 1px solid #91d5ff;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 24px;
+        }
+
+            .info-card h4 {
+                margin: 0 0 8px;
+                color: #0050b3;
+                font-size: 14px;
+                font-weight: 600;
+            }
+
+            .info-card ul {
+                margin: 0;
+                padding-left: 20px;
+                color: #096dd9;
+                font-size: 13px;
+            }
+
+            .info-card li {
+                margin: 4px 0;
+            }
+
+        .results-section {
+            margin-top: 32px;
+        }
+
+            .results-section h2 {
+                font-size: 22px;
+                font-weight: 600;
+                margin-bottom: 20px;
+                text-align: center;
+            }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--accent);
+            margin-bottom: 8px;
+        }
+
+            .stat-number.danger {
+                color: var(--danger);
+            }
+
+        .stat-label {
+            font-size: 14px;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .results-table-wrapper {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px var(--shadow);
+        }
+
+        .results-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+            .results-table thead {
+                background: #f7fafc;
+            }
+
+            .results-table th {
+                padding: 14px 12px;
+                text-align: left;
+                font-size: 12px;
+                font-weight: 700;
+                color: var(--muted);
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+                border-bottom: 2px solid var(--border);
+            }
+
+            .results-table td {
+                padding: 12px;
+                border-bottom: 1px solid var(--border);
+                font-size: 14px;
+            }
+
+            .results-table tbody tr:hover {
+                background: #f7fafc;
+            }
+
+            .results-table tbody tr:last-child td {
+                border-bottom: none;
+            }
+
+        .pill {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 999px;
+            font-size: 11px;
+            font-weight: 600;
+            border: 1px solid;
+        }
+
+        .pill--ok {
+            background: #e6ffed;
+            border-color: #c6f6d5;
+            color: #2f855a;
+        }
+
+        .pill--muted {
+            background: #edf2f7;
+            border-color: #e2e8f0;
+            color: #4a5568;
+        }
+
+        .pill--danger {
+            background: #ffe6e6;
+            border-color: #feb2b2;
+            color: #c53030;
+        }
+
+        .pill--warn {
+            background: #ffe8cc;
+            border-color: #ffd0a8;
+            color: #b7791f;
+        }
+
+        .alert-icon {
+            color: var(--danger);
+            font-size: 18px;
+        }
+
+        .check-icon {
+            color: var(--success);
+            font-size: 18px;
+        }
+
+        .expandable-cell {
+            max-width: 200px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            cursor: pointer;
+            position: relative;
+        }
+
+            .expandable-cell:hover {
+                color: var(--accent);
+            }
+
+        .tooltip {
+            position: relative;
+            display: inline-block;
+        }
+
+            .tooltip .tooltiptext {
+                visibility: hidden;
+                width: 300px;
+                background-color: #333;
+                color: #fff;
+                text-align: left;
+                border-radius: 6px;
+                padding: 10px;
+                position: absolute;
+                z-index: 1;
+                bottom: 125%;
+                left: 50%;
+                margin-left: -150px;
+                opacity: 0;
+                transition: opacity 0.3s;
+                font-size: 12px;
+                line-height: 1.5;
+            }
+
+            .tooltip:hover .tooltiptext {
+                visibility: visible;
+                opacity: 1;
+            }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: var(--muted);
+        }
+
+        .spinner {
+            border: 3px solid var(--border);
+            border-top: 3px solid var(--accent);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 16px;
+        }
+
+        @@keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .alert {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 8px;
+            padding: 12px 16px;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .alert-error {
+            background: #ffe6e6;
+            border-color: #feb2b2;
+            color: var(--danger);
+        }
+    </style>
+</head>
+<body>
+    <br />
+    <br />
+    <div class="container">
+        <h1><i class="fas fa-users"></i> Búsqueda Masiva de Usuarios</h1>
+
+        <!-- Mostrar errores si existen -->
+        @if (!ViewData.ModelState.IsValid)
+        {
+            <div class="alert alert-error">
+                <i class="fas fa-exclamation-circle"></i>
+                @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+                {
+                    <span>@error.ErrorMessage</span>
+                }
+            </div>
+        }
+
+        @if (Model.Resultados == null || !Model.Resultados.Any())
+        {
+            <!-- Card de Información -->
+            <div class="info-card">
+                <h4><i class="fas fa-info-circle"></i> Formato del Excel</h4>
+                <ul>
+                    <li>El archivo debe tener una columna llamada <strong>"RUT"</strong> o <strong>"CORREO"</strong></li>
+                    <li>Puede contener hasta 100 registros por búsqueda</li>
+                    <li>Formatos aceptados: .xlsx, .xls</li>
+                    <li>Ejemplo: <code>RUT: 12345678-9</code> o <code>CORREO: usuario@ejemplo.com</code></li>
+                </ul>
+            </div>
+
+            <!-- Card de Upload -->
+            <form asp-action="ProcesarExcel" method="post" enctype="multipart/form-data" id="uploadForm">
+                @Html.AntiForgeryToken()
+
+                <div class="upload-card">
+                    <div class="upload-icon">
+                        <i class="fas fa-file-excel"></i>
+                    </div>
+                    <h3>Selecciona un archivo Excel</h3>
+                    <p>Arrastra y suelta tu archivo aquí o haz clic para seleccionar</p>
+
+                    <div class="file-input-wrapper">
+                        <label for="fileInput" class="file-label">
+                            <i class="fas fa-upload"></i>
+                            Seleccionar Archivo
+                        </label>
+                        <input type="file"
+                               id="fileInput"
+                               name="ArchivoExcel"
+                               class="file-input"
+                               accept=".xlsx,.xls"
+                               required />
+                    </div>
+
+                    <div id="fileName" class="file-name" style="display: none;"></div>
+
+                    <button type="submit" class="btn-process" id="btnProcess" disabled>
+                        <i class="fas fa-search"></i>
+                        Procesar Búsqueda
+                    </button>
+                </div>
+            </form>
+        }
+        else
+        {
+            <!-- Sección de Resultados -->
+            <div class="results-section">
+                <h2>Resultados de la Búsqueda</h2>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-number">@Model.TotalRegistros</div>
+                        <div class="stat-label">Total Registros</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number danger">@Model.RegistrosConProblemas</div>
+                        <div class="stat-label">Con Problemas</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" style="color: var(--success);">@(Model.TotalRegistros - Model.RegistrosConProblemas)</div>
+                        <div class="stat-label">Sin Problemas</div>
+                    </div>
+                </div>
+
+                <button class="btn-export" onclick="exportarAExcel()">
+                    <i class="fas fa-file-excel"></i>
+                    Exportar Resultados a Excel
+                </button>
+
+                <button class="btn-process" onclick="window.location.href='/BusquedaMasiva/Index'" style="margin-left: 10px;">
+                    <i class="fas fa-redo"></i>
+                    Nueva Búsqueda
+                </button>
+
+                <!-- Tabla de Resultados -->
+                <div class="results-table-wrapper">
+                    <table class="results-table" id="resultsTable">
+                        <thead>
+                            <tr>
+                                <th style="width: 40px;">Estado</th>
+                                <th>Input</th>
+                                <th>Nombre</th>
+                                <th>RUT</th>
+                                <th>Correo</th>
+                                <th style="text-align: center;">AD</th>
+                                <th style="text-align: center;">Finiquitado</th>
+                                <th style="text-align: center;">SPR</th>
+                                <th style="text-align: center;">Emp. Central</th>
+                                <th>Negocios</th>
+                                <th>Sistemas</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var resultado in Model.Resultados)
+                            {
+                                <tr>
+                                    <td style="text-align: center;">
+                                        @if (resultado.TieneProblemas)
+                                        {
+                                            <i class="fas fa-exclamation-triangle alert-icon" title="Usuario con problemas"></i>
+                                        }
+                                        else
+                                        {
+                                            <i class="fas fa-check-circle check-icon" title="Usuario sin problemas"></i>
+                                        }
+                                    </td>
+                                    <td><strong>@resultado.InputBusqueda</strong></td>
+                                    <td>@(resultado.Nombre ?? "-")</td>
+                                    <td>@(resultado.Rut ?? "-")</td>
+                                    <td>@(resultado.Correo ?? "-")</td>
+                                    <td style="text-align: center;">
+                                        @{
+                                            var adClass = resultado.EstadoAD == "ACTIVO" ? "pill pill--ok" : "pill pill--warn";
+                                        }
+                                        <span class="@adClass">@(resultado.EstadoAD ?? "N/A")</span>
+                                        @if (!string.IsNullOrWhiteSpace(resultado.UltimoLoginAD))
+                                        {
+                                            <br />
+                                            <small style="color: var(--muted); font-size: 10px;">@resultado.UltimoLoginAD</small>
+                                        }
+                                    </td>
+                                    <td style="text-align: center;">
+                                        @{
+                                            var finiqClass = resultado.EsFiniquitado ? "pill pill--danger" : "pill pill--ok";
+                                            var finiqText = resultado.EsFiniquitado ? "SÍ" : "NO";
+                                        }
+                                        <span class="@finiqClass">@finiqText</span>
+                                        @if (resultado.FechaFiniquito.HasValue)
+                                        {
+                                            <br />
+                                            <small style="color: var(--muted); font-size: 10px;">@resultado.FechaFiniquito.Value.ToString("dd/MM/yyyy")</small>
+                                        }
+                                    </td>
+                                    <td style="text-align: center;">
+                                        <span class="@(resultado.SprActivo ? "pill pill--ok" : "pill pill--muted")">
+                                            @(resultado.SprActivo ? "ACTIVO" : "INACTIVO")
+                                        </span>
+                                    </td>
+                                    <td style="text-align: center;">
+                                        <span class="@(resultado.EmpCentralActivo ? "pill pill--ok" : "pill pill--muted")">
+                                            @(resultado.EmpCentralActivo ? "ACTIVO" : "INACTIVO")
+                                        </span>
+                                    </td>
+                                    <td>
+                                        @if (resultado.Negocios != null && resultado.Negocios.Any())
+                                        {
+                                            <details style="cursor: pointer;">
+                                                <summary style="list-style: none; display: flex; align-items: center; gap: 8px; padding: 4px 0;">
+                                                    <i class="fas fa-building" style="color: #38a169; font-size: 16px;"></i>
+                                                    <div style="display: flex; flex-direction: column; gap: 2px;">
+                                                        <span style="font-size: 10px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px;">Negocios</span>
+                                                        <span style="font-size: 13px; font-weight: 600;">@resultado.Negocios.Count Negocio(s)</span>
+                                                    </div>
+                                                    <i class="fas fa-chevron-down" style="font-size: 10px; color: var(--muted); margin-left: auto;"></i>
+                                                </summary>
+                                                <ul style="margin: 8px 0 0 20px; padding: 0; list-style: disc; font-size: 13px;">
+                                                    @foreach (var negocio in resultado.Negocios)
+                                                    {
+                                                        <li style="margin: 4px 0;">@negocio</li>
+                                                    }
+                                                </ul>
+                                            </details>
+                                        }
+                                        else
+                                        {
+                                            <span style="color: var(--muted);">-</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (resultado.Sistemas != null && resultado.Sistemas.Any())
+                                        {
+                                            <details style="cursor: pointer;">
+                                                <summary style="list-style: none; display: flex; align-items: center; gap: 8px; padding: 4px 0;">
+                                                    <i class="fas fa-server" style="color: #38a169; font-size: 16px;"></i>
+                                                    <div style="display: flex; flex-direction: column; gap: 2px;">
+                                                        <span style="font-size: 10px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px;">Sistemas</span>
+                                                        <span style="font-size: 13px; font-weight: 600;">@resultado.Sistemas.Count Sistema(s)</span>
+                                                    </div>
+                                                    <i class="fas fa-chevron-down" style="font-size: 10px; color: var(--muted); margin-left: auto;"></i>
+                                                </summary>
+                                                <ul style="margin: 8px 0 0 20px; padding: 0; list-style: disc; font-size: 13px;">
+                                                    @foreach (var sistema in resultado.Sistemas)
+                                                    {
+                                                        <li style="margin: 4px 0;">
+                                                            <strong>@sistema.sistema</strong>
+                                                            <span style="color: var(--muted); font-size: 12px;">(@sistema.estado)</span>
+                                                        </li>
+                                                    }
+                                                </ul>
+                                            </details>
+                                        }
+                                        else
+                                        {
+                                            <span style="color: var(--muted);">-</span>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        }
+    </div>
+
+    <script>
+        const fileInput = document.getElementById('fileInput');
+        const fileName = document.getElementById('fileName');
+        const btnProcess = document.getElementById('btnProcess');
+
+        if (fileInput) {
+            fileInput.addEventListener('change', function(e) {
+                if (this.files && this.files[0]) {
+                    const file = this.files[0];
+                    fileName.textContent = `📄 ${file.name}`;
+                    fileName.style.display = 'block';
+                    btnProcess.disabled = false;
+                } else {
+                    fileName.style.display = 'none';
+                    btnProcess.disabled = true;
+                }
+            });
+        }
+
+        function exportarAExcel() {
+            // Obtener la tabla
+            var tabla = document.getElementById("resultsTable");
+
+            // Crear un libro de trabajo
+            var wb = XLSX.utils.table_to_book(tabla, {sheet: "Resultados"});
+
+            // Generar archivo Excel
+            XLSX.writeFile(wb, 'Busqueda_Masiva_Resultados.xlsx');
+        }
+    </script>
+</body>
+</html>

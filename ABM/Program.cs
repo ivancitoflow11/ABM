@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Builder;
+ï»¿using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.AspNetCore.Http;
@@ -23,11 +23,11 @@ Rotativa.AspNetCore.RotativaConfiguration.Setup(builder.Environment.WebRootPath,
 // Registrar IHttpContextAccessor
 builder.Services.AddHttpContextAccessor();
 
-// Configuración de la sesión
-builder.Services.AddDistributedMemoryCache(); // Opcional: para almacenar en caché en memoria
+// ConfiguraciÃ³n de la sesiÃ³n
+builder.Services.AddDistributedMemoryCache(); // Opcional: para almacenar en cachÃ© en memoria
 builder.Services.AddSession(options =>
 {
-    options.IdleTimeout = TimeSpan.FromMinutes(60); // Ajusta el tiempo según sea necesario
+    options.IdleTimeout = TimeSpan.FromMinutes(60); // Ajusta el tiempo segÃºn sea necesario
     options.Cookie.HttpOnly = true;
     options.Cookie.IsEssential = true;
 });
@@ -64,19 +64,20 @@ builder.Services.AddTransient<IRepositorioKPI, RepositorioKPI>();
 builder.Services.AddTransient<IRepositorioMatriz, RepositorioMatriz>();
 builder.Services.AddTransient<IRepositorioBuscador, RepositorioBuscador>();
 builder.Services.AddTransient<IRepositorioConsultaUsuario, RepositorioConsultaUsuario>();
+builder.Services.AddTransient<IRepositorioBusquedaMasiva, RepositorioBusquedaMasiva>();
 builder.Services.AddAutoMapper(typeof(Program));
 
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>
     {
         options.LoginPath = "/Acceso/Login";
-        options.ExpireTimeSpan = TimeSpan.FromMinutes(60); // Ajusta este valor según tu necesidad
-        options.SlidingExpiration = true; // Renueva la cookie si el usuario está activo
+        options.ExpireTimeSpan = TimeSpan.FromMinutes(60); // Ajusta este valor segÃºn tu necesidad
+        options.SlidingExpiration = true; // Renueva la cookie si el usuario estÃ¡ activo
     });
 
 var app = builder.Build();
 
-// Configurar la canalización de solicitudes HTTP
+// Configurar la canalizaciÃ³n de solicitudes HTTP
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
@@ -84,7 +85,7 @@ if (!app.Environment.IsDevelopment())
 
 app.UseStaticFiles();
 
-// Agrega el middleware de sesión
+// Agrega el middleware de sesiÃ³n
 app.UseSession();
 
 app.UseRouting();

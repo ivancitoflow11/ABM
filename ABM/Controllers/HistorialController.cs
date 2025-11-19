@@ -1,4 +1,5 @@
 ﻿using System.Threading.Tasks;
+using ABM.Filters;
 using ABM.Servicios;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -16,6 +17,7 @@ namespace ABM.Controllers
         }
 
         [HttpGet]
+        [Monitoreo("Historial", "SELECT", "verHistorialFirmas")]
         public async Task<IActionResult> Index()
         {
             var todasLasFirmas = await _repositorioMatriz.ObtenerTodasLasFirmas();

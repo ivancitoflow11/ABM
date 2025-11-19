@@ -164,6 +164,7 @@ namespace ABM.Controllers
         }
 
         [HttpGet]
+        [Monitoreo("VerificarCorreoPasoActivos", "SELECT", "verificarCorreoPasoActivos")]
         public async Task<IActionResult> VerificarCorreoPasoActivos(string correo)
         {
             if (string.IsNullOrWhiteSpace(correo))
@@ -187,6 +188,7 @@ namespace ABM.Controllers
         }
 
         [HttpGet]
+        [Monitoreo("VerificarCorreoEnAD", "SELECT", "verificarCorreoEnAD")]
         public async Task<IActionResult> VerificarCorreoEnAD(string correo)
         {
             if (string.IsNullOrWhiteSpace(correo))
@@ -1009,6 +1011,7 @@ public async Task<IActionResult> EditarUsuario(int id)
         }
 
         [HttpGet]
+        [Monitoreo("NegociosPorPais", "SELECT", "obtenerNegociosFiltradosPorPais")]
         public async Task<JsonResult> ObtenerNegociosFiltradosPorPais(int idPais)
         {
             if (idPais == 0)

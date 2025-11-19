@@ -121,6 +121,7 @@ namespace ABM.Controllers
         }
 
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
+        [Monitoreo("Error", "SELECT", "verPaginaError")]
         public IActionResult Error()
         {
             return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
@@ -133,7 +134,9 @@ namespace ABM.Controllers
             return RedirectToAction("Login", "Acceso");
         }
 
+        [Monitoreo("ListaUsuarios", "SELECT", "verListaUsuarios")]
         public async Task<IActionResult> ListaUsuarios()
+
         {
             var usuarios = await repositorioUsuarios.ObtenerTodosLosUsuarios();
 

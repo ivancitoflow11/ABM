@@ -515,6 +515,7 @@ namespace ABM.Controllers
         }
 
         [HttpGet]
+        [Monitoreo("NegociosPorPais", "SELECT", "obtenerNegociosPorPais")]
         public async Task<JsonResult> GetNegociosPorPais(int idPais)
         {
             if (idPais <= 0)
@@ -531,6 +532,7 @@ namespace ABM.Controllers
         }
 
         [HttpGet]
+        [Monitoreo("SistemasPorPaisYNegocio", "SELECT", "obtenerSistemasPorPaisYNegocio")]
         public async Task<JsonResult> GetSistemasPorPaisYNegocio(int idPais, int idNegocio)
         {
             if (idPais <= 0 || idNegocio <= 0)
@@ -641,7 +643,7 @@ namespace ABM.Controllers
             return RedirectToAction(nameof(Gerencias));
         }
         [HttpGet]
-
+        [Monitoreo("EnvioCorreo", "SELECT", "obtenerDatosEnvioCorreo")]
         public async Task<IActionResult> GetDatosEnvioCorreo(int id) 
         {
             if (id <= 0)
@@ -658,7 +660,7 @@ namespace ABM.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-
+        [Monitoreo("EnvioCorreo", "UPDATE", "editarEnvioCorreo")]
         public async Task<IActionResult> EditarEnvioCorreo(int id, EnvioCorreoDetalleViewModel modeloForm) 
         {
             if (modeloForm == null || id != modeloForm.idDetalle)
@@ -756,6 +758,7 @@ namespace ABM.Controllers
 
 
         [HttpGet]
+        [Monitoreo("GestionCorreos", "SELECT", "verPaginaGestionCorreos")]
         public async Task<IActionResult> GestionCorreos()
         {
             var pageViewModel = new GestionCorreosPageViewModel();
@@ -773,6 +776,7 @@ namespace ABM.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Monitoreo("GestionCorreos", "INSERT", "crearEnvioCorreo")]
         public async Task<IActionResult> CrearEnvioCorreo(GestionCorreosPageViewModel pageModel)
         {
             var modeloForm = pageModel?.CorreoParaCrear;

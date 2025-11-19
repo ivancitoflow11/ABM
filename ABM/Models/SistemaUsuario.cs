@@ -2,14 +2,15 @@
 {
     public class SistemaUsuario
     {
-        public string Rutdni { get; set; }
-        public string Dv { get; set; }
-        public string Nombreusuario { get; set; }
-        public string Mailusuario { get; set; }
-        public string Cargospr { get; set; }
-        public string Estado { get; set; }
-        public string Pais { get; set; }
-        public string Negocio { get; set; }
-        public string Sistema { get; set; }
+        public string rutdni { get; set; }
+        public string dv { get; set; }
+        public string nombreusuario { get; set; }
+        public string mailusuario { get; set; }
+        public string cargospr { get; set; }
+        public string estado { get; set; }  // 👈 Asegúrate que esté con minúscula
+        public string pais { get; set; }
+        public string negocio { get; set; }
+        public string sistema { get; set; }  // 👈 Asegúrate que esté con minúscula
+        public string NegocioPais { get; set; }
     }
 }

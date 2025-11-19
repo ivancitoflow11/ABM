@@ -294,10 +294,9 @@ namespace ABM.Controllers
         }
 
 
-        // NUEVOS MÉTODOS PARA OLVIDO DE CONTRASEÑA
-
         [AllowAnonymous]
         [HttpGet]
+        [Monitoreo("OlvidoClave", "SELECT", "verFormularioOlvidoClave")]
         public IActionResult OlvidoClave()
         {
             if (TempData["MensajeExitoOlvido"] != null)
@@ -314,6 +313,7 @@ namespace ABM.Controllers
         [AllowAnonymous]
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Monitoreo("OlvidoClave", "INSERT", "solicitarRestablecimientoClave")]
         public async Task<IActionResult> OlvidoClave(OlvidoClaveViewModel model)
         {
             if (!ModelState.IsValid)
@@ -324,9 +324,9 @@ namespace ABM.Controllers
             var usuario = await _repositorioUsuarios.ObtenerUsuarioPorCorreo(model.Correo);
             if (usuario != null)
             {
-                // El correo existe, proceder a generar token y enviar email
+
                 var token = Guid.NewGuid().ToString("N");
-                var expiryDate = DateTime.UtcNow.AddMinutes(15); // UTC para consistencia
+                var expiryDate = DateTime.UtcNow.AddMinutes(15);
 
                 bool tokenGuardado = await _repositorioUsuarios.ActualizarTokenRestablecimiento(usuario.idUsuario, token, expiryDate);
 
@@ -339,17 +339,16 @@ namespace ABM.Controllers
                 }
                 else
                 {
-                    // Error al guardar el token, podría ser un problema interno
+
                     TempData["MensajeErrorOlvido"] = "Ocurrió un error al procesar su solicitud. Por favor, intente más tarde.";
                 }
             }
             else
             {
-                // El correo NO existe en la base de datos
-                // ADVERTENCIA: Esto puede ser un riesgo de seguridad (enumeración de usuarios).
+
                 TempData["MensajeErrorOlvido"] = "El correo electrónico ingresado no se encuentra registrado en nuestro sistema. Por favor, ingrese un correo válido.";
             }
-            // Siempre redirigir para evitar reenvío del formulario con F5 y para que TempData funcione correctamente en la vista destino.
+
             return RedirectToAction("OlvidoClave");
 		}
 
@@ -394,46 +393,43 @@ namespace ABM.Controllers
                 mensaje.To.Add(correoDestino);
                 mensaje.Subject = "Restablece tu contraseña";
 
-                // Crear la vista alternativa para el HTML
+
                 AlternateView vistaHtml = AlternateView.CreateAlternateViewFromString(cuerpoHtml, null, MediaTypeNames.Text.Html);
 
        
 
-                // Añadir la vista HTML (con la imagen incrustada) al mensaje
+
                 mensaje.AlternateViews.Add(vistaHtml);
 
                 using (var smtp = new SmtpClient(smtpServer, puerto))
                 {
-                    // Para SMTP
+           
                     if (!string.IsNullOrEmpty(password))
                     {
                         smtp.Credentials = new NetworkCredential(remitente, password);
                     }
 
-                    // para leer EnableSsl desde configuración
+
                     smtp.EnableSsl = bool.Parse(_configuration["EmailSettings:EnableSsl"] ?? "false");
 
                     await smtp.SendMailAsync(mensaje);
                 }
 
-                // _logger.LogInformation($"Correo de restablecimiento enviado a {correoDestino}");
+  
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Error al enviar correo de restablecimiento a {correoDestino}: {ex.ToString()}");
-                // _logger.LogError(ex, $"Error al enviar correo de restablecimiento a {correoDestino}");
+  
             }
         }
 
 
-		// public async Task<IActionResult> TestEnviarCorreo()
-		// {
-		//     await EnviarCorreoRestablecimiento("destinatario@ejemplo.com", "http://tusitio.com/restablecer?token=abcdef", "NombreUsuarioPrueba");
-		//     return Content("Intento de envío de correo realizado.");
-		// }
+
 
 		[AllowAnonymous]
         [HttpGet]
+        [Monitoreo("RestablecerClave", "SELECT", "verFormularioRestablecerClave")]
         public async Task<IActionResult> RestablecerClave(string token)
         {
             if (string.IsNullOrWhiteSpace(token))
@@ -456,6 +452,7 @@ namespace ABM.Controllers
         [AllowAnonymous]
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Monitoreo("RestablecerClave", "UPDATE", "actualizarClaveRestablecida")]
         public async Task<IActionResult> RestablecerClave(RestablecerClaveViewModel model)
         {
             if (!ModelState.IsValid)
@@ -467,14 +464,12 @@ namespace ABM.Controllers
             if (usuario == null || usuario.ResetPasswordTokenExpiry < DateTime.UtcNow)
             {
                 ModelState.AddModelError("", "El enlace de restablecimiento no es válido o ha expirado. Por favor, solicita uno nuevo.");
-                // ViewData["MensajeError"] = "El enlace de restablecimiento no es válido o ha expirado. Por favor, solicita uno nuevo.";
-                // return View("ErrorToken"); 
+
                 return View(model);
             }
 
             string hashedPassword = HashPassword(model.NuevaContrasena);
-            // Aquí, el método del repositorio también debería invalidar el token (ponerlo a NULL)
-            // y actualizar la fecha de cambio de password y quitar el flag de primerInicio si existiera.
+
             bool actualizado = await _repositorioUsuarios.ActualizarPasswordYConsumirToken(usuario.idUsuario, hashedPassword, model.NuevaContrasena);
 
 
