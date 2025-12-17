@@ -268,15 +268,13 @@
             color: #b7791f;
         }
 
-        /* 👇 NUEVO - Grid para cards lado a lado */
+        /* Grid para cards lado a lado */
         .dual-cards-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 16px;
             margin-bottom: 16px;
         }
-
-
 
         /* Card de Sistemas y Negocios */
         .sistemas-card, .negocios-card {
@@ -320,7 +318,7 @@
             font-size: 14px;
         }
 
-        /* Items de negocios - mismo estilo que sistemas */
+        /* Items de negocios */
         .negocio-item {
             display: flex;
             justify-content: space-between;
@@ -369,6 +367,7 @@
                 background: #fff5f5;
             }
 
+        /* 👇 AQUÍ ESTÁ LA MAGIA: Doble arroba */
         @@media print {
             body {
                 background: white;
@@ -414,17 +413,14 @@
 
         <div class="content-wrap">
             <div id="printableContent">
-                <!-- Datos del Usuario - Compacto -->
                 <div class="user-card">
                     <h2>Datos del Usuario</h2>
-                    <p><strong>Nombre:</strong> @Model.Usuario.Nombre</p>
-                    <p><strong>Correo:</strong> @Model.Usuario.Correo</p>
-                    <p><strong>RUT:</strong> @Model.Usuario.Rut</p>
+                    <p><strong>Nombre:</strong> @Model.Usuario.NombreUsuario</p>
+                    <p><strong>Correo:</strong> @Model.Usuario.MailUsuario</p>
+                    <p><strong>RUT:</strong> @Model.Usuario.RutDni</p>
                 </div>
 
-                <!-- Estados - 4 Cards Horizontales -->
                 <div class="estados-grid">
-                    <!-- AD -->
                     <div class="estado-card">
                         <h3>Active Directory</h3>
                         @{
@@ -444,7 +440,6 @@
                         }
                     </div>
 
-                    <!-- Finiquitado -->
                     <div class="estado-card">
                         <h3>Finiquitado</h3>
                         @{
@@ -464,7 +459,6 @@
                         }
                     </div>
 
-                    <!-- SPR -->
                     <div class="estado-card">
                         <h3>SPR</h3>
                         @{
@@ -473,7 +467,6 @@
                         <span class="@sprClass">@(Model.SprActivo ? "ACTIVO" : "NO ACTIVO")</span>
                     </div>
 
-                    <!-- Emp.Central -->
                     <div class="estado-card">
                         <h3>Emp. Central</h3>
                         @{
@@ -483,9 +476,7 @@
                     </div>
                 </div>
 
-                <!-- 👇 NUEVO - Grid con dos cards lado a lado -->
                 <div class="dual-cards-grid">
-                    <!-- Card de Negocios -->
                     <div class="negocios-card">
                         <h2>Negocios Asignados</h2>
                         @if (Model.NegociosUnicos != null && Model.NegociosUnicos.Any())
@@ -507,7 +498,6 @@
                         }
                     </div>
 
-                    <!-- Card de Sistemas -->
                     <div class="sistemas-card">
                         <h2>Sistemas Asignados</h2>
                         @if (Model.Sistemas != null && Model.Sistemas.Any())
@@ -625,8 +615,11 @@
 
             suggestions.forEach((item, idx) => {
                 const li = document.createElement('li');
-                const display = item.correo || item.rut || 'sin dato';
-                const fullText = `${item.nombre} (${display})`;
+
+                // === CAMBIOS EN JS PARA LOS NUEVOS NOMBRES ===
+                // El JSON llega en camelCase: mailUsuario, rutDni, nombreUsuario
+                const display = item.mailUsuario || item.rutDni || 'sin dato';
+                const fullText = `${item.nombreUsuario} (${display})`;
 
                 const regex = new RegExp(`(${term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
                 li.innerHTML = fullText.replace(regex, '<mark>$1</mark>');
@@ -642,9 +635,11 @@
             if (idx < 0 || idx >= suggestions.length) return;
 
             const item = suggestions[idx];
-            const value = (item.nombre && item.nombre.trim())
-                       || (item.correo && item.correo.trim())
-                       || (item.rut && item.rut.trim())
+
+            // === CAMBIOS EN JS PARA LOS NUEVOS NOMBRES ===
+            const value = (item.nombreUsuario && item.nombreUsuario.trim())
+                       || (item.mailUsuario && item.mailUsuario.trim())
+                       || (item.rutDni && item.rutDni.trim())
                        || '';
 
             if (!value) return;

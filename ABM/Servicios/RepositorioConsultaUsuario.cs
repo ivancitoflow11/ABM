@@ -91,33 +91,13 @@ namespace ABM.Servicios
         {
             using var db = new SqlConnection(_connectionString);
 
-            // IMPORTANTE: ajusta el nombre de collation si tu servidor usa otro;
-            // Latin1_General_CI_AI = Case-Insensitive, Accent-Insensitive
-            var sql = @"
-                SELECT TOP 10
-                       (NOMBRES + ' ' + APEPATERNO + ' ' + APEMATERNO) AS Nombre,
-                       CORREO,
-                       RUT
-                FROM ftc_activos_falanet
-                WHERE (
-                        (NOMBRES + ' ' + APEPATERNO + ' ' + APEMATERNO) COLLATE Latin1_General_CI_AI LIKE '%' + @input + '%' COLLATE Latin1_General_CI_AI
-                     OR NOMBRES    COLLATE Latin1_General_CI_AI LIKE '%' + @input + '%' COLLATE Latin1_General_CI_AI
-                     OR APEPATERNO COLLATE Latin1_General_CI_AI LIKE '%' + @input + '%' COLLATE Latin1_General_CI_AI
-                     OR APEMATERNO COLLATE Latin1_General_CI_AI LIKE '%' + @input + '%' COLLATE Latin1_General_CI_AI
-                     OR CORREO     COLLATE Latin1_General_CI_AI LIKE '%' + @input + '%' COLLATE Latin1_General_CI_AI
-                     OR RUT        COLLATE Latin1_General_CI_AI LIKE '%' + @input + '%' COLLATE Latin1_General_CI_AI
-                )
-                GROUP BY NOMBRES, APEPATERNO, APEMATERNO, CORREO, RUT
-                ORDER BY 
-                    CASE 
-                        WHEN NOMBRES    COLLATE Latin1_General_CI_AI LIKE @input + '%' COLLATE Latin1_General_CI_AI THEN 1
-                        WHEN APEPATERNO COLLATE Latin1_General_CI_AI LIKE @input + '%' COLLATE Latin1_General_CI_AI THEN 2
-                        WHEN APEMATERNO COLLATE Latin1_General_CI_AI LIKE @input + '%' COLLATE Latin1_General_CI_AI THEN 3
-                        ELSE 4
-                    END,
-                    NOMBRES, APEPATERNO, APEMATERNO;";
-
-            return await db.QueryAsync<DatosBasicosUsuario>(sql, new { input });
+            // Ahora llamamos directamente al Procedimiento Almacenado.
+            // Dapper mapeará las columnas del SP a las propiedades de 'DatosBasicosUsuario'.
+            return await db.QueryAsync<DatosBasicosUsuario>(
+                "CSS_DatosBasicosUsuario",      // Nombre exacto del SP
+                new { input },                  // Parámetros
+                commandType: CommandType.StoredProcedure // Indicamos que es un SP
+            );
         }
 
         // Lookup AD exacto (recomendado para la card AD)

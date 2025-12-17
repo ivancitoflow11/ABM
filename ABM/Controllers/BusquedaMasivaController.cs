@@ -150,24 +150,28 @@ namespace ABM.Controllers
 
                         if (usuario != null)
                         {
-                            resultado.Rut = usuario.Rut;
-                            resultado.Nombre = usuario.Nombre;
-                            resultado.Correo = usuario.Correo;
+                            // ---------------------------------------------------------
+                            // ACTUALIZACIÓN: Mapeo con los nuevos nombres del Modelo/SP
+                            // ---------------------------------------------------------
+                            resultado.Rut = usuario.RutDni;           // Antes: usuario.Rut
+                            resultado.Nombre = usuario.NombreUsuario; // Antes: usuario.Nombre
+                            resultado.Correo = usuario.MailUsuario;   // Antes: usuario.Correo
 
-                            // Obtener estado AD
-                            var datosAD = await _repositorio.ObtenerDatosAD(usuario.Correo, usuario.Rut);
+                            // Obtener estado AD (Usamos las nuevas propiedades)
+                            var datosAD = await _repositorio.ObtenerDatosAD(usuario.MailUsuario, usuario.RutDni);
                             resultado.EstadoAD = datosAD != null ? "ACTIVO" : "NO ENCONTRADO";
                             resultado.UltimoLoginAD = datosAD?.ultimo_login;
 
-                            // Obtener estado finiquitado
-                            var claveFiniq = string.IsNullOrWhiteSpace(usuario.Rut) ? input : usuario.Rut;
+                            // Obtener estado finiquitado (Usamos RutDni)
+                            var claveFiniq = string.IsNullOrWhiteSpace(usuario.RutDni) ? input : usuario.RutDni;
                             var datosFiniquito = await _repositorio.ObtenerDatosFiniquito(claveFiniq);
                             resultado.EsFiniquitado = datosFiniquito != null;
                             resultado.FechaFiniquito = datosFiniquito?.fecfiniquito;
 
-                            // Obtener estado SPR y Emp Central
-                            var claveSpr = !string.IsNullOrWhiteSpace(usuario.Rut) ? usuario.Rut
-                                          : (!string.IsNullOrWhiteSpace(usuario.Correo) ? usuario.Correo : input);
+                            // Obtener estado SPR y Emp Central (Usamos RutDni y MailUsuario)
+                            var claveSpr = !string.IsNullOrWhiteSpace(usuario.RutDni) ? usuario.RutDni
+                                            : (!string.IsNullOrWhiteSpace(usuario.MailUsuario) ? usuario.MailUsuario : input);
+
                             var (spr, emp) = await _repositorio.ObtenerEstadoSprEmpCentral(claveSpr);
                             resultado.SprActivo = spr;
                             resultado.EmpCentralActivo = emp;
@@ -219,6 +223,7 @@ namespace ABM.Controllers
                     resultados.Add(resultado);
 
                     // Guardar en la base de datos
+                    // Nota: Aquí usamos las propiedades de 'resultado' que ya fueron llenadas correctamente arriba
                     var detalle = new DetalleResultadoBusqueda
                     {
                         InputBusqueda = resultado.InputBusqueda,
@@ -257,34 +262,6 @@ namespace ABM.Controllers
                     System.Diagnostics.Debug.WriteLine($"Usuario: {r.InputBusqueda} - Sistemas: {r.Sistemas?.Count ?? 0} - Negocios: {r.Negocios?.Count ?? 0}");
                 }
                 System.Diagnostics.Debug.WriteLine("=== FIN RESULTADO FINAL ===\n");
-
-                // 👇 LOG JUSTO ANTES DE ENVIAR A LA VISTA
-                System.Diagnostics.Debug.WriteLine($"\n=== VERIFICACIÓN ANTES DE VISTA ===");
-                System.Diagnostics.Debug.WriteLine($"vm.Resultados.Count: {vm.Resultados?.Count}");
-                if (vm.Resultados != null)
-                {
-                    foreach (var res in vm.Resultados)
-                    {
-                        System.Diagnostics.Debug.WriteLine($"  {res.InputBusqueda}: Sistemas={res.Sistemas?.Count ?? -1}, Negocios={res.Negocios?.Count ?? -1}");
-                        if (res.Sistemas != null && res.Sistemas.Any())
-                        {
-                            System.Diagnostics.Debug.WriteLine($"    Primer sistema: {res.Sistemas[0].sistema} - NegocioPais: {res.Sistemas[0].NegocioPais}");
-                            foreach (var sis in res.Sistemas)
-                            {
-                                System.Diagnostics.Debug.WriteLine($"      Sistema: {sis.sistema}");
-                            }
-                        }
-                        if (res.Negocios != null && res.Negocios.Any())
-                        {
-                            System.Diagnostics.Debug.WriteLine($"    Primer negocio: {res.Negocios[0]}");
-                            foreach (var neg in res.Negocios)
-                            {
-                                System.Diagnostics.Debug.WriteLine($"      Negocio: {neg}");
-                            }
-                        }
-                    }
-                }
-                System.Diagnostics.Debug.WriteLine("=== FIN VERIFICACIÓN ===\n");
 
                 return View("Index", vm);
             }
