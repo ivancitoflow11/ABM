@@ -2,6 +2,7 @@
 {
     public class UsuariosDuplicados
     {
+        public string Vertical { get; set; }
         public string pais { get; set; }
 		public string Negocio { get; set; }
 		public string sistema { get; set; }

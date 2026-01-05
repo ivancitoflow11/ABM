@@ -2,6 +2,7 @@
 {
     public class Finiquitados
     {
+        public string Vertical { get; set; }
         public string pais { get; set; }
         public string negocio { get; set; }
         public string sistema { get; set; }

@@ -1,0 +1,303 @@
+﻿@model IEnumerable<ABM.Models.ResumenSistema>
+
+@{
+    ViewData["Title"] = "Resumen de Sistemas";
+}
+
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+<link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
+
+<style>
+    /* --- 1. COLORES DE MARCA --- */
+    :root {
+        --color-brand-green: #9ec630;
+        --color-brand-dark: #2c3e50;
+    }
+
+    /* --- 2. AJUSTE DE PANTALLA COMPLETA --- */
+    /* Hacemos que el container ocupe casi todo el ancho */
+    .container-fluid {
+        max-width: 98% !important; /* Fuerza a usar el 98% de la pantalla */
+        padding-left: 5px;
+        padding-right: 5px;
+    }
+
+    /* --- 3. DISEÑO DE CALENDARIO MODERNO (MATERIAL DESIGN) --- */
+    /* El contenedor principal del calendario */
+    #ui-datepicker-div {
+        background: #fff;
+        border: none;
+        border-radius: 12px;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.15); /* Sombra elegante */
+        padding: 10px;
+        font-family: 'Segoe UI', sans-serif;
+        width: 320px; /* Un poco más ancho */
+    }
+
+    /* Encabezado Verde */
+    .ui-datepicker-header {
+        background-color: var(--color-brand-green) !important;
+        color: white !important;
+        border: none !important;
+        border-radius: 8px;
+        padding: 10px 0;
+        font-weight: bold;
+        text-transform: uppercase;
+    }
+
+    /* Flechas de navegación (Anterior/Siguiente) */
+    .ui-datepicker-prev, .ui-datepicker-next {
+        cursor: pointer;
+        filter: brightness(0) invert(1); /* Vuelve blancos los íconos */
+    }
+
+        .ui-datepicker-prev:hover, .ui-datepicker-next:hover {
+            background: rgba(255,255,255,0.2) !important;
+            border: none !important;
+            border-radius: 5px;
+        }
+
+    /* La tabla de días */
+    .ui-datepicker-calendar th {
+        color: #888;
+        font-weight: 600;
+        font-size: 0.85rem;
+        padding: 10px 0;
+    }
+
+    /* Los días individuales */
+    .ui-datepicker-calendar td a {
+        text-align: center !important;
+        border: none !important;
+        background: none !important;
+        color: #333 !important;
+        width: 35px;
+        height: 35px;
+        line-height: 35px;
+        margin: 0 auto;
+        border-radius: 50%; /* Días redonditos */
+        transition: all 0.2s;
+    }
+
+        /* Días Disponibles (Hover) */
+        .ui-datepicker-calendar td a:hover {
+            background-color: #f0f5e0 !important;
+            color: var(--color-brand-green) !important;
+            font-weight: bold;
+        }
+
+    /* Día Seleccionado (Activo) */
+    .ui-datepicker-calendar td.ui-datepicker-current-day a {
+        background-color: var(--color-brand-green) !important;
+        color: white !important;
+        box-shadow: 0 4px 10px rgba(158, 198, 48, 0.4); /* Resplandor verde */
+        font-weight: bold;
+    }
+
+    /* Días Deshabilitados (Sin datos) */
+    .ui-state-disabled span {
+        color: #e9ecef !important; /* Gris muy clarito */
+        background: none !important;
+        border: none !important;
+    }
+
+    /* --- 4. ESTILOS TABLA Y FILTRO --- */
+    .filter-card {
+        background-color: #f8f9fa;
+        border-left: 5px solid var(--color-brand-green);
+        border-radius: 8px;
+    }
+
+    .btn-filtrar {
+        background-color: var(--color-brand-green);
+        color: white;
+        border: none;
+        font-weight: bold;
+    }
+
+        .btn-filtrar:hover {
+            background-color: #8ab029;
+            color: white;
+        }
+
+    /* Tabla */
+    #tablaResumen {
+        font-size: 1.05rem;
+        width: 100% !important;
+    }
+
+        #tablaResumen tbody td {
+            padding: 12px 10px;
+            vertical-align: middle;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+    .thead-custom th {
+        background-color: #212529 !important;
+        color: #ffffff !important;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        padding: 15px;
+        border-bottom: 3px solid var(--color-brand-green) !important;
+    }
+
+    /* Paginación */
+    .page-item.active .page-link {
+        background-color: var(--color-brand-green) !important;
+        border-color: var(--color-brand-green) !important;
+        color: #fff !important;
+    }
+
+    .page-link {
+        color: #333 !important;
+    }
+</style>
+
+<div class="container-fluid mt-4 mb-5">
+
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div class="d-flex align-items-center">
+            <div style="width: 5px; height: 35px; background-color: #9ec630; margin-right: 12px; border-radius: 3px;"></div>
+            <h3 class="m-0 fw-bold">Resumen de Sistemas App</h3>
+        </div>
+    </div>
+
+    <div class="card shadow-sm mb-4 filter-card">
+        <div class="card-body py-3">
+            <form method="get" asp-action="Index" class="row align-items-end">
+                <div class="col-md-3">
+                    <label class="form-label fw-bold text-muted small text-uppercase">
+                        <i class="bi bi-calendar-event"></i> Filtrar por Fecha de Reporte
+                    </label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-white border-end-0"><i class="bi bi-calendar3 text-success"></i></span>
+                        <input type="text" id="calendarioInput" name="fechaBusqueda" class="form-control border-start-0 ps-0"
+                               value="@ViewBag.FechaSeleccionada" readonly placeholder="Selecciona una fecha..." style="background-color: white; cursor: pointer;" />
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-filtrar w-100 shadow-sm">
+                        <i class="bi bi-search"></i> Buscar
+                    </button>
+                </div>
+                <div class="col-md-7 text-end align-self-center d-none d-md-block">
+                    <span class="badge bg-light text-dark border p-2">
+                        <i class="bi bi-info-circle text-primary"></i> Solo días hábiles con datos
+                    </span>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card shadow border-0" style="border-radius: 12px; overflow: hidden;">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table id="tablaResumen" class="table table-hover mb-0 w-100">
+                    <thead class="thead-custom">
+                        <tr>
+                            <th class="ps-4"><i class="bi bi-cpu"></i> Sistema</th>
+                            <th class="text-center">Finiquitado</th>
+                            <th class="text-center">Activo</th>
+                            <th class="text-center">No Enc.</th>
+                            <th class="text-center">Totales</th>
+                            <th class="text-center"><i class="bi bi-calendar-check"></i> Reporte</th>
+                            <th class="text-center pe-4"><i class="bi bi-clock-history"></i> Actualización</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model != null && Model.Any())
+                        {
+                            foreach (var item in Model)
+                            {
+                                <tr>
+                                    <td class="fw-bold text-dark ps-4">@item.Sistema</td>
+
+                                    <td class="text-center bg-danger text-white fw-bold">@item.Finiquitado</td>
+                                    <td class="text-center bg-success text-white fw-bold">@item.Activo</td>
+                                    <td class="text-center bg-warning text-dark fw-bold">@item.No_Encontrado</td>
+
+                                    <td class="text-center fw-bold fs-5 bg-light">@item.Totales</td>
+
+                                    <td class="text-center">@item.Fecha_Reporte.ToString("dd-MM-yyyy")</td>
+                                    <td class="text-center pe-4">
+                                        @if (item.Fecha_Actualizacion.HasValue)
+                                        {
+                                            @item.Fecha_Actualizacion.Value.ToString("dd-MM-yyyy")
+                                        }
+                                        else
+                                        {
+
+                                            <span class="text-muted small fst-italic">--</span>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
+    <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.js"></script>
+
+    <script>
+        $(document).ready(function () {
+
+            // 1. OBTENER FECHAS
+            var fechasDisponibles = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(ViewBag.ListaFechasDisponibles ?? new List<string>()));
+
+            // 2. DATATABLES CONFIG
+            $('#tablaResumen').DataTable({
+                "pageLength": 10,
+                "lengthMenu": [[10, 25, 50, -1], [10, 25, 50, "Todos"]],
+                "ordering": true,
+                "language": { "url": "//cdn.datatables.net/plug-ins/1.13.7/i18n/es-ES.json" },
+                // Ajustamos el DOM para dar un poco de margen a los controles de la tabla
+                "dom": '<"d-flex justify-content-between align-items-center m-3"lf>rt<"d-flex justify-content-between align-items-center m-3"ip>'
+            });
+
+            // 3. CALENDARIO PERSONALIZADO (ESPAÑOL MANUAL)
+            // Definimos el idioma español manualmente para no depender de CDN externo
+            $.datepicker.regional['es'] = {
+                closeText: 'Cerrar',
+                prevText: '< Ant',
+                nextText: 'Sig >',
+                currentText: 'Hoy',
+                monthNames: ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'],
+                monthNamesShort: ['Ene','Feb','Mar','Abr', 'May','Jun','Jul','Ago','Sep', 'Oct','Nov','Dic'],
+                dayNames: ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'],
+                dayNamesShort: ['Dom','Lun','Mar','Mié','Juv','Vie','Sáb'],
+                dayNamesMin: ['Do','Lu','Ma','Mi','Ju','Vi','Sá'],
+                weekHeader: 'Sm',
+                dateFormat: 'yy-mm-dd',
+                firstDay: 1, // La semana empieza el Lunes
+                isRTL: false,
+                showMonthAfterYear: false,
+                yearSuffix: ''
+            };
+            $.datepicker.setDefaults($.datepicker.regional['es']);
+
+            // Inicializamos el Datepicker
+            $("#calendarioInput").datepicker({
+                dateFormat: "yy-mm-dd",
+                changeMonth: true,
+                changeYear: true,
+                beforeShowDay: function(date) {
+                    var stringFecha = $.datepicker.formatDate('yy-mm-dd', date);
+                    if (fechasDisponibles.indexOf(stringFecha) != -1) {
+                        return [true, "", "Datos Disponibles"];
+                    } else {
+                        return [false, "", "Sin ejecución"];
+                    }
+                }
+            });
+        });
+    </script>
+}

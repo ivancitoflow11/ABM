@@ -1,4 +1,4 @@
-﻿@model AlertaSistemaViewModel
+﻿@model ABM.Models.AlertaSistemaViewModel
 
 <!DOCTYPE html>
 <html lang="es">
@@ -30,7 +30,6 @@
             width: 100%;
         }
 
-        /* --- INICIO: NUEVOS ESTILOS PARA LA TABLA --- */
         .table-container-scroll {
             overflow-x: auto;
             width: 100%;
@@ -38,7 +37,7 @@
 
         .table-incidencias {
             table-layout: fixed;
-            min-width: 900px;
+            min-width: 1000px;
         }
 
             .table-incidencias th,
@@ -47,12 +46,18 @@
                 vertical-align: middle;
             }
 
+                .table-incidencias th.col-vertical,
+                .table-incidencias td.col-vertical,
                 .table-incidencias th.col-negocio,
                 .table-incidencias td.col-negocio,
                 .table-incidencias th.col-sistema,
                 .table-incidencias td.col-sistema {
                     text-align: left;
-                    white-space: normal; /* Permite que el texto largo se ajuste */
+                    white-space: normal;
+                }
+
+                .table-incidencias th.col-vertical {
+                    width: 120px;
                 }
 
                 .table-incidencias th.col-negocio {
@@ -84,11 +89,56 @@
             font-size: 0.8em;
             font-weight: bold;
         }
-        /* --- FIN: NUEVOS ESTILOS PARA LA TABLA --- */
 
+        .empty-state {
+            text-align: center;
+            padding: 50px;
+            color: #6c757d;
+        }
+        .empty-state i {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            color: #dee2e6;
+        }
+
+        #loader-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.9);
+            z-index: 9999;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            backdrop-filter: blur(2px);
+        }
+
+        .spinner {
+            border: 8px solid #f3f3f3;
+            border-top: 8px solid #28a745;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            animation: spin 1s linear infinite;
+        }
+
+        @@keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
     </style>
 </head>
 <body>
+    
+    <div id="loader-overlay" style="display:none;">
+        <div class="spinner"></div>
+        <h4 style="margin-top: 20px; color: #333; font-weight: 600;">Procesando información...</h4>
+        <p style="color: #666;">Por favor espere, esto puede tardar unos momentos.</p>
+    </div>
+
     <div>
         <br />
         <br />
@@ -105,7 +155,7 @@
             <div class="col-md-12">
                 <div class="card mb-4">
                     <div class="card-header text-white" style="background-color: #5a6268; color: white !important;">
-                        Resumen de incidencias por sistemas
+                        Resumen de incidencias por sistemas 
                     </div>
                     <div class="card-body text-center bg-light">
                         <div style="margin-bottom:10px">Estados de Usuario:</div>
@@ -119,6 +169,9 @@
                     <form method="get" asp-action="AlertaSistema"
                           class="row g-2 align-items-end mb-4"
                           style="margin-left:30px; margin-top:10px">
+                        
+                        <input type="hidden" name="buscar" value="true" />
+
                         <div class="col-md-3">
                             <label class="form-label">Negocio</label>
                             <select name="idNegocio" id="selectNegocio" class="form-select">
@@ -159,43 +212,50 @@
                     </form>
 
                     <div class="card-body table-container-scroll">
-                        <table id="file_export4" class="table table-bordered table-incidencias">
-                            <thead>
-                                <tr>
-                                    <th rowspan="2" class="col-negocio">Negocio</th>
-                                    <th rowspan="2" class="col-sistema">Sistema</th>
-                                    @if (Model?.PaisesEnCabecera != null)
-                                    {
-                                        @foreach (var pais in Model.PaisesEnCabecera)
+                        
+                        <div id="botones-exportacion" class="mb-3 d-flex justify-content-start"></div>
+
+                        @if (Model != null && Model.EstadisticasAgrupadas != null && Model.EstadisticasAgrupadas.Any())
+                        {
+                            <table id="file_export4" class="table table-bordered table-incidencias">
+                                <thead>
+                                    <tr>
+                                        <th rowspan="2" class="col-vertical">Vertical</th>
+                                        
+                                        <th rowspan="2" class="col-negocio">Negocio</th>
+                                        <th rowspan="2" class="col-sistema">Sistema</th>
+                                        @if (Model?.PaisesEnCabecera != null)
                                         {
-                                            <th colspan="3">
-                                                @if (!string.IsNullOrEmpty(pais.Bandera))
-                                                {
-                                                    <img src="data:image/png;base64,@pais.Bandera" alt="@pais.pais" class="flag-img" title="@pais.pais" />
-                                                }
-                                            </th>
+                                            @foreach (var pais in Model.PaisesEnCabecera)
+                                            {
+                                                <th colspan="3">
+                                                    @if (!string.IsNullOrEmpty(pais.Bandera))
+                                                    {
+                                                        <img src="data:image/png;base64,@pais.Bandera" alt="@pais.pais" class="flag-img" title="@pais.pais" />
+                                                    }
+                                                </th>
+                                            }
                                         }
-                                    }
-                                    <th rowspan="2" class="col-detalle">Detalle</th>
-                                </tr>
-                                <tr class="sub-header">
-                                    @if (Model?.PaisesEnCabecera != null)
-                                    {
-                                        @foreach (var pais in Model.PaisesEnCabecera)
+                                        <th rowspan="2" class="col-detalle">Detalle</th>
+                                    </tr>
+                                    <tr class="sub-header">
+                                        @if (Model?.PaisesEnCabecera != null)
                                         {
-                                            <th class="data-cell" title="Finiquitados">F.</th>
-                                            <th class="data-cell" title="No Encontrados">N.E.</th>
-                                            <th class="data-cell" title="Cuentas Duplicadas">C.D.</th>
+                                            @foreach (var pais in Model.PaisesEnCabecera)
+                                            {
+                                                <th class="data-cell" title="Finiquitados">F.</th>
+                                                <th class="data-cell" title="No Encontrados">N.E.</th>
+                                                <th class="data-cell" title="Cuentas Duplicadas">C.D.</th>
+                                            }
                                         }
-                                    }
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @if (Model?.EstadisticasAgrupadas != null)
-                                {
-                                    foreach (var grupo in Model.EstadisticasAgrupadas)
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var grupo in Model.EstadisticasAgrupadas)
                                     {
                                         <tr>
+                                            <td class="col-vertical">@grupo.Key.Vertical</td>
+
                                             <td class="col-negocio">@grupo.Key.Negocio</td>
                                             <td class="col-sistema">@grupo.Key.Sistema</td>
 
@@ -232,7 +292,6 @@
                                                         data-bs-target="#detailsModal"
                                                         data-sistema="@grupo.Key.Sistema"
                                                         data-negocio="@grupo.Key.Negocio"
-                                                        data-pais=""
                                                         data-total-usuarios="@grupo.Sum(g => g.TotalUsuarios)"
                                                         data-activos="@grupo.Sum(g => g.Activos)"
                                                         data-finiquitados="@grupo.Sum(g => g.Finiquitados)"
@@ -247,9 +306,50 @@
                                             </td>
                                         </tr>
                                     }
-                                }
-                            </tbody>
-                        </table>
+                                </tbody>
+                            </table>
+                        }
+                        else
+                        {
+                            <div class="empty-state">
+                                <i class="fas fa-search" style="font-size: 3rem; color: #ccc;"></i>
+                                <h3>Seleccione un Negocio o Sistema y presione "Filtrar"</h3>
+                            </div>
+                        }
+
+                        <div style="visibility:hidden; position:absolute; width:100%; height:0; overflow:hidden;">
+                            <table id="tabla_para_excel" class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Vertical</th>
+                                        <th>Negocio</th>
+                                        <th>Sistema</th>
+                                        <th>País</th>
+                                        <th>F.</th>
+                                        <th>N.E.</th>
+                                        <th>C.D.</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @if (Model != null && Model.estadisticas != null)
+                                    {
+                                        foreach (var item in Model.estadisticas)
+                                        {
+                                            <tr>
+                                                <td>@item.Vertical</td>
+                                                <td>@item.Negocio</td>
+                                                <td>@item.Sistema</td>
+                                                <td>@item.Pais</td>
+                                                <td>@item.Finiquitados</td>
+                                                <td>@item.NoEncontrados</td>
+                                                <td>@item.CtaDuplicadas</td>
+                                            </tr>
+                                        }
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+
                     </div>
                 </div>
             </div>
@@ -325,17 +425,10 @@
 
         <script>
             $(document).ready(function() {
-                // Inicialización de la tabla principal con paginación, botones, etc.
+                
                 $('#file_export4').DataTable({
                      pageLength: 10,
-                     // El 'dom' controla qué elementos se muestran y en qué orden.
-                     // l=Length, B=Buttons, f=Filtering, r=processing, t=table, i=info, p=pagination
-                     dom: 'lBfrtip',
-                     buttons: [
-                        { extend: 'copy', text: 'Copiar', className: 'btn btn-secondary btn-sm' },
-                        { extend: 'excel', text: 'Excel', className: 'btn btn-success btn-sm' },
-                        { extend: 'pdf', text: 'PDF', className: 'btn btn-danger btn-sm' }
-                     ],
+                     dom: 'lfrtip',
                      language: {
                         lengthMenu: "Mostrar _MENU_ registros",
                         search: "Buscar en tabla:",
@@ -349,6 +442,40 @@
                         }
                      }
                 });
+
+            var tablaExcel = $('#tabla_para_excel').DataTable({
+                  dom: 'Bfrtip',
+                  buttons: [
+                    { extend: 'copy', text: 'Copiar', className: 'btn btn-secondary btn-sm' },
+                    {
+                        extend: 'excel',
+                        text: 'Excel',
+                        className: 'btn btn-success btn-sm',
+                        title: 'Reporte Incidencias',
+                        // Agrega un mensaje arriba con la fecha JS
+                        messageTop: 'Fecha de descarga: ' + new Date().toLocaleString()
+                    },
+                    {
+                        extend: 'pdfHtml5',
+                        text: 'PDF',
+                        className: 'btn btn-danger btn-sm',
+                        title: 'Reporte Incidencias',
+                        orientation: 'landscape',
+                        // Lo mismo para PDF
+                        messageTop: 'Fecha de descarga: ' + new Date().toLocaleString()
+                    }
+                  ]
+            });
+
+                tablaExcel.buttons().container().appendTo($('#botones-exportacion'));
+
+                $('form').on('submit', function() {
+                    $('#loader-overlay').fadeIn();
+                });
+
+                $(window).on('load', function() {
+                    $('#loader-overlay').fadeOut();
+                });
             });
 
             document.addEventListener('DOMContentLoaded', function () {
@@ -361,11 +488,47 @@
             });
 
             function showFiniquitadosModal(sistema, pais, negocio) {
-                var finiquitadosList = @Html.Raw(Json.Serialize(Model.ListaFiltroFiniquitados ?? new List<Finiquitados>()));
+                var finiquitadosList = @Html.Raw(Json.Serialize(Model.ListaFiltroFiniquitados ?? new List<ABM.Models.Finiquitados>()));
                 var data = finiquitadosList.filter(f => f.sistema === sistema && f.pais === pais && f.negocio === negocio);
                 var modalBody = document.querySelector('#finiquitadosModal .modal-body');
                 if (data.length > 0) {
-                    modalBody.innerHTML = `<table id="tablaFiniquitados" class="table table-striped" style="width:100%"><thead><tr><th>País</th><th>Negocio</th><th>Sistema</th><th>Nombre</th><th>RUT/DNI</th><th>User ID</th><th>Cargo</th><th>C. Costo</th><th>Últ. Login</th><th>Alta</th><th>Baja</th><th>Finiquito</th></tr></thead><tbody>${data.map(f => `<tr><td>${f.pais}</td><td>${f.negocio}</td><td>${f.sistema}</td><td>${f.nombreusuario}</td><td>${f.rutdni}</td><td>${f.userid}</td><td>${f.cargo}</td><td>${f.Nomccostospr}</td><td>${f.fecultlogin}</td><td>${f.fecalta}</td><td>${f.fecbaja}</td><td>${f.fecfiniq}</td></tr>`).join('')}</tbody></table>`;
+                    modalBody.innerHTML = `
+                        <table id="tablaFiniquitados" class="table table-striped" style="width:100%">
+                            <thead>
+                                <tr>
+                                    <th>País</th>
+                                    <th>Vertical</th> <th>Negocio</th>
+                                    <th>Sistema</th>
+                                    <th>Nombre</th>
+                                    <th>RUT/DNI</th>
+                                    <th>User ID</th>
+                                    <th>Cargo</th>
+                                    <th>C. Costo</th>
+                                    <th>Últ. Login</th>
+                                    <th>Alta</th>
+                                    <th>Baja</th>
+                                    <th>Finiquito</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${data.map(f => `
+                                    <tr>
+                                        <td>${f.pais}</td>
+                                        <td>${f.vertical || ''}</td> <td>${f.negocio}</td>
+                                        <td>${f.sistema}</td>
+                                        <td>${f.nombreusuario}</td>
+                                        <td>${f.rutdni}</td>
+                                        <td>${f.userid}</td>
+                                        <td>${f.cargo}</td>
+                                        <td>${f.codccostospr}</td>
+                                        <td>${f.fecultlogin}</td>
+                                        <td>${f.fecalta}</td>
+                                        <td>${f.fecbaja}</td>
+                                        <td>${f.fecfiniq}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>`;
                     $('#tablaFiniquitados').DataTable({ dom: "Bfrtip", buttons: ['copy', 'excel', 'pdf'], "destroy": true });
                 } else {
                     modalBody.innerHTML = '<p>No hay usuarios finiquitados para esta selección.</p>';
@@ -374,11 +537,45 @@
             }
 
             function showNoEncontradosModal(sistema, pais, negocio) {
-                 var noEncontradosList = @Html.Raw(Json.Serialize(Model.ListaUsuariosNoEncontrados ?? new List<UsuariosNoEncontrados>()));
+                 var noEncontradosList = @Html.Raw(Json.Serialize(Model.ListaUsuariosNoEncontrados ?? new List<ABM.Models.UsuariosNoEncontrados>()));
                  var data = noEncontradosList.filter(f => f.sistema === sistema && f.pais === pais && f.negocio === negocio);
                  var modalBody = document.querySelector('#NoEncontradosModal .modal-body');
                  if (data.length > 0) {
-                    modalBody.innerHTML = `<table id="tablaNoEncontrados" class="table table-striped" style="width:100%"><thead><tr><th>País</th><th>Negocio</th><th>Sistema</th><th>Nombre</th><th>RUT/DNI</th><th>User ID</th><th>Cargo</th><th>C. Costo</th><th>Últ. Login</th><th>Alta</th><th>Baja</th></tr></thead><tbody>${data.map(f => `<tr><td>${f.pais}</td><td>${f.negocio}</td><td>${f.sistema}</td><td>${f.nombreusuario}</td><td>${f.rutdni}</td><td>${f.userid}</td><td>${f.cargo}</td><td>${f.Nomccostospr}</td><td>${f.fecultlogin}</td><td>${f.fecalta}</td><td>${f.fecbaja}</td></tr>`).join('')}</tbody></table>`;
+                    modalBody.innerHTML = `
+                        <table id="tablaNoEncontrados" class="table table-striped" style="width:100%">
+                            <thead>
+                                <tr>
+                                    <th>País</th>
+                                    <th>Vertical</th> <th>Negocio</th>
+                                    <th>Sistema</th>
+                                    <th>Nombre</th>
+                                    <th>RUT/DNI</th>
+                                    <th>User ID</th>
+                                    <th>Cargo</th>
+                                    <th>C. Costo</th>
+                                    <th>Últ. Login</th>
+                                    <th>Alta</th>
+                                    <th>Baja</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${data.map(f => `
+                                    <tr>
+                                        <td>${f.pais}</td>
+                                        <td>${f.vertical || ''}</td> <td>${f.negocio}</td>
+                                        <td>${f.sistema}</td>
+                                        <td>${f.nombreusuario}</td>
+                                        <td>${f.rutdni}</td>
+                                        <td>${f.userid}</td>
+                                        <td>${f.cargo}</td>
+                                        <td>${f.Nomccostospr}</td>
+                                        <td>${f.fecultlogin}</td>
+                                        <td>${f.fecalta}</td>
+                                        <td>${f.fecbaja}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>`;
                     $('#tablaNoEncontrados').DataTable({ dom: "Bfrtip", buttons: ['copy', 'excel', 'pdf'], "destroy": true });
                  } else {
                     modalBody.innerHTML = '<p>No hay usuarios no encontrados para esta selección.</p>';
@@ -387,11 +584,47 @@
             }
 
             function showCtasDuplicadasModal(sistema, pais, negocio) {
-                var ctasDuplicadasList = @Html.Raw(Json.Serialize(Model.ListaUsuariosDuplicados ?? new List<UsuariosDuplicados>()));
+                var ctasDuplicadasList = @Html.Raw(Json.Serialize(Model.ListaUsuariosDuplicados ?? new List<ABM.Models.UsuariosDuplicados>()));
                 var data = ctasDuplicadasList.filter(f => f.sistema === sistema && f.pais === pais && f.negocio === negocio);
                 var modalBody = document.querySelector('#CtasDuplicadasModal .modal-body');
                  if (data.length > 0) {
-                    modalBody.innerHTML = `<table id="tablaDuplicados" class="table table-striped" style="width:100%"><thead><tr><th>País</th><th>Negocio</th><th>Sistema</th><th>Nombre</th><th>RUT/DNI</th><th>User ID</th><th>Cod. C. Costo</th><th>Cargo</th><th>Nom. C. Costo</th><th>Últ. Login</th><th>Alta</th><th>Baja</th></tr></thead><tbody>${data.map(f => `<tr><td>${f.pais}</td><td>${f.negocio}</td><td>${f.sistema}</td><td>${f.nombreusuario}</td><td>${f.rutdni}</td><td>${f.userid}</td><td>${f.codccosto}</td><td>${f.cargo}</td><td>${f.Nomccostospr}</td><td>${f.fecultlogin}</td><td>${f.fecalta}</td><td>${f.fecbaja}</td></tr>`).join('')}</tbody></table>`;
+                    modalBody.innerHTML = `
+                        <table id="tablaDuplicados" class="table table-striped" style="width:100%">
+                            <thead>
+                                <tr>
+                                    <th>País</th>
+                                    <th>Vertical</th> <th>Negocio</th>
+                                    <th>Sistema</th>
+                                    <th>Nombre</th>
+                                    <th>RUT/DNI</th>
+                                    <th>User ID</th>
+                                    <th>Cod. C. Costo</th>
+                                    <th>Cargo</th>
+                                    <th>Nom. C. Costo</th>
+                                    <th>Últ. Login</th>
+                                    <th>Alta</th>
+                                    <th>Baja</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${data.map(f => `
+                                    <tr>
+                                        <td>${f.pais}</td>
+                                        <td>${f.vertical || ''}</td> <td>${f.negocio}</td>
+                                        <td>${f.sistema}</td>
+                                        <td>${f.nombreusuario}</td>
+                                        <td>${f.rutdni}</td>
+                                        <td>${f.userid}</td>
+                                        <td>${f.codccosto}</td>
+                                        <td>${f.cargo}</td>
+                                        <td>${f.Nomccostospr}</td>
+                                        <td>${f.fecultlogin}</td>
+                                        <td>${f.fecalta}</td>
+                                        <td>${f.fecbaja}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>`;
                     $('#tablaDuplicados').DataTable({ dom: "Bfrtip", buttons: ['copy', 'excel', 'pdf'], "destroy": true });
                  } else {
                     modalBody.innerHTML = '<p>No hay cuentas duplicadas para esta selección.</p>';
@@ -403,7 +636,9 @@
                 document.getElementById('selectNegocio').addEventListener('change', function () {
                     var idNeg = this.value;
                     var selSis = document.getElementById('selectSistema');
+                    
                     selSis.innerHTML = '<option value="">Cargando...</option>';
+                    
                     fetch('@Url.Action("SistemasPorNegocio", "Alertas")?idNegocio=' + idNeg)
                         .then(resp => resp.json())
                         .then(data => {
