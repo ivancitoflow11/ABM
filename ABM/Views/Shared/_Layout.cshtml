@@ -56,12 +56,158 @@
 		width: 200px; /* Ajusta este valor al ancho deseado, por ejemplo, 200px */
 		height: auto; /* Esto mantendrá la proporción original de la imagen */
 	}
+	/* --- ASISTENTE FLOTANTE CORREGIDO --- */
 
-	/* O si la clase .lds-ripple también está involucrada en el tamaño: */
-	.preloader .lds-ripple {
-		width: 200px; /* Ajusta este valor */
-		height: auto;
-	}</style>
+	/* El contenedor principal: Lo fijamos en la esquina inferior derecha */
+	.asistente-container {
+		position: fixed;
+		bottom: 15px; /* Un poco más de margen abajo */
+		right: 15px; /* Un poco más de margen a la derecha */
+		z-index: 1050;
+		cursor: pointer;
+	}
+
+	/* FRANK (El avatar): Ajustamos su tamaño para que no sea gigante */
+	.asistente-avatar {
+		/* TAMAÑO IDEAL: Ni muy grande ni muy chico */
+		height: 90px;
+		width: auto; /* Que mantenga su proporción */
+		/* Sombra suave que sigue su silueta */
+		filter: drop-shadow(2px 3px 4px rgba(0,0,0,0.3));
+		/* Transición suave para el efecto de salto */
+		transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); /* Un efecto rebote más bonito */
+	}
+
+	/* Efecto al pasar el mouse: Frank salta un poquito */
+	.asistente-container:hover .asistente-avatar {
+		transform: scale(1.08) translateY(-5px);
+		filter: drop-shadow(3px 5px 8px rgba(0,0,0,0.4)); /* Sombra más intensa */
+	}
+
+		/* --- BOTÓN DE MINIMIZAR (El guión - junto a Frank) --- */
+	.btn-minimizar-frank {
+		position: absolute;
+		top: 0;
+		right: 0;
+		width: 24px;
+		height: 24px;
+		background-color: #f8f9fa; /* Fondo blanco/gris claro */
+		color: #6c757d;
+		border: 1px solid #dee2e6;
+		border-radius: 50%;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		cursor: pointer;
+		font-size: 16px;
+		box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+		z-index: 1070; /* Por encima de todo */
+		transition: all 0.2s;
+	}
+
+	.btn-minimizar-frank:hover {
+		background-color: #dc3545; /* Rojo al pasar el mouse */
+		color: white;
+		transform: scale(1.1);
+	}
+
+	/* --- ESTADO MINIMIZADO (El botón redondo pequeño) --- */
+	.frank-min-trigger {
+		position: fixed;
+		bottom: 20px;
+		right: 20px;
+		width: 50px;
+		height: 50px;
+		background-color: #9ec630; /* Tu verde corporativo */
+		color: white;
+		border-radius: 50%;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		font-size: 24px;
+		box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+		cursor: pointer;
+		z-index: 1050;
+		transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+		display: none; /* Oculto por defecto */
+	}
+
+	.frank-min-trigger:hover {
+		transform: scale(1.1) rotate(10deg); /* Efecto juguetón */
+		background-color: #8ab029;
+	}
+
+	/* Animación de salida (para cuando Frank se va) */
+	.fade-out-down {
+		animation: fadeOutDown 0.3s forwards;
+	}
+
+	@@keyframes fadeOutDown {
+		from { opacity: 1; transform: translateY(0); }
+		to { opacity: 0; transform: translateY(20px); }
+	}
+
+	/* Animación de entrada (para cuando vuelve) */
+	.fade-in-up-fast {
+		animation: fadeInUpFast 0.3s forwards;
+	}
+
+	@@keyframes fadeInUpFast {
+		from { opacity: 0; transform: translateY(20px); }
+		to { opacity: 1; transform: translateY(0); }
+	}
+
+	/* EL GLOBO DE TEXTO: Corregimos su posición y el error del doble 'bottom' */
+	.asistente-globo {
+		position: absolute;
+		/* AQUÍ ESTABA EL ERROR: 90px (altura de Frank) + 15px de espacio */
+		bottom: 105px;
+		right: 0;
+		width: 260px; /* Un pelín más ancho para que quepa mejor el texto */
+		background-color: white;
+		color: #333;
+		padding: 15px;
+		border-radius: 15px 15px 0 15px;
+		box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+		border: 1px solid #e9ecef; /* Borde más sutil */
+		display: none;
+		font-size: 0.95rem; /* Letra un poquito más grande */
+		line-height: 1.5;
+		z-index: 1060; /* Aseguramos que quede por encima de Frank si se superponen */
+	}
+
+		/* El triangulito del globo */
+		.asistente-globo::after {
+			content: '';
+			position: absolute;
+			bottom: -10px;
+			right: 35px; /* Lo movemos un poco para que apunte más al centro de Frank */
+			border-width: 10px 10px 0;
+			border-style: solid;
+			border-color: white transparent;
+			display: block;
+			width: 0;
+		}
+
+	/* Animación de entrada suave */
+	.fade-in-up {
+		animation: fadeInUp 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+	}
+
+	/* Recuerda: Doble arroba si esto va en un archivo .cshtml */
+	@@keyframes fadeInUp {
+		from {
+			opacity: 0;
+			transform: translateY(15px);
+		}
+
+		to {
+			opacity: 1;
+			transform: translateY(0);
+		}
+	}
+
+	</style>
 
 <!DOCTYPE html>
 <html lang="en" dir="ltr" data-bs-theme="light" data-color-theme="Blue_Theme" data-layout="vertical">
@@ -917,7 +1063,72 @@
 
 	<div class="dark-transparent sidebartoggler"></div>
 
+	@if (ViewBag.TextoAyuda != null)
+	{
+		<div id="frankContainer" class="asistente-container">
 
+			<div class="btn-minimizar-frank" onclick="minimizarFrank(event)" title="Minimizar Asistente">
+				<i class="bi bi-dash"></i>
+			</div>
+
+			<div class="asistente-globo" id="globoAyuda">
+				<strong><i class="bi bi-info-circle-fill text-success"></i> Asistente ABM:</strong>
+				<hr style="margin: 5px 0;">
+				<p style="margin:0;">@ViewBag.TextoAyuda</p>
+			</div>
+
+			<img src="~/imagenes/frank/frank.png" class="asistente-avatar" alt="Ayuda" title="Click para ayuda" onclick="toggleAyuda()">
+		</div>
+
+		<div id="frankMinimizado" class="frank-min-trigger" onclick="restaurarFrank()" title="Restaurar Asistente">
+			<i class="bi bi-question-lg"></i>
+		</div>
+
+		<script>
+			// Función para mostrar/ocultar el globo de texto
+			function toggleAyuda() {
+				var globo = document.getElementById('globoAyuda');
+				if (globo.style.display === "none" || globo.style.display === "") {
+					globo.style.display = "block";
+					globo.classList.add("fade-in-up");
+				} else {
+					globo.style.display = "none";
+				}
+			}
+
+			// Función para minimizar a Frank
+			function minimizarFrank(e) {
+				// Evitamos que el clic active otras cosas
+				if(e) e.stopPropagation();
+
+				var container = document.getElementById('frankContainer');
+				var trigger = document.getElementById('frankMinimizado');
+
+				// Animación de salida
+				container.classList.remove("fade-in-up-fast");
+				container.classList.add("fade-out-down");
+
+				// Esperamos a que termine la animación para ocultarlo
+				setTimeout(function() {
+					container.style.display = 'none';
+					trigger.style.display = 'flex';
+					trigger.classList.add("fade-in-up-fast"); // Animación de entrada del botón pequeño
+				}, 300);
+			}
+
+			// Función para restaurar a Frank
+			function restaurarFrank() {
+				var container = document.getElementById('frankContainer');
+				var trigger = document.getElementById('frankMinimizado');
+
+				trigger.style.display = 'none';
+
+				container.style.display = 'block';
+				container.classList.remove("fade-out-down");
+				container.classList.add("fade-in-up-fast");
+			}
+		</script>
+	}
 
 
 	<!-- Import Js Files -->
@@ -1273,7 +1484,27 @@
 		}
 			});
 	</script>
+	<script>
+		$(document).ready(function () {
+			var currentUrl = window.location.pathname;
 
+			// Buscamos todos los links del menú lateral
+			$('.sidebar-menu a').each(function () {
+				var linkUrl = $(this).attr('href');
+
+				// Si la URL del link coincide con la actual
+				if (currentUrl.toLowerCase().indexOf(linkUrl.toLowerCase()) !== -1 && linkUrl !== "/") {
+					// Agregamos la clase 'active' (o la clase que use tu template para resaltar)
+					$(this).addClass('active');
+					$(this).parent().addClass('menu-open'); // Si está dentro de un submenú
+
+					// Opcional: Pintarlo de tu verde corporativo si la clase active no lo hace
+					$(this).css('background-color', '#9ec630');
+					$(this).css('color', 'white');
+				}
+			});
+		});
+	</script>
 	@* <script src="/js/dashboards/dashboard1.js"></script> *@
 
 	@await RenderSectionAsync("Scripts", required: false)

@@ -2,9 +2,12 @@
 
 @{
     ViewData["Title"] = "Resumen de Sistemas";
+    // Texto que dirá Frank al hacer clic en él
+    ViewBag.TextoAyuda = "En esta pantalla puedes visualizar el resumen general de los archivos de los sistemas, filtrar por fechas y descargar reportes consolidados (Excel/PDF) con fecha y hora.";
 }
 
 <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css" />
+<link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.bootstrap5.min.css" />
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
 <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
 
@@ -16,26 +19,23 @@
     }
 
     /* --- 2. AJUSTE DE PANTALLA COMPLETA --- */
-    /* Hacemos que el container ocupe casi todo el ancho */
     .container-fluid {
-        max-width: 98% !important; /* Fuerza a usar el 98% de la pantalla */
+        max-width: 98% !important;
         padding-left: 5px;
         padding-right: 5px;
     }
 
-    /* --- 3. DISEÑO DE CALENDARIO MODERNO (MATERIAL DESIGN) --- */
-    /* El contenedor principal del calendario */
+    /* --- 3. CALENDARIO PERSONALIZADO (ESTILO MODERNO) --- */
     #ui-datepicker-div {
         background: #fff;
         border: none;
         border-radius: 12px;
-        box-shadow: 0 10px 25px rgba(0,0,0,0.15); /* Sombra elegante */
+        box-shadow: 0 10px 25px rgba(0,0,0,0.15);
         padding: 10px;
         font-family: 'Segoe UI', sans-serif;
-        width: 320px; /* Un poco más ancho */
+        width: 320px;
     }
 
-    /* Encabezado Verde */
     .ui-datepicker-header {
         background-color: var(--color-brand-green) !important;
         color: white !important;
@@ -46,10 +46,9 @@
         text-transform: uppercase;
     }
 
-    /* Flechas de navegación (Anterior/Siguiente) */
     .ui-datepicker-prev, .ui-datepicker-next {
         cursor: pointer;
-        filter: brightness(0) invert(1); /* Vuelve blancos los íconos */
+        filter: brightness(0) invert(1);
     }
 
         .ui-datepicker-prev:hover, .ui-datepicker-next:hover {
@@ -58,7 +57,6 @@
             border-radius: 5px;
         }
 
-    /* La tabla de días */
     .ui-datepicker-calendar th {
         color: #888;
         font-weight: 600;
@@ -66,7 +64,6 @@
         padding: 10px 0;
     }
 
-    /* Los días individuales */
     .ui-datepicker-calendar td a {
         text-align: center !important;
         border: none !important;
@@ -76,28 +73,25 @@
         height: 35px;
         line-height: 35px;
         margin: 0 auto;
-        border-radius: 50%; /* Días redonditos */
+        border-radius: 50%;
         transition: all 0.2s;
     }
 
-        /* Días Disponibles (Hover) */
         .ui-datepicker-calendar td a:hover {
             background-color: #f0f5e0 !important;
             color: var(--color-brand-green) !important;
             font-weight: bold;
         }
 
-    /* Día Seleccionado (Activo) */
     .ui-datepicker-calendar td.ui-datepicker-current-day a {
         background-color: var(--color-brand-green) !important;
         color: white !important;
-        box-shadow: 0 4px 10px rgba(158, 198, 48, 0.4); /* Resplandor verde */
+        box-shadow: 0 4px 10px rgba(158, 198, 48, 0.4);
         font-weight: bold;
     }
 
-    /* Días Deshabilitados (Sin datos) */
     .ui-state-disabled span {
-        color: #e9ecef !important; /* Gris muy clarito */
+        color: #e9ecef !important;
         background: none !important;
         border: none !important;
     }
@@ -121,13 +115,13 @@
             color: white;
         }
 
-    /* Tabla */
-    #tablaResumen {
+    /* IMPORTANTE: La tabla debe usar el ID correcto en el HTML */
+    #file_export4 {
         font-size: 1.05rem;
         width: 100% !important;
     }
 
-        #tablaResumen tbody td {
+        #file_export4 tbody td {
             padding: 12px 10px;
             vertical-align: middle;
             border-bottom: 1px solid #dee2e6;
@@ -142,7 +136,7 @@
         border-bottom: 3px solid var(--color-brand-green) !important;
     }
 
-    /* Paginación */
+    /* Ajuste de Paginación para coincidir con el verde */
     .page-item.active .page-link {
         background-color: var(--color-brand-green) !important;
         border-color: var(--color-brand-green) !important;
@@ -193,7 +187,7 @@
     <div class="card shadow border-0" style="border-radius: 12px; overflow: hidden;">
         <div class="card-body p-0">
             <div class="table-responsive">
-                <table id="tablaResumen" class="table table-hover mb-0 w-100">
+                <table id="file_export4" class="table table-hover mb-0 w-100">
                     <thead class="thead-custom">
                         <tr>
                             <th class="ps-4"><i class="bi bi-cpu"></i> Sistema</th>
@@ -247,24 +241,23 @@
     <script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
     <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.js"></script>
 
+    <script src="https://cdn.datatables.net/buttons/2.4.2/js/dataTables.buttons.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.bootstrap5.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/pdfmake.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/vfs_fonts.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.html5.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.print.min.js"></script>
+
+    <script src="~/js/datatable/datatable-advanced.init.js"></script>
+
     <script>
         $(document).ready(function () {
 
-            // 1. OBTENER FECHAS
+            // Recibimos la lista de fechas válidas desde C#
             var fechasDisponibles = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(ViewBag.ListaFechasDisponibles ?? new List<string>()));
 
-            // 2. DATATABLES CONFIG
-            $('#tablaResumen').DataTable({
-                "pageLength": 10,
-                "lengthMenu": [[10, 25, 50, -1], [10, 25, 50, "Todos"]],
-                "ordering": true,
-                "language": { "url": "//cdn.datatables.net/plug-ins/1.13.7/i18n/es-ES.json" },
-                // Ajustamos el DOM para dar un poco de margen a los controles de la tabla
-                "dom": '<"d-flex justify-content-between align-items-center m-3"lf>rt<"d-flex justify-content-between align-items-center m-3"ip>'
-            });
-
-            // 3. CALENDARIO PERSONALIZADO (ESPAÑOL MANUAL)
-            // Definimos el idioma español manualmente para no depender de CDN externo
+            // Configuración del idioma Español
             $.datepicker.regional['es'] = {
                 closeText: 'Cerrar',
                 prevText: '< Ant',
@@ -277,14 +270,14 @@
                 dayNamesMin: ['Do','Lu','Ma','Mi','Ju','Vi','Sá'],
                 weekHeader: 'Sm',
                 dateFormat: 'yy-mm-dd',
-                firstDay: 1, // La semana empieza el Lunes
+                firstDay: 1,
                 isRTL: false,
                 showMonthAfterYear: false,
                 yearSuffix: ''
             };
             $.datepicker.setDefaults($.datepicker.regional['es']);
 
-            // Inicializamos el Datepicker
+            // Inicializar el calendario
             $("#calendarioInput").datepicker({
                 dateFormat: "yy-mm-dd",
                 changeMonth: true,
