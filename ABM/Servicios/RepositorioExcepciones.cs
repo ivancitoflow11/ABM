@@ -21,6 +21,7 @@ namespace ABM.Servicios
         Task<List<Comentarios>> ObtenerListaHistoricaExcepcionesPorUsuario(int idUsuarioLogueado);
         Task<List<Comentarios>> ObtenerExcepcionesPorFirma(int idFirma);
     }
+
     public class RepositorioExcepciones : IRepositorioExcepciones
     {
         private readonly string connectionString;
@@ -31,7 +32,6 @@ namespace ABM.Servicios
             connectionString = configuration.GetConnectionString("CadenaSQL");
             httpContext = httpContextAccessor.HttpContext;
         }
-
 
         public async Task<IEnumerable<TipoExcepcion>> ObtenerTiposExcepciones()
         {
@@ -49,41 +49,38 @@ namespace ABM.Servicios
             {
                 var parametros = new { idpais, idnegocio };
 
-                var modelo = await dbdapper.QueryAsync<SistemaExcepcion>(@"SELECT
-                AL3.sistema,          
-                AL1.idPaisNegocioSistema,   
-                FP.pais AS pais,           
-                FN.negocio AS negocio,    
-                COUNT(AL1.rutdni) AS qty   
+                // CAMBIO: Simplificado usando ftc_pns_2. 
+                // Ya trae los nombres y filtra solo activos.
+                var modelo = await dbdapper.QueryAsync<SistemaExcepcion>(@"
+            SELECT
+                AL2.sistema,           
+                AL1.idPaisNegocioSistema,    
+                AL2.pais AS pais,            
+                AL2.negocio AS negocio,      
+                COUNT(AL1.rutdni) AS qty    
             FROM
                 ftc_matriz_diaria AL1
+            -- CRUCE OBLIGATORIO CON PNS_2 (Sistemas Activos)
             INNER JOIN
-                dbo.ftc_pais_negocio_sistema AL2 ON AL2.idPaisNegocioSistema = AL1.idPaisNegocioSistema
-            INNER JOIN
-                dbo.ftc_sistema AL3 ON AL3.idSistema = AL2.idSistema
+                dbo.ftc_pns_2 AL2 ON AL2.idPaisNegocioSistema = AL1.idPaisNegocioSistema
             INNER JOIN
                 dbo.ftc_pnsjt AL4 ON AL2.idPaisNegocioSistema = AL4.idPaisNegocioSistema
-            INNER JOIN
-                dbo.ftc_pais FP ON AL2.idPais = FP.idPais 
-            INNER JOIN
-                dbo.ftc_negocio FN ON AL2.idNegocio = FN.idNegocio 
             WHERE
                 AL1.estado_ex <> 'CERRADO'
                 AND AL1.estadousuario IN ('ACTIVO', 'EXTERNO')
                 AND AL1.fechaAutorizacion_ex IS NULL
-                AND FP.idPais = @idpais         
-                AND FN.idNegocio = @idnegocio  
+                AND AL2.idPais = @idpais          
+                AND AL2.idNegocio = @idnegocio   
             GROUP BY
-                AL3.sistema,
+                AL2.sistema,
                 AL1.idPaisNegocioSistema,
-                FP.pais,     
-                FN.negocio     
+                AL2.pais,      
+                AL2.negocio      
             ORDER BY
                 2;", parametros);
                 return modelo;
             }
         }
-
 
         public async Task<IEnumerable<DetalleExcepcion>> ObtenerListaDetalleExcepcionPorGerencia(int idpais, int idnegocio)
         {
@@ -91,13 +88,14 @@ namespace ABM.Servicios
             {
                 var parametros = new { idpais, idnegocio };
 
+                // CAMBIO: Reemplazo de ftc_pais_negocio_sistema/ftc_pais/ftc_negocio por ftc_pns_2
                 var modelo = await dbdapper.QueryAsync<DetalleExcepcion>(@"
                 WITH UniqueRutDni AS (
                 SELECT
                     AL1.idPaisNegocioSistema,
-                    AL3.sistema, 
-                    FP.pais,    
-                    FN.negocio,
+                    AL2.sistema, 
+                    AL2.pais,     
+                    AL2.negocio,
                     AL1.idCarga,
                     AL1.rutdni,
                     AL1.nombreusuario,
@@ -108,7 +106,7 @@ namespace ABM.Servicios
                     AL1.fechaAutorizacion_ex,
                     AL1.usersSistaAdmin_ex,
                     AL1.aprobado_ex,
-                    AL1.fechaesperada_ex,      
+                    AL1.fechaesperada_ex,       
                     G.ID_gerencia,
                     G.Nom_Gerencia,
                     S.ID_Subgerencia,
@@ -116,26 +114,21 @@ namespace ABM.Servicios
                     ROW_NUMBER() OVER (PARTITION BY CONCAT(AL1.rutdni, AL1.userid) ORDER BY AL1.idCarga DESC) AS rn
                 FROM
                     dbo.ftc_matriz_diaria AL1
+                -- CRUCE CON PNS_2
                 INNER JOIN
-                    dbo.ftc_pais_negocio_sistema AL2 ON AL2.idPaisNegocioSistema = AL1.idPaisNegocioSistema
-                INNER JOIN
-                    dbo.ftc_pais FP ON AL2.idPais = FP.idPais 
-                INNER JOIN
-                    dbo.ftc_negocio FN ON AL2.idNegocio = FN.idNegocio 
-                INNER JOIN
-                    dbo.ftc_sistema AL3 ON AL3.idSistema = AL2.idSistema
+                    dbo.ftc_pns_2 AL2 ON AL2.idPaisNegocioSistema = AL1.idPaisNegocioSistema
                 INNER JOIN
                     dbo.ftc_pnsjt AL4 ON AL2.idPaisNegocioSistema = AL4.idPaisNegocioSistema
-                                       AND AL1.estado_ex = 'PENDIENTE' 
+                                     AND AL1.estado_ex = 'PENDIENTE' 
                 LEFT JOIN
                     (SELECT
                         rutdni,
                         nombreusuario,
                         idPaisNegocioSistema,
                         MAX(Nomccostospr) AS Nomccostospr
-                     FROM
+                      FROM
                         dbo.ftc_agrupa_activos
-                     GROUP BY
+                      GROUP BY
                         rutdni, nombreusuario, idPaisNegocioSistema) AA
                 ON
                     AL1.rutdni = AA.rutdni
@@ -149,15 +142,14 @@ namespace ABM.Servicios
                     dbo.ftc_usuario U ON U.ID_gerencia = G.ID_gerencia 
                 WHERE
                     AL1.estado_ex <> 'CERRADO'
-                    AND FP.idPais = @idpais          
-                    AND FN.idNegocio = @idnegocio    
+                    AND AL2.idPais = @idpais           
+                    AND AL2.idNegocio = @idnegocio     
                     AND AL1.estadousuario IN ('ACTIVO', 'EXTERNO')
                     AND AL1.fechaAutorizacion_ex IS NULL
                     AND AL1.perfil IS NOT NULL
             )
             SELECT
-                UniqueRutDni.* 
-            FROM UniqueRutDni
+                UniqueRutDni.* FROM UniqueRutDni
             WHERE rn = 1;", parametros);
                 return modelo;
             }
@@ -168,12 +160,14 @@ namespace ABM.Servicios
             using (IDbConnection dbdapper = new SqlConnection(connectionString))
             {
                 var parametros = new { idpais, idnegocio };
+
+                // CAMBIO: Reemplazo de tablas individuales por ftc_pns_2
                 var modelo = await dbdapper.QueryAsync<DetalleExcepcion>(@"WITH UniqueRutDni AS (
                 SELECT
                     AL1.idPaisNegocioSistema,
-                    AL3.sistema,        
-                    FP.pais,          
-                    FN.negocio,         
+                    AL2.sistema,        
+                    AL2.pais,           
+                    AL2.negocio,          
                     AL1.idCarga,
                     AL1.rutdni,
                     AL1.nombreusuario,
@@ -192,26 +186,21 @@ namespace ABM.Servicios
                     ROW_NUMBER() OVER (PARTITION BY CONCAT(AL1.rutdni, AL1.userid) ORDER BY AL1.idCarga DESC) AS rn 
                 FROM
                     dbo.ftc_matriz_diaria AL1
+                -- CRUCE CON PNS_2
                 INNER JOIN
-                    dbo.ftc_pais_negocio_sistema AL2 ON AL2.idPaisNegocioSistema = AL1.idPaisNegocioSistema
-                INNER JOIN
-                    dbo.ftc_pais FP ON AL2.idPais = FP.idPais 
-                INNER JOIN
-                    dbo.ftc_negocio FN ON AL2.idNegocio = FN.idNegocio 
-                INNER JOIN
-                    dbo.ftc_sistema AL3 ON AL3.idSistema = AL2.idSistema 
+                    dbo.ftc_pns_2 AL2 ON AL2.idPaisNegocioSistema = AL1.idPaisNegocioSistema
                 INNER JOIN
                     dbo.ftc_pnsjt AL4 ON AL2.idPaisNegocioSistema = AL4.idPaisNegocioSistema
-                                       AND AL1.estado_ex = 'PENDIENTE' 
+                                     AND AL1.estado_ex = 'PENDIENTE' 
                 LEFT JOIN
                     (SELECT
                         rutdni,
                         nombreusuario,
                         idPaisNegocioSistema,
                         MAX(Nomccostospr) AS Nomccostospr 
-                     FROM
+                      FROM
                         dbo.ftc_agrupa_activos
-                     GROUP BY
+                      GROUP BY
                         rutdni, nombreusuario, idPaisNegocioSistema) AA
                 ON
                     AL1.rutdni = AA.rutdni
@@ -223,15 +212,14 @@ namespace ABM.Servicios
                     dbo.ftc_gerencia G ON S.COD_Gerencia = G.ID_gerencia 
                 WHERE
                     AL1.estado_ex <> 'CERRADO'
-                    AND FP.idPais = @idpais         
-                    AND FN.idNegocio = @idnegocio   
+                    AND AL2.idPais = @idpais          
+                    AND AL2.idNegocio = @idnegocio    
                     AND AL1.estadousuario IN ('ACTIVO', 'EXTERNO')
                     AND AL1.fechaAutorizacion_ex IS NULL
                     AND AL1.perfil IS NOT NULL
             )
             SELECT
-                UniqueRutDni.* 
-            FROM UniqueRutDni
+                UniqueRutDni.* FROM UniqueRutDni
             WHERE rn = 1;", parametros);
 
                 return modelo;
@@ -247,11 +235,6 @@ namespace ABM.Servicios
                 FROM ftc_motivo WHERE idMotivo = @Id", new { Id });
             }
         }
-
-        //HASTA AQUI OK
-
-
-
 
         public async Task GuardarComentariosExcepcion(Comentarios excepcion)
         {
@@ -282,11 +265,11 @@ namespace ABM.Servicios
             }
         }
 
-
         public async Task<List<Comentarios>> ObtenerListaHistoricaExcepciones()
         {
             using (IDbConnection dbdapper = new SqlConnection(connectionString))
             {
+                // CAMBIO: Agregado INNER JOIN con ftc_pns_2 para filtrar historial de sistemas activos
                 var lista = await dbdapper.QueryAsync<Comentarios>(@"SELECT 
             C.[idCarga],
             C.[idUsuario],
@@ -310,6 +293,9 @@ namespace ABM.Servicios
             ftc_motivo M ON C.idMotivo = M.idMotivo
         LEFT JOIN 
             ftc_matriz_diaria MD ON C.idCarga = MD.idCarga
+        -- FILTRO DE ACTIVOS APLICADO AL HISTORIAL
+        INNER JOIN
+            dbo.ftc_pns_2 PNS ON MD.idPaisNegocioSistema = PNS.idPaisNegocioSistema
         LEFT JOIN 
             ftc_usuario U ON C.[idUsuario] = U.idUsuario
         LEFT JOIN 
@@ -321,11 +307,11 @@ namespace ABM.Servicios
             }
         }
 
-
         public async Task<List<Comentarios>> ObtenerListaHistoricaExcepcionesPorUsuario(int idUsuarioLogueado)
         {
             using (IDbConnection dbdapper = new SqlConnection(connectionString))
             {
+                // CAMBIO: Reemplazo de joins antiguos por ftc_pns_2
                 var query = @"
                             SELECT 
                             C.[idCarga], C.[idUsuario], C.[idRol], U.[nombre] AS Responsable, M.[motivo], M.[idMotivo],
@@ -333,16 +319,15 @@ namespace ABM.Servicios
                             C.[llave_ex], 
                             MD.[nombreusuario], MD.[perfil], MD.[cargospr], 
                             G.[Nom_Gerencia],
-                            FP.pais AS Pais,      
-                            FN.negocio AS Negocio   
+                            PNS.pais AS Pais,       
+                            PNS.negocio AS Negocio   
                         FROM ftc_comentarios C
                         LEFT JOIN ftc_motivo M ON C.idMotivo = M.idMotivo
                         LEFT JOIN ftc_matriz_diaria MD ON C.idCarga = MD.idCarga 
                         LEFT JOIN ftc_usuario U ON C.[idUsuario] = U.idUsuario
                         LEFT JOIN ftc_gerencia G ON U.ID_gerencia = G.ID_gerencia
-                        INNER JOIN dbo.ftc_pais_negocio_sistema AL2 ON MD.idPaisNegocioSistema = AL2.idPaisNegocioSistema
-                        INNER JOIN dbo.ftc_pais FP ON AL2.idPais = FP.idPais
-                        INNER JOIN dbo.ftc_negocio FN ON AL2.idNegocio = FN.idNegocio
+                        -- CRUCE CON PNS_2
+                        INNER JOIN dbo.ftc_pns_2 PNS ON MD.idPaisNegocioSistema = PNS.idPaisNegocioSistema
                         WHERE U.idUsuario = @idUsuarioLogueado
                         ORDER BY C.idCarga DESC;";
 
@@ -356,6 +341,7 @@ namespace ABM.Servicios
         {
             using (IDbConnection db = new SqlConnection(connectionString))
             {
+                // CAMBIO: Agregado filtro de PNS_2 para asegurar consistencia
                 var query = @"
                     SELECT 
                 C.[idCarga],
@@ -376,6 +362,8 @@ namespace ABM.Servicios
             FROM ftc_comentarios C
             LEFT JOIN ftc_motivo M ON C.idMotivo = M.idMotivo
             LEFT JOIN ftc_matriz_diaria MD ON C.idCarga = MD.idCarga
+            -- FILTRO DE ACTIVOS
+            INNER JOIN dbo.ftc_pns_2 PNS ON MD.idPaisNegocioSistema = PNS.idPaisNegocioSistema
             LEFT JOIN ftc_usuario U ON C.idUsuario = U.idUsuario
             LEFT JOIN ftc_gerencia G ON U.ID_gerencia = G.ID_gerencia
             WHERE G.ID_gerencia = (
@@ -391,6 +379,5 @@ namespace ABM.Servicios
                 return excepciones.ToList();
             }
         }
-
     }
 }

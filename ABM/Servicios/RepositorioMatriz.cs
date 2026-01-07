@@ -7,8 +7,9 @@ using System.Data;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Logging; 
+using Microsoft.Extensions.Logging;
 using Microsoft.AspNetCore.Hosting;
+using System; // Necesario para Exception y Convert
 
 namespace ABM.Servicios
 {
@@ -29,14 +30,14 @@ namespace ABM.Servicios
     {
         private readonly string _connectionString;
         private readonly IHttpContextAccessor _httpContextAccessor;
-        private readonly ILogger<RepositorioMatriz> _logger; // <-- CAMBIO 1: AÑADIR CAMPO PARA EL LOGGER
+        private readonly ILogger<RepositorioMatriz> _logger;
         private readonly IWebHostEnvironment _hostingEnvironment;
 
         public RepositorioMatriz(IConfiguration configuration, IHttpContextAccessor httpContextAccessor, ILogger<RepositorioMatriz> logger, IWebHostEnvironment hostingEnvironment)
         {
             _connectionString = configuration.GetConnectionString("CadenaSQL");
             _httpContextAccessor = httpContextAccessor;
-            _logger = logger; // Asignar el logger
+            _logger = logger;
             _hostingEnvironment = hostingEnvironment;
         }
 
@@ -44,6 +45,8 @@ namespace ABM.Servicios
         {
             return _connectionString;
         }
+
+        private IDbConnection Connection => new SqlConnection(_connectionString);
 
         public async Task<FirmaReporteViewModel> ObtenerDatosParaReporteFirma(int idFirma)
         {
@@ -63,8 +66,6 @@ namespace ABM.Servicios
             if (firmaInfo == null) return null;
 
             // --- INICIO DE LA LÓGICA DE LA IMAGEN ---
-
-            // 1. Obtenemos la RUTA del archivo de la firma desde la BD
             var rutaRelativaFirma = await connection.QuerySingleOrDefaultAsync<string>(
                 "SELECT firma FROM ftc_usuario WHERE idUsuario = @codUsuarioResponsable",
                 new { firmaInfo.codUsuarioResponsable });
@@ -74,16 +75,12 @@ namespace ABM.Servicios
             {
                 try
                 {
-                    // 2. Combinamos la ruta web con la ruta del servidor para obtener la ruta física completa
-                    // Nota: Se elimina la barra inicial si existe para que Path.Combine funcione bien.
                     var rutaFisica = System.IO.Path.Combine(_hostingEnvironment.WebRootPath, rutaRelativaFirma.TrimStart('/'));
 
                     if (System.IO.File.Exists(rutaFisica))
                     {
-                        // 3. Leemos el archivo y lo convertimos a Base64
                         byte[] imageBytes = await System.IO.File.ReadAllBytesAsync(rutaFisica);
                         string base64String = Convert.ToBase64String(imageBytes);
-                        // 4. Formateamos la cadena para que el HTML la entienda como una imagen
                         firmaEnBase64 = $"data:image/png;base64,{base64String}";
                     }
                 }
@@ -110,13 +107,15 @@ namespace ABM.Servicios
             return new FirmaReporteViewModel
             {
                 FirmaInfo = firmaInfo,
-                FirmaUsuarioBase64 = firmaEnBase64, // imagen ya convertida
+                FirmaUsuarioBase64 = firmaEnBase64,
                 DetallesFirma = detalles
             };
         }
+
         public async Task<IEnumerable<Firma>> ObtenerTodasLasFirmas()
         {
             using var connection = Connection;
+            // HISTORIAL: Se mantiene con LEFT JOIN a las tablas maestras para no perder firmas antiguas de sistemas inactivos
             const string query = @"
                 SELECT 
                     f.idFirma, f.fechaFirma, f.comentario,
@@ -139,7 +138,6 @@ namespace ABM.Servicios
 
             return await connection.QueryAsync<Firma>(query);
         }
-        private IDbConnection Connection => new SqlConnection(_connectionString);
 
         private int ObtenerIdUsuarioActual()
         {
@@ -151,30 +149,27 @@ namespace ABM.Servicios
         {
             using (IDbConnection db = new SqlConnection(_connectionString))
             {
+                // CAMBIO IMPORTANTE: Usamos ftc_pns_2 para traer solo lo activo.
+                // Como ftc_pns_2 ya tiene los nombres (pais, sistema) y los IDs, eliminamos los JOINS viejos.
                 const string query = @"
         SELECT DISTINCT
-            p.pais,
-            s.sistema,
-            s.idSistema,
-            pns.idNegocio      
+            pns.pais,
+            pns.sistema,
+            pns.idSistema,
+            pns.idNegocio       
         FROM
-            dbo.ftc_pais_negocio_sistema pns
-        JOIN
-            dbo.ftc_pais p ON pns.idPais = p.idPais
-        JOIN
-            dbo.ftc_sistema s ON pns.idSistema = s.idSistema
+            dbo.ftc_pns_2 pns
         JOIN
             dbo.ftc_agrupa_activos aa ON pns.idPaisNegocioSistema = aa.idPaisNegocioSistema
-        JOIN -- <-- 1. NUEVO JOIN A LA TABLA pnsjt
+        JOIN 
             dbo.ftc_pnsjt jt ON pns.idPaisNegocioSistema = jt.idPaisNegocioSistema
         WHERE
             pns.idPais = @IdPais
             AND pns.idNegocio = @IdNegocio
-            AND pns.estado = 1
             AND aa.perfil IS NOT NULL
-            AND jt.infomatrizperfil = 'SI' -- <-- 2. NUEVO FILTRO
+            AND jt.infomatrizperfil = 'SI'
         ORDER BY
-            p.pais, s.sistema;
+            pns.pais, pns.sistema;
     ";
                 return await db.QueryAsync<MatrizDisponible>(query, new { IdPais = idPais, IdNegocio = idNegocio });
             }
@@ -184,23 +179,21 @@ namespace ABM.Servicios
         {
             using (IDbConnection db = new SqlConnection(_connectionString))
             {
+                // CAMBIO IMPORTANTE: Reemplazo de ftc_pais_negocio_sistema por ftc_pns_2
                 const string query = @"
                     SELECT 
                         aa.*,
-                        p.pais,
-                        s.sistema,
+                        pns.pais,
+                        pns.sistema,
                         g.Nom_Gerencia,
                         sg.Nom_Subgerencia,
-                        n.negocio
+                        pns.negocio
                     FROM dbo.ftc_agrupa_activos aa
-                    JOIN dbo.ftc_pais_negocio_sistema pns ON aa.idPaisNegocioSistema = pns.idPaisNegocioSistema
-                    JOIN dbo.ftc_sistema s ON pns.idSistema = s.idSistema
-                    JOIN dbo.ftc_pais p ON pns.idPais = p.idPais
-                    JOIN dbo.ftc_negocio n ON pns.idNegocio = n.idNegocio
+                    INNER JOIN dbo.ftc_pns_2 pns ON aa.idPaisNegocioSistema = pns.idPaisNegocioSistema
                     LEFT JOIN dbo.ftc_Subgerencias sg ON aa.Nomccostospr = sg.Nom_Subgerencia
                     LEFT JOIN dbo.ftc_gerencia g ON sg.COD_Gerencia = g.ID_gerencia
-                    WHERE s.idSistema = @IdSistema 
-                        AND p.pais = @NombrePais
+                    WHERE pns.idSistema = @IdSistema 
+                        AND pns.pais = @NombrePais
                         AND pns.idNegocio = @IdNegocio;
                 ";
                 return await db.QueryAsync<MatrizActivo>(query, new { IdSistema = idSistema, NombrePais = nombrePais, IdNegocio = idNegocio });
@@ -263,7 +256,11 @@ namespace ABM.Servicios
                     idSistema = idSistema
                 }, transaction);
 
+                // Aquí obtenemos el nombre del país para reusar la lógica de obtención de datos
                 var nombrePais = await connection.QuerySingleAsync<string>("SELECT pais FROM ftc_pais WHERE idPais = @IdPais", new { IdPais = idPais }, transaction);
+
+                // NOTA: Esta llamada usa el método que acabamos de corregir (ObtenerListaDataMatrizTodo)
+                // por lo tanto, la firma se creará SOLO con datos de sistemas activos (pns_2).
                 var datosMatriz = await ObtenerListaDataMatrizTodo(idSistema, nombrePais, idNegocio);
 
                 var sqlDetalle = @"
@@ -299,7 +296,6 @@ namespace ABM.Servicios
                 transaction.Commit();
                 return true;
             }
-            // CAMBIO 3: ACTUALIZAR BLOQUE CATCH PARA MOSTRAR EL ERROR
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error al crear la firma y sus detalles en la base de datos.");

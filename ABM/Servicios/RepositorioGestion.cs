@@ -32,9 +32,10 @@ namespace ABM.Servicios
             {
                 var parametros = new { idpais, idnegocio };
 
+                // CAMBIO: Cruce con ftc_pns_2
                 var modelo = await dbdapper.QueryFirstOrDefaultAsync<ResumenGestionViewModel>(@"
             SELECT
-                sub.feccarga                         AS FechaCarga,
+                sub.feccarga                                      AS FechaCarga,
                 sub.pais,
                 SUM(sub.cnt_activos)       AS Activos,
                 SUM(sub.cnt_finiquitados)  AS Finiquitados,
@@ -42,7 +43,7 @@ namespace ABM.Servicios
                 ROUND(
                   CAST(SUM(sub.cnt_finiquitados) AS FLOAT) * 100
                   / NULLIF(SUM(sub.cnt_usuarios), 0),
-                2)                          AS Riesgo
+                2)                                          AS Riesgo
             FROM (
                 SELECT
                     gd.feccarga,
@@ -50,12 +51,11 @@ namespace ABM.Servicios
                     gd.cnt_finiquitados,
                     gd.cnt_no_encontrados,
                     gd.cnt_usuarios,
-                    p.pais
+                    pns.pais
                 FROM dbo.ftc_gestion_diaria AS gd
-                INNER JOIN dbo.ftc_pais_negocio_sistema AS pns
+                -- CRUCE CON PNS_2 (Solo activos)
+                INNER JOIN dbo.ftc_pns_2 AS pns
                     ON gd.idPaisNegocioSistema = pns.idPaisNegocioSistema  
-                INNER JOIN dbo.ftc_pais AS p
-                    ON pns.idPais = p.idPais  
                 WHERE
                     gd.feccarga = (
                         SELECT TOP 1 feccarga 
@@ -75,13 +75,14 @@ namespace ABM.Servicios
             }
         }
 
-        //NO VA POR AHORA
+        //NO VA POR AHORA (Pero actualizado por si acaso)
         public async Task<IEnumerable<CasosCargoViewModel>> ObtenerListaCasosCargo(int idpais, int idnegocio)
         {
             using (IDbConnection dbdapper = new SqlConnection(connectionString))
             {
                 var parametros = new { idpais, idnegocio };
 
+                // CAMBIO: Cruce con ftc_pns_2
                 var modelo = await dbdapper.QueryAsync<CasosCargoViewModel>(@"
             SELECT 
                 sistema,
@@ -91,23 +92,22 @@ namespace ABM.Servicios
                 SUM(total) - SUM(cerrados) AS pendientes 
             FROM (
                 SELECT 
-                    dbo.ftc_sistema.sistema,
+                    pns.sistema,
                     COUNT(DISTINCT mtd.rutdni) AS rut,
                     COUNT(mtd.estado_ex) AS total,
                     CASE WHEN mtd.estado_ex = 'GESTIONADO' THEN COUNT(mtd.estado_ex) ELSE 0 END AS gestionados,
                     CASE WHEN mtd.estado_ex LIKE 'CERRADO%' THEN COUNT(mtd.estado_ex) ELSE 0 END AS cerrados,
-                    dbo.ftc_sistema.idSistema
+                    pns.idSistema
                 FROM ftc_matriz_diaria AS mtd
-                INNER JOIN dbo.ftc_pais_negocio_sistema 
-                    ON mtd.idPaisNegocioSistema = dbo.ftc_pais_negocio_sistema.idPaisNegocioSistema
-                INNER JOIN dbo.ftc_sistema 
-                    ON dbo.ftc_pais_negocio_sistema.idSistema = dbo.ftc_sistema.idSistema
-                WHERE dbo.ftc_pais_negocio_sistema.idPais = @idpais
-                  AND dbo.ftc_pais_negocio_sistema.idNegocio = @idnegocio
+                -- CRUCE CON PNS_2
+                INNER JOIN dbo.ftc_pns_2 AS pns 
+                    ON mtd.idPaisNegocioSistema = pns.idPaisNegocioSistema
+                WHERE pns.idPais = @idpais
+                  AND pns.idNegocio = @idnegocio
                 GROUP BY 
-                    dbo.ftc_sistema.sistema, 
+                    pns.sistema, 
                     mtd.estado_ex, 
-                    dbo.ftc_sistema.idSistema
+                    pns.idSistema
             ) AS c
             GROUP BY 
                 sistema, 
@@ -123,30 +123,26 @@ namespace ABM.Servicios
             {
                 var parametros = new { idpais, idnegocio };
 
+                // CAMBIO: Cruce simplificado con ftc_pns_2 (ya trae sistema)
                 var modelo = await dbdapper.QueryAsync<EvidenciasFiniquitadoViewModel>(@"
             SELECT        
-                ftc_sistema.sistema,
+                pns.sistema,
                 ftc_gestion_diaria.cnt_finiquitados AS finiquitados_hoy,
                 ftc_gestion_diaria.entre_1_3,
                 ftc_gestion_diaria.entre_4_6,
                 ftc_gestion_diaria.mayor_a_6
             FROM ftc_gestion_diaria
-            INNER JOIN ftc_pais_negocio_sistema 
-                ON ftc_gestion_diaria.idPaisNegocioSistema = ftc_pais_negocio_sistema.idPaisNegocioSistema  
-            INNER JOIN ftc_pais 
-                ON ftc_pais_negocio_sistema.idPais = ftc_pais.idPais 
-            INNER JOIN ftc_negocio 
-                ON ftc_pais_negocio_sistema.idNegocio = ftc_negocio.idNegocio 
-            INNER JOIN ftc_sistema 
-                ON ftc_pais_negocio_sistema.idSistema = ftc_sistema.idSistema
+            -- CRUCE CON PNS_2
+            INNER JOIN dbo.ftc_pns_2 AS pns 
+                ON ftc_gestion_diaria.idPaisNegocioSistema = pns.idPaisNegocioSistema  
             WHERE 
                 ftc_gestion_diaria.feccarga = (
                     SELECT TOP 1 feccarga 
                     FROM ftc_gestion_diaria 
                     ORDER BY idGestionDiaria DESC
                 )
-                AND ftc_pais_negocio_sistema.idPais = @idpais
-                AND ftc_pais_negocio_sistema.idNegocio = @idnegocio;
+                AND pns.idPais = @idpais
+                AND pns.idNegocio = @idnegocio;
         ", parametros);
 
                 return modelo;
@@ -159,35 +155,34 @@ namespace ABM.Servicios
             {
                 var parametros = new { idpais, idnegocio };
 
+                // CAMBIO: Cruce con ftc_pns_2 en ambas CTEs
                 var modelo = await dbdapper.QueryAsync<ResumenPaisViewModel>(@"
             ;WITH ActivosData AS (
                 SELECT 
-                    AL3.sistema,
-                    AL1.feccarga                          AS feccarga,
+                    AL2.sistema,
+                    AL1.feccarga                                      AS feccarga,
                     COUNT(DISTINCT CASE WHEN AL1.estado = 'ACTIVO'         THEN AL1.rutdni END) AS ACTIVOS,
                     COUNT(DISTINCT CASE WHEN AL1.estado = 'FINIQUITADO'    THEN AL1.rutdni END) AS FINIQUITADOS,
                     COUNT(DISTINCT CASE WHEN AL1.estado = 'NO ENCONTRADO'  THEN AL1.rutdni END) AS NO_ENCONTRADOS
                 FROM dbo.ftc_agrupa_activos AS AL1
-                INNER JOIN dbo.ftc_pais_negocio_sistema AS AL2 
+                -- CRUCE CON PNS_2
+                INNER JOIN dbo.ftc_pns_2 AS AL2 
                     ON AL1.idPaisNegocioSistema = AL2.idPaisNegocioSistema
-                INNER JOIN dbo.ftc_sistema AS AL3 
-                    ON AL2.idSistema = AL3.idSistema
                 WHERE 
                     AL2.idPais     = @idpais
                     AND AL2.idNegocio = @idnegocio
                 GROUP BY 
-                    AL3.sistema,
+                    AL2.sistema,
                     AL1.feccarga
             ),
             GestionDiariaData AS (
                 SELECT DISTINCT 
-                    AL3.sistema   AS Sistema,
+                    pns.sistema   AS Sistema,
                     AL1.feccarga  AS feccarga
                 FROM dbo.ftc_agrupa_activos AS AL1
-                INNER JOIN dbo.ftc_pais_negocio_sistema AS pns 
+                -- CRUCE CON PNS_2
+                INNER JOIN dbo.ftc_pns_2 AS pns 
                     ON AL1.idPaisNegocioSistema = pns.idPaisNegocioSistema  
-                INNER JOIN dbo.ftc_sistema AS AL3 
-                    ON pns.idSistema = AL3.idSistema
                 WHERE 
                     AL1.feccarga = (
                         SELECT TOP 1 feccarga 
@@ -219,17 +214,19 @@ namespace ABM.Servicios
             {
                 var parametros = new { idpais, idnegocio };
 
+                // CAMBIO: Cruce con ftc_pns_2
                 var modelo = await dbdapper.QueryAsync<TendenciaDiariaViewModel>(@"
             SELECT TOP 60 
                 dbo.ftc_gestion_diaria.feccarga, 
                 SUM(dbo.ftc_gestion_diaria.cnt_finiquitados) AS cnt_finiquitados
             FROM dbo.ftc_gestion_diaria
-            INNER JOIN dbo.ftc_pais_negocio_sistema 
-                ON dbo.ftc_gestion_diaria.idPaisNegocioSistema = dbo.ftc_pais_negocio_sistema.idPaisNegocioSistema
+            -- CRUCE CON PNS_2
+            INNER JOIN dbo.ftc_pns_2 AS pns 
+                ON dbo.ftc_gestion_diaria.idPaisNegocioSistema = pns.idPaisNegocioSistema
             WHERE 
                 dbo.ftc_gestion_diaria.feccarga IS NOT NULL
-                AND ftc_pais_negocio_sistema.idPais = @idpais
-                AND ftc_pais_negocio_sistema.idNegocio = @idnegocio
+                AND pns.idPais = @idpais
+                AND pns.idNegocio = @idnegocio
             GROUP BY 
                 dbo.ftc_gestion_diaria.feccarga
             ORDER BY 
@@ -239,8 +236,5 @@ namespace ABM.Servicios
                 return modelo;
             }
         }
-
-
-
     }
 }

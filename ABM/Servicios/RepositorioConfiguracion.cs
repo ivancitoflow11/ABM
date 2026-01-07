@@ -223,26 +223,31 @@ namespace ABM.Servicios
         public async Task<IEnumerable<Negocio>> ObtenerNegociosPorPaisAsync(int idPais)
         {
             using var db = new SqlConnection(connectionString);
-            // Obtiene solo los negocios distintos asociados al país y que estén en un cruce PNS activo
+
+            // CAMBIO: Usamos ftc_pns_2 para asegurar consistencia con el resto del app.
+            // Esta tabla ya contiene solo lo activo, así que no necesitamos filtrar por estado='1'
             var sql = @"
         SELECT DISTINCT n.idNegocio, n.negocio AS Nombre
         FROM ftc_negocio n
-        JOIN ftc_pais_negocio_sistema pns ON n.idNegocio = pns.idNegocio
-        WHERE pns.idPais = @idPais AND pns.estado = '1'
+        INNER JOIN ftc_pns_2 pns ON n.idNegocio = pns.idNegocio
+        WHERE pns.idPais = @idPais
         ORDER BY n.negocio;";
+
             return await db.QueryAsync<Negocio>(sql, new { idPais });
         }
 
         public async Task<IEnumerable<Sistema>> ObtenerSistemasPorPaisYNegocioAsync(int idPais, int idNegocio)
         {
             using var db = new SqlConnection(connectionString);
-            // Obtiene solo los sistemas distintos asociados al país y negocio, y que estén en un cruce PNS activo
+
+            // CAMBIO: Usamos ftc_pns_2 para asegurar consistencia.
             var sql = @"
         SELECT DISTINCT s.idSistema, s.sistema, s.codSistema, s.nriesgo 
         FROM ftc_sistema s
-        JOIN ftc_pais_negocio_sistema pns ON s.idSistema = pns.idSistema
-        WHERE pns.idPais = @idPais AND pns.idNegocio = @idNegocio AND pns.estado = '1'
+        INNER JOIN ftc_pns_2 pns ON s.idSistema = pns.idSistema
+        WHERE pns.idPais = @idPais AND pns.idNegocio = @idNegocio
         ORDER BY s.sistema;";
+
             return await db.QueryAsync<Sistema>(sql, new { idPais, idNegocio });
         }
         public async Task<IEnumerable<EnvioCorreoDetalleViewModel>> ObtenerEnvioCorreoDetallesVMAsync()

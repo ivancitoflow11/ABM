@@ -31,7 +31,7 @@ namespace ABM.Servicios
         {
             using (IDbConnection dbdapper = new SqlConnection(connectionString))
             {
-                // Implementación de la Query 1 proporcionada
+                // AJUSTE QUERY 1: Cruzamos con ftc_pns_2 en ambas CTEs
                 return await dbdapper.QueryAsync<EstadisticasUsuarios>(@"
             WITH ActivosData AS (
                 SELECT 
@@ -64,6 +64,8 @@ namespace ABM.Servicios
                         a.ESTADO, 
                         b.BANDERA
                     FROM ftc_agrupa_activos_app a 
+                    -- NUEVO CRUCE OBLIGATORIO CON PNS_2
+                    INNER JOIN [ABM_FTC].[dbo].[ftc_pns_2] pns ON a.IDSISTEMA = pns.idSistema AND a.IDNEGOCIO = pns.idNegocio
                     LEFT OUTER JOIN ftc_pais b ON a.pais = b.pais OR a.pais = b.codPais 
                 ) AL1
                 WHERE (@idNegocio IS NULL OR AL1.IDNEGOCIO = @idNegocio)
@@ -80,12 +82,8 @@ namespace ABM.Servicios
                     ISNULL(ftc_gestion_diaria.entre_4_6, 0) AS De_4_a_6_Dias_Sin_Gestion,
                     ISNULL(ftc_gestion_diaria.mayor_a_6, 0) AS Mas_de_6_Dias_Sin_Gestion
                 FROM ftc_gestion_diaria 
-                LEFT OUTER JOIN (
-                    SELECT idPaisNegocioSistema,pais,idPais,'Antigua' vertical,negocio,idNegocio,sistema,codSistema,idSistema,codPais
-                    FROM pns
-                    UNION ALL 
-                    SELECT * FROM FTC_pns_2
-                ) b ON ftc_gestion_diaria.idPaisNegocioSistema = b.idPaisNegocioSistema
+                -- REEMPLAZAMOS EL UNION POR CRUCE DIRECTO CON PNS_2 PARA FILTRAR ACTIVOS
+                INNER JOIN [ABM_FTC].[dbo].[ftc_pns_2] b ON ftc_gestion_diaria.idPaisNegocioSistema = b.idPaisNegocioSistema
                 WHERE 
                     ftc_gestion_diaria.feccarga = (
                         SELECT TOP 1 feccarga 
@@ -100,7 +98,7 @@ namespace ABM.Servicios
                 A.Sistema,
                 A.Negocio,
                 A.Pais,
-                A.Vertical, -- Mapeado al Modelo
+                A.Vertical, 
                 A.Bandera,
                 A.total_Usuarios AS TotalUsuarios,
                 A.Activos,
@@ -122,7 +120,7 @@ namespace ABM.Servicios
         {
             using (IDbConnection dbdapper = new SqlConnection(connectionString))
             {
-                // Implementación de Query 2
+                // AJUSTE QUERY 2: INNER JOIN con PNS_2
                 return await dbdapper.QueryAsync<Finiquitados>(@"
             SELECT 
                 b.PAIS          AS pais,
@@ -133,11 +131,13 @@ namespace ABM.Servicios
                 a.RUT_DNI       AS rutdni,
                 a.ID_USUARIO    AS userid,
                 a.CARGO         AS cargo,
-                a.C_COSTO       AS codccostospr, -- Mapeado al modelo existente
+                a.C_COSTO       AS codccostospr,
                 a.FECHA_FINIQUITO AS fecfiniq,
                 a.ALTA          AS fecalta,
                 a.BAJA          AS fecbaja
             FROM ftc_agrupa_activos_app a 
+            -- CRUCE OBLIGATORIO
+            INNER JOIN [ABM_FTC].[dbo].[ftc_pns_2] pns ON a.IDSISTEMA = pns.idSistema AND a.IDNEGOCIO = pns.idNegocio
             LEFT OUTER JOIN ftc_pais b ON a.pais = b.pais OR a.pais = b.codPais 
             WHERE a.ESTADO = 'FINIQUITADO'
                 AND (@idNegocio IS NULL OR a.IDNEGOCIO = @idNegocio)
@@ -150,7 +150,7 @@ namespace ABM.Servicios
         {
             using (IDbConnection dbdapper = new SqlConnection(connectionString))
             {
-                // Implementación de Query 3
+                // AJUSTE QUERY 3: INNER JOIN con PNS_2
                 return await dbdapper.QueryAsync<UsuariosNoEncontrados>(@"
             SELECT 
                 b.PAIS          AS pais,
@@ -161,10 +161,12 @@ namespace ABM.Servicios
                 a.RUT_DNI       AS rutdni,
                 a.ID_USUARIO    AS userid,
                 a.CARGO         AS cargo,
-                a.C_COSTO       AS Nomccostospr, -- Mapeado al modelo existente
+                a.C_COSTO       AS Nomccostospr,
                 a.ALTA          AS fecalta,
                 a.BAJA          AS fecbaja
             FROM ftc_agrupa_activos_app a 
+            -- CRUCE OBLIGATORIO
+            INNER JOIN [ABM_FTC].[dbo].[ftc_pns_2] pns ON a.IDSISTEMA = pns.idSistema AND a.IDNEGOCIO = pns.idNegocio
             LEFT OUTER JOIN ftc_pais b ON a.pais = b.pais OR a.pais = b.codPais 
             WHERE a.ESTADO = 'NO ENCONTRADO'
                 AND (@idNegocio IS NULL OR a.IDNEGOCIO = @idNegocio)
@@ -177,7 +179,7 @@ namespace ABM.Servicios
         {
             using (IDbConnection dbdapper = new SqlConnection(connectionString))
             {
-                // Implementación de Query 4
+                // AJUSTE QUERY 4: INNER JOIN con PNS_2 dentro del CTE
                 return await dbdapper.QueryAsync<UsuariosDuplicados>(@"
             WITH CTE_Cuentas AS (
                 SELECT 
@@ -189,12 +191,14 @@ namespace ABM.Servicios
                     a.RUT_DNI       AS rutdni,
                     a.ID_USUARIO    AS userid,
                     a.CARGO         AS cargo,
-                    a.C_COSTO       AS codccosto, -- Mapeado al modelo existente
+                    a.C_COSTO       AS codccosto,
                     a.FECHA_FINIQUITO AS fecfiniq,
                     a.ALTA          AS fecalta,
                     a.BAJA          AS fecbaja,
-                    ROW_NUMBER() OVER (PARTITION BY a.RUT_DNI ORDER BY a.BAJA DESC) AS RowNum -- Ajustado orden por BAJA al no tener fechaad
+                    ROW_NUMBER() OVER (PARTITION BY a.RUT_DNI ORDER BY a.BAJA DESC) AS RowNum 
                 FROM ftc_agrupa_activos_app a 
+                -- CRUCE OBLIGATORIO
+                INNER JOIN [ABM_FTC].[dbo].[ftc_pns_2] pns ON a.IDSISTEMA = pns.idSistema AND a.IDNEGOCIO = pns.idNegocio
                 LEFT OUTER JOIN ftc_pais b ON a.pais = b.pais OR a.pais = b.codPais 
                 WHERE a.ESTADO = 'CUENTA DUPLICADA'
                     AND (@idNegocio IS NULL OR a.IDNEGOCIO = @idNegocio)
@@ -211,7 +215,7 @@ namespace ABM.Servicios
         {
             using (IDbConnection dbdapper = new SqlConnection(connectionString))
             {
-                // Implementación de Query 5
+                // QUERY 5: Esta ya estaba usando FTC_PNS_2, se mantiene correcta.
                 var query = @"
             SELECT DISTINCT S.idSistema, S.codSistema, S.sistema
             FROM FTC_PNS_2 S

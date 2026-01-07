@@ -21,12 +21,12 @@ namespace ABM.Servicios
 
         Task<int> CrearDetalleRol(DetalleRolModel detalle);
         Task<IEnumerable<PaisNegocioSistemaModel>> ObtenerPaisNegocioSistemasActivos();
-        Task<bool> ExisteRolConNombre(string nombreRol, int? idRolExcluir = null); 
+        Task<bool> ExisteRolConNombre(string nombreRol, int? idRolExcluir = null);
 
         //Menus
         Task<IEnumerable<MenuModel>> ObtenerMenus();
         Task InsertarPermisosMenu(int idRol, List<int> listaMenusSeleccionados);
-		Task<IEnumerable<string>> ObtenerVistasPorMenusAsync(List<int> idsMenus);
+        Task<IEnumerable<string>> ObtenerVistasPorMenusAsync(List<int> idsMenus);
 
         // Nuevos métodos para editar
         Task<RolModel> ObtenerRolPorId(int idRol);
@@ -62,26 +62,26 @@ namespace ABM.Servicios
         {
             using var connection = new SqlConnection(connectionString);
 
+            // CAMBIO: Simplificado usando ftc_pns_2. 
+            // Eliminamos los JOINs a ftc_pais, ftc_negocio, ftc_sistema porque ftc_pns_2 ya tiene esos datos.
+            // Esto asegura que solo se muestren asignaciones a sistemas ACTIVOS.
             var query = @"
-SELECT 
-    r.idRol, 
-    r.nombre AS nombreRol,
-    pns.idPaisNegocioSistema,
-    pa.pais, 
-    pns.idPais,
-    ne.negocio, 
-    pns.idNegocio,
-    si.sistema,
-    si.codSistema,
-    pns.idSistema,
-    pa.codPais
-FROM ftc_rol r
-JOIN ftc_detalle_rol dr ON r.idRol = dr.idRol
-JOIN ftc_pais_negocio_sistema pns ON dr.idPaisNegocioSistema = pns.idPaisNegocioSistema
-JOIN ftc_pais pa ON pa.idPais = pns.idPais
-JOIN ftc_negocio ne ON ne.idNegocio = pns.idNegocio
-JOIN ftc_sistema si ON si.idSistema = pns.idSistema
-ORDER BY r.idRol, pa.pais, pns.idNegocio, si.sistema";
+            SELECT 
+                r.idRol, 
+                r.nombre AS nombreRol,
+                pns.idPaisNegocioSistema,
+                pns.pais, 
+                pns.idPais,
+                pns.negocio, 
+                pns.idNegocio,
+                pns.sistema,
+                pns.codSistema,
+                pns.idSistema,
+                pns.codPais
+            FROM ftc_rol r
+            JOIN ftc_detalle_rol dr ON r.idRol = dr.idRol
+            JOIN ftc_pns_2 pns ON dr.idPaisNegocioSistema = pns.idPaisNegocioSistema
+            ORDER BY r.idRol, pns.pais, pns.idNegocio, pns.sistema";
 
             var datos = await connection.QueryAsync(query);
 
@@ -142,22 +142,21 @@ ORDER BY r.idRol, pa.pais, pns.idNegocio, si.sistema";
         {
             using (IDbConnection db = new SqlConnection(connectionString))
             {
+                // CAMBIO: Usamos ftc_pns_2 directamente.
+                // Esta tabla ya contiene solo lo activo (estado=1), es más rápida y segura.
                 var query = @"
                 SELECT 
-                    PNS.idPaisNegocioSistema, 
-                    p.pais, 
-                    PNS.idPais, 
-                    n.negocio, 
-                    PNS.idNegocio, 
-                    s.sistema, 
-                    s.codSistema, 
-                    PNS.idSistema, 
-                    p.codPais
-                FROM ftc_pais_negocio_sistema AS PNS
-                INNER JOIN ftc_pais p ON p.idPais = PNS.idPais
-                INNER JOIN ftc_negocio n ON n.idNegocio = PNS.idNegocio
-                INNER JOIN ftc_sistema s ON s.idSistema = PNS.idSistema
-                WHERE PNS.estado = 1;";
+                    idPaisNegocioSistema, 
+                    pais, 
+                    idPais, 
+                    negocio, 
+                    idNegocio, 
+                    sistema, 
+                    codSistema, 
+                    idSistema, 
+                    codPais
+                FROM ftc_pns_2
+                ORDER BY pais, negocio, sistema;";
 
                 return await db.QueryAsync<PaisNegocioSistemaModel>(query);
             }
@@ -206,16 +205,16 @@ ORDER BY r.idRol, pa.pais, pns.idNegocio, si.sistema";
             }
         }
 
-		public async Task<IEnumerable<string>> ObtenerVistasPorMenusAsync(List<int> idsMenus)
-		{
-			if (idsMenus == null || !idsMenus.Any())
-			{
-				return Enumerable.Empty<string>();
-			}
+        public async Task<IEnumerable<string>> ObtenerVistasPorMenusAsync(List<int> idsMenus)
+        {
+            if (idsMenus == null || !idsMenus.Any())
+            {
+                return Enumerable.Empty<string>();
+            }
 
-			using (IDbConnection db = new SqlConnection(connectionString))
-			{
-				var sql = @"
+            using (IDbConnection db = new SqlConnection(connectionString))
+            {
+                var sql = @"
             SELECT DISTINCT VISTA
             FROM [ftc_MENU]
             WHERE Estado = 1
@@ -224,10 +223,10 @@ ORDER BY r.idRol, pa.pais, pns.idNegocio, si.sistema";
               AND VISTA <> ''
             ORDER BY VISTA;
         ";
-				var resultado = await db.QueryAsync<string>(sql, new { Ids = idsMenus });
-				return resultado;
-			}
-		}
+                var resultado = await db.QueryAsync<string>(sql, new { Ids = idsMenus });
+                return resultado;
+            }
+        }
 
         public async Task<bool> ExisteRolConNombre(string nombreRol, int? idRolExcluir = null)
         {

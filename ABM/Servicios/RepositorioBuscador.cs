@@ -4,11 +4,10 @@ using Microsoft.Data.SqlClient;
 using System.Data;
 using System.Threading.Tasks;
 using System.Collections.Generic;
-
+using Microsoft.Extensions.Configuration; // Agregado para IConfiguration
 
 namespace ABM.Servicios
 {
-
     public interface IRepositorioBuscador
     {
         Task<IEnumerable<ActivosFalanetUser>> BuscarEnActivosFalanet(string rut, string nombreCompleto, string correo);
@@ -16,7 +15,6 @@ namespace ABM.Servicios
         Task<IEnumerable<FiniquitadoUser>> BuscarEnFiniquitados(string rutDni, string nombreUsuario, string mailUsuario, int idPais, int idNegocio);
         Task<IEnumerable<SapUser>> BuscarEnPasoSap(string rutODni, string nombreCompleto, string correoUsuario);
         Task<IEnumerable<AgrupaActivosUser>> BuscarEnAgrupaActivos(string rutDni, string nombreUsuario, string mailUsuario);
-
     }
 
     public class RepositorioBuscador : IRepositorioBuscador
@@ -32,6 +30,8 @@ namespace ABM.Servicios
         {
             using (IDbConnection db = new SqlConnection(connectionString))
             {
+                // NOTA: ftc_paso_sap parece ser data cruda sin IDs de sistema para cruzar con ftc_pns_2.
+                // Se mantiene igual a menos que existan columnas idSistema/idNegocio.
                 var sql = @"
                     SELECT DISTINCT
                         Pais,
@@ -59,6 +59,7 @@ namespace ABM.Servicios
                 });
             }
         }
+
         public async Task<IEnumerable<AgrupaActivosUser>> BuscarEnAgrupaActivos(string rutDni, string nombreUsuario, string mailUsuario)
         {
             using (IDbConnection db = new SqlConnection(connectionString))
@@ -88,11 +89,14 @@ namespace ABM.Servicios
                 });
             }
         }
+
         public async Task<IEnumerable<FiniquitadoUser>> BuscarEnFiniquitados(string rutDni, string nombreUsuario, string mailUsuario, int idPais, int idNegocio)
         {
             using (IDbConnection db = new SqlConnection(connectionString))
             {
-                // Adaptamos la query que nos diste
+                // --- CAMBIO IMPORTANTE AQUÍ ---
+                // Reemplazamos el cruce con ftc_pais_negocio_sistema (antigua) por ftc_pns_2 (nueva)
+                // Y usamos los campos correctos de la nueva tabla.
                 var sql = @"
                     SELECT DISTINCT
                         AL1.rutdni,
@@ -100,21 +104,16 @@ namespace ABM.Servicios
                         AL1.nombreusuario,
                         AL1.mailusuario,
                         AL1.cargospr,
-                        AL3.sistema,
-                        AL4.pais,
-                        AL5.negocio,
+                        AL2.sistema,  -- Viene de la PNS_2
+                        AL2.pais,     -- Viene de la PNS_2
+                        AL2.negocio,  -- Viene de la PNS_2
                         AL1.fecfiniq,
                         G.Nom_Gerencia
                     FROM
                         dbo.ftc_agrupa_activos AL1
                     JOIN
-                        dbo.ftc_pais_negocio_sistema AL2 ON AL2.idPaisNegocioSistema = AL1.idPaisNegocioSistema
-                    JOIN
-                        dbo.ftc_sistema AL3 ON AL3.idSistema = AL2.idSistema
-                    JOIN
-                        dbo.ftc_pais AL4 ON AL4.idPais = AL2.idPais
-                    JOIN
-                        dbo.ftc_negocio AL5 ON AL5.idNegocio = AL2.idNegocio
+                        -- CAMBIO: Usamos la nueva tabla maestra de sistemas activos
+                        dbo.ftc_pns_2 AL2 ON AL2.idPaisNegocioSistema = AL1.idPaisNegocioSistema
                     LEFT JOIN
                         dbo.ftc_Subgerencias S ON AL1.Nomccostospr = S.Nom_Subgerencia
                     LEFT JOIN
@@ -139,7 +138,7 @@ namespace ABM.Servicios
                 });
             }
         }
-        // --- Búsqueda en Active Directory (Fase 1) ---
+
         public async Task<IEnumerable<AdUser>> BuscarUsuariosEnAd(string employeeId, string displayName, string mail)
         {
             using (IDbConnection db = new SqlConnection(connectionString))
@@ -147,7 +146,7 @@ namespace ABM.Servicios
                 var sql = @"
             SELECT
                 employeeID,
-                cn AS DisplayName, -- CAMBIO: Se obtiene 'cn' y se asigna a la propiedad DisplayName
+                cn AS DisplayName,
                 mail,
                 sAMAccountName,
                 title,
@@ -159,13 +158,8 @@ namespace ABM.Servicios
             FROM
                 dbo.ftc_ad
             WHERE
-                -- Aplicar el filtro de ID con igualdad (mucho más rápido) si no está vacío.
                 (@employeeId IS NOT NULL AND employeeID = @employeeId)
-
-                -- O aplicar el filtro de nombre (usando la columna 'cn') si no está vacío.
-                OR (@displayName IS NOT NULL AND cn LIKE '%' + @displayName + '%') -- CAMBIO: Se busca en la columna 'cn'
-
-                -- O aplicar el filtro de correo si no está vacío.
+                OR (@displayName IS NOT NULL AND cn LIKE '%' + @displayName + '%')
                 OR (@mail IS NOT NULL AND mail LIKE '%' + @mail + '%');";
 
                 return await db.QueryAsync<AdUser>(sql, new
@@ -176,7 +170,7 @@ namespace ABM.Servicios
                 });
             }
         }
-        // --- Implementación Fase 2 (AÑADIR ESTE MÉTODO) ---
+
         public async Task<IEnumerable<ActivosFalanetUser>> BuscarEnActivosFalanet(string rut, string nombreCompleto, string correo)
         {
             using (IDbConnection db = new SqlConnection(connectionString))
@@ -207,6 +201,5 @@ namespace ABM.Servicios
                 });
             }
         }
-
     }
 }
