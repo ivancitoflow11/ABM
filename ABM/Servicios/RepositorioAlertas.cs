@@ -31,7 +31,7 @@ namespace ABM.Servicios
         {
             using (IDbConnection dbdapper = new SqlConnection(connectionString))
             {
-                // AJUSTE QUERY 1: Cruzamos con ftc_pns_2 en ambas CTEs
+                // AJUSTE: Usamos COALESCE(RUT, ID, NOMBRE) para identificar usuarios únicos.
                 return await dbdapper.QueryAsync<EstadisticasUsuarios>(@"
             WITH ActivosData AS (
                 SELECT 
@@ -40,11 +40,13 @@ namespace ABM.Servicios
                     AL1.VERTICAL AS Vertical,
                     AL1.SISTEMA AS Sistema,
                     AL1.BANDERA AS Bandera,
-                    COUNT(CASE WHEN AL1.estado = 'ACTIVO' THEN 1 END) AS Activos,
-                    COUNT(CASE WHEN AL1.estado = 'FINIQUITADO' THEN 1 END) AS Finiquitados,
-                    COUNT(CASE WHEN AL1.estado = 'NO ENCONTRADO' THEN 1 END) AS No_Encontrados,
-                    COUNT(CASE WHEN AL1.estado = 'CUENTA DUPLICADA' THEN 1 END) AS CtaDuplicadas,
-                    COUNT(CASE WHEN AL1.estado IN ('ACTIVO', 'FINIQUITADO', 'NO ENCONTRADO') OR AL1.estado = 'CUENTA DUPLICADA' THEN 1 END) AS total_Usuarios
+                    -- AQUI ESTA EL CAMBIO: COALESCE busca el primero que tenga datos (RUT -> ID -> NOMBRE)
+                    COUNT(DISTINCT CASE WHEN AL1.estado = 'ACTIVO' THEN COALESCE(AL1.RUT_DNI, AL1.ID_USUARIO, AL1.NOMBRE) END) AS Activos,
+                    COUNT(DISTINCT CASE WHEN AL1.estado = 'FINIQUITADO' THEN COALESCE(AL1.RUT_DNI, AL1.ID_USUARIO, AL1.NOMBRE) END) AS Finiquitados,
+                    COUNT(DISTINCT CASE WHEN AL1.estado = 'NO ENCONTRADO' THEN COALESCE(AL1.RUT_DNI, AL1.ID_USUARIO, AL1.NOMBRE) END) AS No_Encontrados,
+                    COUNT(DISTINCT CASE WHEN AL1.estado = 'CUENTA DUPLICADA' THEN COALESCE(AL1.RUT_DNI, AL1.ID_USUARIO, AL1.NOMBRE) END) AS CtaDuplicadas,
+                    -- Total general con la misma lógica
+                    COUNT(DISTINCT CASE WHEN AL1.estado IN ('ACTIVO', 'FINIQUITADO', 'NO ENCONTRADO') OR AL1.estado = 'CUENTA DUPLICADA' THEN COALESCE(AL1.RUT_DNI, AL1.ID_USUARIO, AL1.NOMBRE) END) AS total_Usuarios
                 FROM (
                     SELECT 
                         b.PAIS, 
@@ -64,7 +66,6 @@ namespace ABM.Servicios
                         a.ESTADO, 
                         b.BANDERA
                     FROM ftc_agrupa_activos_app a 
-                    -- NUEVO CRUCE OBLIGATORIO CON PNS_2
                     INNER JOIN [ABM_FTC].[dbo].[ftc_pns_2] pns ON a.IDSISTEMA = pns.idSistema AND a.IDNEGOCIO = pns.idNegocio
                     LEFT OUTER JOIN ftc_pais b ON a.pais = b.pais OR a.pais = b.codPais 
                 ) AL1
@@ -82,7 +83,6 @@ namespace ABM.Servicios
                     ISNULL(ftc_gestion_diaria.entre_4_6, 0) AS De_4_a_6_Dias_Sin_Gestion,
                     ISNULL(ftc_gestion_diaria.mayor_a_6, 0) AS Mas_de_6_Dias_Sin_Gestion
                 FROM ftc_gestion_diaria 
-                -- REEMPLAZAMOS EL UNION POR CRUCE DIRECTO CON PNS_2 PARA FILTRAR ACTIVOS
                 INNER JOIN [ABM_FTC].[dbo].[ftc_pns_2] b ON ftc_gestion_diaria.idPaisNegocioSistema = b.idPaisNegocioSistema
                 WHERE 
                     ftc_gestion_diaria.feccarga = (

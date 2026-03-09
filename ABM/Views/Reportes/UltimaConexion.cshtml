@@ -1,9 +1,13 @@
 ﻿
 @model IEnumerable<ABM.Models.UltimaConexion>
 @using System.Linq
-
+@{
+    ViewData["Title"] = "Reporte de Última Conexión";
+    // Texto enfocado solo en Última Conexión y Filtros
+    ViewBag.TextoAyuda = "En este reporte podrá consultar el historial de acceso de los usuarios, detallando la fecha y hora de su última conexión registrada en la plataforma. Utilice el menú superior para filtrar y visualizar la actividad específica por Sistema.";
+}
 <link rel="stylesheet" href="~/css/botones.css" asp-append-version="true" />
-
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
 <div class="pt-5">
     <h4 class="mt-5">Reporte de Última Conexión</h4>
 

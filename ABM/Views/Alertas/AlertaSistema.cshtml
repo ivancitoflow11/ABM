@@ -1,9 +1,14 @@
 ﻿@model ABM.Models.AlertaSistemaViewModel
-
+@{
+    ViewData["Title"] = "Alerta Sistema";
+    // Lo que dirá Frank en esta pantalla:
+    ViewBag.TextoAyuda = "Aquí podrá visualizar el resumen de incidencias por sistema (Finiquitados, No Encontrados y Duplicados), clasificado por Negocio y Sistema. Haga clic en los números de la tabla para ver el detalle de usuarios o use el botón 'Ver Detalles' para estadísticas agrupadas.";
+}
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <link rel="stylesheet" href="~/css/botones.css" asp-append-version="true" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Alerta Sistema</title>

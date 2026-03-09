@@ -1,8 +1,47 @@
 ﻿@model IEnumerable<ABM.Models.Finiquitados>
 @using System.Linq
-
+@{
+    // Texto que dirá el Asistente Frank
+    ViewBag.TextoAyuda = "En esta sección encontrará el listado detallado de usuarios con estado Finiquitado. Utilice el filtro superior para buscar por Sistema y visualizar información clave como la fecha de baja, RUT y el estado actual de la cuenta.";
+}
 <link rel="stylesheet" href="~/css/botones.css" asp-append-version="true" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
 
+<style>
+    /* --- ESTILOS ASISTENTE FRANK --- */
+    .frank-box {
+        background-color: #f8f9fa;
+        border-left: 5px solid #9ec630;
+        padding: 15px 20px;
+        margin-bottom: 25px; /* Separación con la tarjeta */
+        border-radius: 4px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        display: flex;
+        align-items: flex-start;
+        gap: 15px;
+    }
+
+    .frank-icon i {
+        font-size: 2rem;
+        color: #9ec630;
+    }
+
+    .frank-title {
+        color: #2c3e50;
+        font-weight: 800;
+        text-transform: uppercase;
+        margin-bottom: 5px;
+        font-size: 1rem;
+        letter-spacing: 0.5px;
+    }
+
+    .frank-content {
+        color: #555;
+        font-size: 0.95rem;
+        line-height: 1.4;
+        margin: 0;
+    }
+</style>
 <div class="pt-5">
     <h4 class="mt-5">Usuarios Finiquitados</h4>
 

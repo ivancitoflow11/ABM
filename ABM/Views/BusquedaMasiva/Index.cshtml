@@ -2,6 +2,8 @@
 
 @{
     ViewData["Title"] = "Búsqueda Masiva de Usuarios";
+    // Texto del Asistente Frank para Búsqueda Masiva
+    ViewBag.TextoAyuda = "Utilice esta herramienta para realizar consultas masivas cargando un archivo Excel con una lista de RUTs o Correos. Obtendrá un reporte consolidado con el estado de cada usuario, alertas de inconsistencia y detalles de acceso.";
 }
 
 <!DOCTYPE html>
@@ -16,7 +18,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <style>
         :root {
             --bg-color: #f4f7f9;

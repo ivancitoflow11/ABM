@@ -1,6 +1,11 @@
 ﻿@using Newtonsoft.Json
 @model VisionViewModel
 
+@{
+    // Texto que dirá el Asistente Frank en esta pantalla
+    ViewBag.TextoAyuda = "En esta vista podrá monitorear la situación global del negocio mediante un mapa interactivo. Consulte el resumen de riesgos por sistema y país, mapas de calor de riesgo perfil y la gestión histórica de finiquitos con gráficas de tendencia.";
+}
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -8,7 +13,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Vision Corporativa</title>
     <link href="~/css/leaflet.css" rel="stylesheet" />
-
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <style>
         .color-legend {
             display: flex;

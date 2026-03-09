@@ -89,8 +89,17 @@ namespace ABM.Controllers
 			return value;
 		}
 
-		// Acción para Finiquitados
-		[HttpGet]
+        // Acción para Datos AD (NUEVO)
+        [HttpGet]
+        [Monitoreo("DescargarDatosADCSV", "SELECT", "descargarDatosADCSV")]
+        public async Task<IActionResult> DescargarDatosADCSV(string downloadToken)
+        {
+            var datos = await _repositorioDescargas.ObtenerDatosAD();
+            return GenerarRespuestaCsv(datos, "DatosAD", downloadToken);
+        }
+
+        // Acción para Finiquitados
+        [HttpGet]
         [Monitoreo("DescargarFiniquitadosCSV", "SELECT", "descargarFiniquitadosCSV")]
         public async Task<IActionResult> DescargarFiniquitadosCSV(string downloadToken) // Aceptar token
 		{

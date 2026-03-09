@@ -350,31 +350,7 @@
 								</li>
 							}
 						}
-					
-						<li class="sidebar-item">
-							<a class="sidebar-link has-arrow" href="javascript:void(0)" aria-expanded="false">
-								<i class="fa-solid fa-download"></i>
-								<span class="hide-menu">Descargar</span>
-							</a>
-							<ul aria-expanded="false" class="collapse first-level">
-								<li class="sidebar-item">
-									<a id="btnDescargarFiniquitados" href="@Url.Action("DescargarFiniquitadosCSV","Descargas")" class="sidebar-link sublink">
-										<div class="round-16 d-flex align-items-center justify-content-center">
-											<iconify-icon icon="solar:stop-circle-line-duotone"></iconify-icon>
-										</div>
-										<span class="hide-menu">Finiquitados CSV</span>
-									</a>
-								</li>
-								<li class="sidebar-item">
-									<a id="btnDescargarActivosFalanet" href="@Url.Action("DescargarActivosFalanetCSV","Descargas")" class="sidebar-link sublink">
-										<div class="round-16 d-flex align-items-center justify-content-center">
-											<iconify-icon icon="solar:stop-circle-line-duotone"></iconify-icon>
-										</div>
-										<span class="hide-menu">Activos CSV</span>
-									</a>
-								</li>
-							</ul>
-						</li>
+				
 						
 						<li class="sidebar-item">
 							<a class="sidebar-link" asp-controller="Home" asp-action="Salir">
@@ -1356,7 +1332,7 @@
 	</script>
 
 	<script>
-		// Funciones auxiliares para cookies (para la lógica de descarga)
+		// 1. Funciones auxiliares para cookies (NO TOCAR)
 		function getCookie(name) {
 			const value = `; ${document.cookie}`;
 			const parts = value.split(`; ${name}=`);
@@ -1368,121 +1344,111 @@
 			document.cookie = name + '=; Path=' + path + '; Expires=Thu, 01 Jan 1970 00:00:01 GMT;';
 		}
 
-		function initializeDownloadButton(buttonId, fileDescription) {
-			const button = document.getElementById(buttonId);
-			if (!button) {
-				// console.warn(`Botón de descarga con ID '${buttonId}' no encontrado.`);
-				return;
-			}
+		// 2. Lógica central de descarga (GENÉRICA)
+		function ejecutarDescarga(url, descripcionArchivo) {
+			const downloadToken = new Date().getTime().toString();
+			const successCookieName = `download_status_${downloadToken}`;
+			const errorCookieName = `download_error_${downloadToken}`;
 
-			button.addEventListener('click', function (event) {
-				event.preventDefault();
+			deleteCookie(successCookieName);
+			deleteCookie(errorCookieName);
 
-				const originalHref = this.href;
-				const downloadToken = new Date().getTime().toString();
-				const successCookieName = `download_status_${downloadToken}`;
-				const errorCookieName = `download_error_${downloadToken}`;
+			// Agregamos el token a la URL
+			const separator = url.includes('?') ? '&' : '?';
+			const downloadUrlWithToken = `${url}${separator}downloadToken=${downloadToken}`;
 
-				deleteCookie(successCookieName);
-				deleteCookie(errorCookieName);
-
-				const downloadUrlWithToken = originalHref + (originalHref.includes('?') ? '&' : '?') + `downloadToken=${downloadToken}`;
-
-				Swal.fire({
-					title: 'Procesando descarga...',
-					html: `Preparando tu archivo de ${fileDescription}.<br/>Por favor, espera.`,
-					allowOutsideClick: false,
-					allowEscapeKey: false,
-					didOpen: () => {
-						Swal.showLoading();
-					}
-				});
-
-				const iframe = document.createElement('iframe');
-				iframe.style.display = 'none';
-				iframe.src = downloadUrlWithToken;
-				document.body.appendChild(iframe);
-
-				let checkCookieInterval = setInterval(function () {
-					const successStatus = getCookie(successCookieName);
-					const errorStatus = getCookie(errorCookieName);
-
-					if (successStatus === 'completed') {
-						clearInterval(checkCookieInterval);
-						deleteCookie(successCookieName);
-						if (document.body.contains(iframe)) document.body.removeChild(iframe);
-
-						Swal.fire({
-							icon: 'success',
-							title: '¡Descarga Completada!',
-							text: `Tu archivo de ${fileDescription} se ha descargado!.`,
-							timer: 3500,
-							timerProgressBar: true
-						});
-					} else if (errorStatus) {
-						clearInterval(checkCookieInterval);
-						deleteCookie(errorCookieName);
-						if (document.body.contains(iframe)) document.body.removeChild(iframe);
-
-						let errorMessageText = `No se pudo preparar el archivo de ${fileDescription}.`;
-						if (errorStatus === 'nodata') {
-							errorMessageText = `No hay datos disponibles para la descarga de ${fileDescription}.`;
-						} else if (errorStatus === 'processing') {
-							errorMessageText = `Hubo un error al procesar los datos para ${fileDescription}.`;
-						}
-
-						Swal.fire({
-							icon: 'error',
-							title: 'Error en la Descarga',
-							text: errorMessageText
-						});
-					}
-				}, 1000);
-
-				setTimeout(() => {
-					if (getCookie(successCookieName) === null && getCookie(errorCookieName) === null) {
-						clearInterval(checkCookieInterval);
-						if (document.body.contains(iframe)) document.body.removeChild(iframe);
-						if (Swal.isLoading()) { // Solo si el Swal de carga sigue activo
-							Swal.fire({
-								icon: 'warning',
-								title: 'Tiempo de Espera Agotado',
-								text: 'No se recibió confirmación del servidor para la descarga. Por favor, intenta de nuevo.'
-							});
-						}
-					}
-				}, 60000);
+			Swal.fire({
+				title: 'Procesando descarga...',
+				html: `Preparando tu archivo de <b>${descripcionArchivo}</b>.<br/>Por favor, espera.`,
+				allowOutsideClick: false,
+				allowEscapeKey: false,
+				didOpen: () => { Swal.showLoading(); }
 			});
+
+			const iframe = document.createElement('iframe');
+			iframe.style.display = 'none';
+			iframe.src = downloadUrlWithToken;
+			document.body.appendChild(iframe);
+
+			let checkCookieInterval = setInterval(function () {
+				const successStatus = getCookie(successCookieName);
+				const errorStatus = getCookie(errorCookieName);
+
+				if (successStatus === 'completed') {
+					clearInterval(checkCookieInterval);
+					deleteCookie(successCookieName);
+					if (document.body.contains(iframe)) document.body.removeChild(iframe);
+
+					Swal.fire({
+						icon: 'success',
+						title: '¡Descarga Completada!',
+						text: `Tu archivo de ${descripcionArchivo} se ha descargado!.`,
+						timer: 3500,
+						timerProgressBar: true
+					});
+				} else if (errorStatus) {
+					clearInterval(checkCookieInterval);
+					deleteCookie(errorCookieName);
+					if (document.body.contains(iframe)) document.body.removeChild(iframe);
+
+					let msg = `No se pudo preparar el archivo de ${descripcionArchivo}.`;
+					if (errorStatus === 'nodata') msg = `No hay datos disponibles para ${descripcionArchivo}.`;
+					else if (errorStatus === 'processing') msg = `Error al procesar datos de ${descripcionArchivo}.`;
+
+					Swal.fire({ icon: 'error', title: 'Error', text: msg });
+				}
+			}, 1000);
+
+			// Timeout de 1 minuto por si acaso
+			setTimeout(() => {
+				if (getCookie(successCookieName) === null && getCookie(errorCookieName) === null) {
+					clearInterval(checkCookieInterval);
+					if (document.body.contains(iframe)) document.body.removeChild(iframe);
+					if (Swal.isLoading()) {
+						Swal.fire({ icon: 'warning', title: 'Tiempo Agotado', text: 'El servidor tardó demasiado en responder.' });
+					}
+				}
+			}, 60000);
 		}
 
-		// Inicialización de los botones de descarga y manejo de TempData
+		// 3. DETECTOR INTELIGENTE DE CLICS (ACTUALIZADO CON AD)
+			document.addEventListener('click', function (e) {
+				const link = e.target.closest('a');
+
+				if (link && link.href) {
+					// Finiquitados
+					if (link.href.includes('DescargarFiniquitadosCSV')) {
+						e.preventDefault();
+						ejecutarDescarga(link.href, 'Finiquitados General');
+					}
+					// Activos Falanet
+					else if (link.href.includes('DescargarActivosFalanetCSV')) {
+						e.preventDefault();
+						ejecutarDescarga(link.href, 'Activos Falanet');
+					}
+					// NUEVO: Datos AD
+					else if (link.href.includes('DescargarDatosADCSV')) {
+						e.preventDefault();
+						ejecutarDescarga(link.href, 'Datos Active Directory');
+					}
+				}
+			});
+
+		// 4. Manejo de Alertas del Backend (TempData)
 		document.addEventListener('DOMContentLoaded', function () {
-			initializeDownloadButton('btnDescargarFiniquitados', 'Finiquitados General');
-			initializeDownloadButton('btnDescargarActivosFalanet', 'Activos Falanet');
-
-		@if (TempData["SuccessMessage"] != null)
-		{
-			<text>
-						Swal.fire({
-							icon: 'success',
-						title: '@Html.Raw(TempData["SuccessMessage"])',
-						showConfirmButton: false,
-						timer: 2000
-							});
-			</text>
-		}
-		@if (TempData["ErrorMessage"] != null)
-		{
-			<text>
-						Swal.fire({
-							icon: 'error',
-						title: 'Atención',
-						text: '@Html.Raw(TempData["ErrorMessage"])',
-						showConfirmButton: true
-							});
-			</text>
-		}
-			});
+			@if (TempData["SuccessMessage"] != null)
+			{
+					<text>
+					Swal.fire({ icon: 'success', title: '@Html.Raw(TempData["SuccessMessage"])', showConfirmButton: false, timer: 2000 });
+					</text>
+			}
+			@if (TempData["ErrorMessage"] != null)
+			{
+					<text>
+					Swal.fire({ icon: 'error', title: 'Atención', text: '@Html.Raw(TempData["ErrorMessage"])', showConfirmButton: true });
+					</text>
+			}
+		});
 	</script>
 	<script>
 		$(document).ready(function () {

@@ -1,8 +1,11 @@
 ﻿@model IEnumerable<ABM.Models.UsuariosNoEncontrados>
 @using System.Linq
-
+@{
+    // Texto que dirá el Asistente Frank
+    ViewBag.TextoAyuda = "En esta sección visualizará el listado de usuarios clasificados como 'No Encontrados', es decir, cuentas que no presentan coincidencias con la fuente de datos oficial. Utilice el filtro por Sistema para segmentar los resultados.";
+}
 <link rel="stylesheet" href="~/css/botones.css" asp-append-version="true" />
-
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
 <div class="pt-5">
     <h4 class="mt-5">Usuarios NO Encontrados</h4>
 

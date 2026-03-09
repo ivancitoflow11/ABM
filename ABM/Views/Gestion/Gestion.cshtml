@@ -1,14 +1,16 @@
 ﻿@model GestionViewModel
-@*
-    For more information on enabling MVC for empty projects, visit 
-
-*@
+@{
+    ViewData["Title"] = "Gestión";
+    // Texto corregido para la vista de Gestión
+    ViewBag.TextoAyuda = "En este panel de Gestión podrá monitorear los indicadores operativos clave: contadores de estado en tiempo real (Activos, Finiquitados, Riesgo), tablas de evidencias clasificadas por antigüedad y gráficas de tendencias para el análisis por sistema y país.";
+}
 @{
 }
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <link rel="stylesheet" href="~/css/botones.css" asp-append-version="true" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gestión</title>

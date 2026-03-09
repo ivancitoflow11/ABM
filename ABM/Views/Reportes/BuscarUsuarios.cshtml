@@ -1,8 +1,11 @@
 ﻿@model IEnumerable<ABM.Models.UsersBuscar>
 @using System
-
+@{
+    // Texto del Asistente Frank para Buscar Usuarios
+    ViewBag.TextoAyuda = "Utilice este buscador para localizar usuarios específicos ingresando su RUT o Nombre. Obtendrá un reporte detallado que incluye estado actual, fechas de finiquito, última conexión registrada y sistema asociado.";
+}
 <link rel="stylesheet" href="~/css/botones.css" asp-append-version="true" />
-
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
 <div class="pt-5">
     <h4 class="mt-5">Buscar Usuarios</h4>
 
