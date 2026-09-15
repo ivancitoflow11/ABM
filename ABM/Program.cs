@@ -66,6 +66,7 @@ builder.Services.AddTransient<IRepositorioBuscador, RepositorioBuscador>();
 builder.Services.AddTransient<IRepositorioConsultaUsuario, RepositorioConsultaUsuario>();
 builder.Services.AddTransient<IRepositorioBusquedaMasiva, RepositorioBusquedaMasiva>();
 builder.Services.AddTransient<IRepositorioResumen, RepositorioResumen>();
+builder.Services.AddTransient<IRepositorioSolicitudes, RepositorioSolicitudes>();
 builder.Services.AddAutoMapper(typeof(Program));
 
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)

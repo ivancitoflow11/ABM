@@ -1,0 +1,121 @@
+@model List<ABM.Models.Solicitud>
+
+@{
+    ViewData["Title"] = "Administrar Solicitudes";
+}
+
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">@ViewData["Title"]</h3>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table id="tablaSolicitudes" class="table table-bordered table-striped">
+                            <thead>
+                                <tr>
+                                    <th>N° Ticket</th>
+                                    <th>Usuario</th>
+                                    <th>Correo</th>
+                                    <th>Asunto</th>
+                                    <th>Mensaje</th>
+                                    <th>Estado</th>
+                                    <th>Fecha Creación</th>
+                                    <th>Fecha Cambio Estado</th>
+                                    <th>Actualizado Por</th>
+                                    <th>Acción</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @if (Model != null)
+                                {
+                                    foreach (var s in Model)
+                                    {
+                                        <tr data-id-solicitud="@s.idSolicitud">
+                                            <td>@s.idSolicitud</td>
+                                            <td>@s.NombreCreador</td>
+                                            <td>@s.CorreoCreador</td>
+                                            <td>@s.asunto</td>
+                                            <td>@s.mensaje</td>
+                                            <td class="celda-estado">
+                                                <span class="badge @(s.estado == "Completada" ? "bg-success" : s.estado == "En curso" ? "bg-warning" : "bg-secondary")">
+                                                    @s.estado
+                                                </span>
+                                            </td>
+                                            <td>@s.FechaCreacion.ToString("yyyy-MM-dd HH:mm")</td>
+                                            <td class="celda-fecha-cambio">@(s.FechaCambioEstado.HasValue ? s.FechaCambioEstado.Value.ToString("yyyy-MM-dd HH:mm") : "-")</td>
+                                            <td>@(s.NombreActualizo ?? "-")</td>
+                                            <td style="white-space:nowrap;">
+                                                <select class="form-select form-select-sm select-nuevo-estado" style="display:inline-block; width:auto;">
+                                                    <option value="Pendiente" selected="@(s.estado == "Pendiente")">Pendiente</option>
+                                                    <option value="En curso" selected="@(s.estado == "En curso")">En curso</option>
+                                                    <option value="Completada" selected="@(s.estado == "Completada")">Completada</option>
+                                                </select>
+                                                <button type="button" class="btn btn-primary btn-sm btn-guardar-estado">
+                                                    <i class="fa-solid fa-check"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    }
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="/libs/datatables.net/js/jquery.dataTables.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            var token = $('input[name="__RequestVerificationToken"]').val();
+
+            $('#tablaSolicitudes').DataTable({
+                order: [[6, "desc"]]
+            });
+
+            $(document).on('click', '.btn-guardar-estado', function () {
+                var fila = $(this).closest('tr');
+                var idSolicitud = fila.data('idSolicitud');
+                var nuevoEstado = fila.find('.select-nuevo-estado').val();
+
+                Swal.fire({
+                    title: '¿Confirmar cambio de estado?',
+                    text: 'La solicitud pasará a estado "' + nuevoEstado + '".',
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonText: 'Sí, actualizar',
+                    cancelButtonText: 'Cancelar'
+                }).then(function (result) {
+                    if (!result.isConfirmed) return;
+
+                    $.ajax({
+                        url: '@Url.Action("CambiarEstado", "Solicitudes")',
+                        type: 'POST',
+                        data: {
+                            idSolicitud: idSolicitud,
+                            nuevoEstado: nuevoEstado,
+                            __RequestVerificationToken: token
+                        }
+                    }).done(function (res) {
+                        if (res.success) {
+                            Swal.fire({ icon: 'success', title: 'Listo', text: res.message, timer: 1500, showConfirmButton: false })
+                                .then(function () { location.reload(); });
+                        } else {
+                            Swal.fire({ icon: 'error', title: 'Atención', text: res.message });
+                        }
+                    }).fail(function () {
+                        Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudo contactar al servidor.' });
+                    });
+                });
+            });
+        });
+    </script>
+}
+
+@Html.AntiForgeryToken()

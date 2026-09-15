@@ -1,0 +1,88 @@
+@model List<ABM.Models.Solicitud>
+
+@{
+    ViewData["Title"] = "Mis Solicitudes";
+}
+
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-lg-4 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Nueva Solicitud</h3>
+                </div>
+                <div class="card-body">
+                    <form asp-controller="Solicitudes" asp-action="Crear" method="post">
+                        @Html.AntiForgeryToken()
+                        <div class="form-group mb-3">
+                            <label class="control-label">Asunto</label>
+                            <input name="Asunto" type="text" maxlength="200" required class="form-control" placeholder="Asunto de tu solicitud" />
+                        </div>
+                        <div class="form-group mb-3">
+                            <label class="control-label">Mensaje</label>
+                            <textarea name="Mensaje" maxlength="4000" required rows="6" class="form-control" placeholder="Cuéntanos qué necesitas"></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="fa-solid fa-paper-plane"></i> Enviar Solicitud
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-8 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">@ViewData["Title"]</h3>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table id="tablaMisSolicitudes" class="table table-bordered table-striped">
+                            <thead>
+                                <tr>
+                                    <th>N° Ticket</th>
+                                    <th>Asunto</th>
+                                    <th>Mensaje</th>
+                                    <th>Estado</th>
+                                    <th>Fecha Creación</th>
+                                    <th>Fecha Cambio Estado</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @if (Model != null)
+                                {
+                                    foreach (var s in Model)
+                                    {
+                                        <tr>
+                                            <td>@s.idSolicitud</td>
+                                            <td>@s.asunto</td>
+                                            <td>@s.mensaje</td>
+                                            <td>
+                                                <span class="badge @(s.estado == "Completada" ? "bg-success" : s.estado == "En curso" ? "bg-warning" : "bg-secondary")">
+                                                    @s.estado
+                                                </span>
+                                            </td>
+                                            <td>@s.FechaCreacion.ToString("yyyy-MM-dd HH:mm")</td>
+                                            <td>@(s.FechaCambioEstado.HasValue ? s.FechaCambioEstado.Value.ToString("yyyy-MM-dd HH:mm") : "-")</td>
+                                        </tr>
+                                    }
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="/libs/datatables.net/js/jquery.dataTables.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            $('#tablaMisSolicitudes').DataTable({
+                order: [[4, "desc"]]
+            });
+        });
+    </script>
+}
