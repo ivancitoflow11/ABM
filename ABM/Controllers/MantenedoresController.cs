@@ -43,6 +43,50 @@ namespace ABM.Controllers
             _webHostEnvironment = webHostEnvironment;
         }
 
+        private const string MensajeRolSuperior = "No puede asignar ni modificar un rol (o a un usuario con un rol) que tenga más permisos de menú que el suyo.";
+        private const string MensajeMenuSuperior = "Sólo puede otorgar menús que su propio rol ya tiene asignados.";
+
+        // Jerarquía de roles: nadie puede otorgar ni tocar más permisos de los que tiene. Con roles
+        // dinámicos no hay un "nivel", así que se compara por inclusión de menús permitidos (ftc_PermisosMenu).
+        private async Task<HashSet<int>> ObtenerMenusDelActorAsync()
+        {
+            var actor = await _repositorioUsuarios.ObtenerDatosUsuarioPerfilLogeado();
+            if (actor?.idRol == null)
+            {
+                return new HashSet<int>();
+            }
+
+            return (await _repositorioRoles.ObtenerMenusSeleccionadosPorRol(actor.idRol.Value)).ToHashSet();
+        }
+
+        private async Task<bool> MenusSonAsignablesAsync(IEnumerable<int> menus)
+        {
+            if (menus == null)
+            {
+                return true;
+            }
+
+            var menusActor = await ObtenerMenusDelActorAsync();
+            return menus.All(menusActor.Contains);
+        }
+
+        private async Task<bool> PuedeOtorgarRolAsync(int? idRolObjetivo)
+        {
+            if (!idRolObjetivo.HasValue)
+            {
+                return true;
+            }
+
+            var menusObjetivo = await _repositorioRoles.ObtenerMenusSeleccionadosPorRol(idRolObjetivo.Value);
+            return await MenusSonAsignablesAsync(menusObjetivo);
+        }
+
+        private async Task<IEnumerable<MenuModel>> ObtenerMenusAsignablesAsync()
+        {
+            var menusActor = await ObtenerMenusDelActorAsync();
+            return (await _repositorioRoles.ObtenerMenus()).Where(m => menusActor.Contains(m.IdMenu)).ToList();
+        }
+
         [HttpGet]
         [Monitoreo("Registrarse", "SELECT", "verFormRegistrarse")]
         public async Task<IActionResult> Registrarse()
@@ -85,6 +129,15 @@ namespace ABM.Controllers
             {
                 ModelState.AddModelError("Repeat_Password", "Las contraseñas no coinciden.");
                 // También hay que recargar los dropdowns antes de volver a la vista
+                model.RolesDisponibles = await _repositorioUsuarios.ObtenerRoles();
+                model.GerenciasDisponibles = (await _repositorioConfiguracion.ObtenerGerencias())
+                                                 .Select(g => new SelectListItem { Value = g.IdGerencia.ToString(), Text = g.Nom_Gerencia }).ToList();
+                return View(model);
+            }
+
+            if (!await PuedeOtorgarRolAsync(model.RolId))
+            {
+                ModelState.AddModelError("RolId", MensajeRolSuperior);
                 model.RolesDisponibles = await _repositorioUsuarios.ObtenerRoles();
                 model.GerenciasDisponibles = (await _repositorioConfiguracion.ObtenerGerencias())
                                                  .Select(g => new SelectListItem { Value = g.IdGerencia.ToString(), Text = g.Nom_Gerencia }).ToList();
@@ -238,6 +291,12 @@ public async Task<IActionResult> EditarUsuario(int id)
                 return RedirectToAction("ListaUsuarios");
             }
 
+            if (!await PuedeOtorgarRolAsync(usuario.idRol))
+            {
+                TempData["ErrorMessage"] = MensajeRolSuperior;
+                return RedirectToAction("ListaUsuarios");
+            }
+
             // Obtiene los datos necesarios para los menús desplegables (roles y gerencias).
             var roles = await _repositorioUsuarios.ObtenerRoles();
             var gerencias = await _repositorioConfiguracion.ObtenerGerencias();
@@ -296,6 +355,14 @@ public async Task<IActionResult> EditarUsuario(int id)
             {
                 TempData["ErrorMessage"] = "Usuario no encontrado.";
                 return RedirectToAction("ListaUsuarios");
+            }
+
+            // El rol actual sale de la BD (no del formulario) y el nuevo se valida antes de tocar archivos o datos.
+            if (!await PuedeOtorgarRolAsync(usuarioExistente.idRol) || !await PuedeOtorgarRolAsync(model.RolId))
+            {
+                ModelState.AddModelError("", MensajeRolSuperior);
+                await PopulateDropdowns(model);
+                return View(model);
             }
 
             // --- LÓGICA PARA ACTUALIZAR LA FIRMA ---
@@ -376,7 +443,7 @@ public async Task<IActionResult> EditarUsuario(int id)
             var model = new RolWizardViewModel();
             // Asegurar que las listas para los pasos se cargan
             ViewBag.PNSModelList = await _repositorioRoles.ObtenerPaisNegocioSistemasActivos();
-            ViewBag.MenusDisponibles = await _repositorioRoles.ObtenerMenus();
+            ViewBag.MenusDisponibles = await ObtenerMenusAsignablesAsync();
             // No es necesario ViewBag.IsEditMode aquí
             return View("CrearRolUnicaVista", model);
         }
@@ -405,11 +472,15 @@ public async Task<IActionResult> EditarUsuario(int id)
                 // Aunque el wizard lo valida en cliente, una validación de servidor es buena.
                 ModelState.AddModelError("ListaMenusSeleccionados", "Debe seleccionar al menos un menú.");
             }
+            else if (!await MenusSonAsignablesAsync(model.ListaMenusSeleccionados))
+            {
+                ModelState.AddModelError("ListaMenusSeleccionados", MensajeMenuSuperior);
+            }
 
 
             if (!ModelState.IsValid)
             {
-                ViewBag.MenusDisponibles = await _repositorioRoles.ObtenerMenus();
+                ViewBag.MenusDisponibles = await ObtenerMenusAsignablesAsync();
                 ViewBag.PNSModelList = await _repositorioRoles.ObtenerPaisNegocioSistemasActivos();
                 return View("CrearRolUnicaVista", model);
             }
@@ -456,6 +527,12 @@ public async Task<IActionResult> EditarUsuario(int id)
                 return RedirectToAction("ListarRoles");
             }
 
+            if (!await PuedeOtorgarRolAsync(id))
+            {
+                TempData["ErrorMessage"] = MensajeRolSuperior;
+                return RedirectToAction("ListarRoles");
+            }
+
             var model = new RolWizardViewModel
             {
                 IdRol = rolDb.IdRol,
@@ -466,7 +543,7 @@ public async Task<IActionResult> EditarUsuario(int id)
             };
 
             ViewBag.PNSModelList = await _repositorioRoles.ObtenerPaisNegocioSistemasActivos();
-            ViewBag.MenusDisponibles = await _repositorioRoles.ObtenerMenus();
+            ViewBag.MenusDisponibles = await ObtenerMenusAsignablesAsync();
             // No es necesario ViewBag.IsEditMode aquí, ya que es una vista dedicada
             return View("EditarRolWizard", model); // Nueva vista para editar
         }
@@ -479,6 +556,13 @@ public async Task<IActionResult> EditarUsuario(int id)
             if (!model.IdRol.HasValue) // Seguridad básica
             {
                 TempData["ErrorMessage"] = "Error al identificar el rol a editar.";
+                return RedirectToAction("ListarRoles");
+            }
+
+            // No se puede modificar un rol que tenga más permisos que el propio.
+            if (!await PuedeOtorgarRolAsync(model.IdRol.Value))
+            {
+                TempData["ErrorMessage"] = MensajeRolSuperior;
                 return RedirectToAction("ListarRoles");
             }
 
@@ -500,11 +584,15 @@ public async Task<IActionResult> EditarUsuario(int id)
             {
                 ModelState.AddModelError("ListaMenusSeleccionados", "Debe seleccionar al menos un menú.");
             }
+            else if (!await MenusSonAsignablesAsync(model.ListaMenusSeleccionados))
+            {
+                ModelState.AddModelError("ListaMenusSeleccionados", MensajeMenuSuperior);
+            }
 
 
             if (!ModelState.IsValid)
             {
-                ViewBag.MenusDisponibles = await _repositorioRoles.ObtenerMenus();
+                ViewBag.MenusDisponibles = await ObtenerMenusAsignablesAsync();
                 ViewBag.PNSModelList = await _repositorioRoles.ObtenerPaisNegocioSistemasActivos();
                 return View("EditarRolWizard", model); // Apuntar a la vista de edición en caso de error
             }
@@ -529,7 +617,7 @@ public async Task<IActionResult> EditarUsuario(int id)
             catch (Exception ex)
             {
                 TempData["ErrorMessage"] = $"Error al actualizar el rol: {ex.Message}";
-                ViewBag.MenusDisponibles = await _repositorioRoles.ObtenerMenus();
+                ViewBag.MenusDisponibles = await ObtenerMenusAsignablesAsync();
                 ViewBag.PNSModelList = await _repositorioRoles.ObtenerPaisNegocioSistemasActivos();
                 return View("EditarRolWizard", model); // Apuntar a la vista de edición en caso de error
             }
