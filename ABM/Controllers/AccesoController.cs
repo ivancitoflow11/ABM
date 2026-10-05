@@ -23,6 +23,10 @@ namespace ABM.Controllers
         private readonly IConfiguration _configuration;
 		private readonly IWebHostEnvironment _hostingEnvironment;
 
+        // Contexto de "cambio de clave pendiente": sólo lo emite Login() tras validar la contraseña
+        // (primer inicio o clave expirada). El usuario a modificar sale de acá, nunca del cuerpo del POST.
+        private const string TempDataCambioClave = "idUsuarioCambioClave";
+
 		public AccesoController(IRepositorioUsuarios repositorioUsuarios, IRepositorioRoles repositorioRoles, IConfiguration configuration, IWebHostEnvironment hostingEnvironment)
         {
             _repositorioUsuarios = repositorioUsuarios;
@@ -55,7 +59,7 @@ namespace ABM.Controllers
                 // Si es el primer inicio, redirigimos a cambiar contraseña
                 if (usuario.primerInicio)
                 {
-                    TempData["idUsuario"] = usuario.idUsuario;
+                    TempData[TempDataCambioClave] = usuario.idUsuario;
                     return RedirectToAction("CambiarPasswordPrimerInicio", "Acceso");
                 }
 
@@ -64,7 +68,7 @@ namespace ABM.Controllers
                     var fechaExpiracion = usuario.FechaCambioPassword.Value.AddMonths(usuario.MesesExpiracionClave);
                     if (DateTime.Now >= fechaExpiracion)
                     {
-                        TempData["idUsuario"] = usuario.idUsuario;
+                        TempData[TempDataCambioClave] = usuario.idUsuario;
                         TempData["ExpiracionClave"] = true;
                         return RedirectToAction("CambiarPasswordPrimerInicio", "Acceso");
                     }
@@ -234,22 +238,14 @@ namespace ABM.Controllers
         [Monitoreo("CambiarPasswordPrimerInicio", "SELECT", "verFormularioCambioPasswordPrimerInicio")]
         public IActionResult CambiarPasswordPrimerInicio()
         {
-            if (TempData["idUsuario"] == null)
+            // Peek no consume el valor: tiene que seguir disponible para el POST.
+            if (TempData.Peek(TempDataCambioClave) == null)
             {
                 TempData["MensajeError"] = "Ocurrió un error, por favor inicie sesión nuevamente.";
                 return RedirectToAction("Login");
             }
 
-            // Convertir el valor de TempData a int y asignarlo al modelo
-            int idUsuario = Convert.ToInt32(TempData["idUsuario"]);
-            TempData.Keep("idUsuario");
-
-            var model = new CambioPasswordVM
-            {
-                IdUsuario = idUsuario
-            };
-
-            return View(model);
+            return View(new CambioPasswordVM());
         }
 
         [AllowAnonymous]
@@ -258,25 +254,39 @@ namespace ABM.Controllers
         [Monitoreo("CambiarPasswordPrimerInicio", "UPDATE", "cambiarPasswordPrimerInicio")]
         public async Task<IActionResult> CambiarPasswordPrimerInicio(CambioPasswordVM model)
         {
-            if (!ModelState.IsValid)
-            {
-                return View(model);
-            }
-
-            if (model.IdUsuario <= 0)
+            // La identidad sale únicamente del contexto que emitió Login() tras validar la contraseña.
+            // Sin ese contexto (POST directo, sin haber pasado por el login) no se cambia nada.
+            var contexto = TempData.Peek(TempDataCambioClave);
+            if (contexto == null)
             {
                 TempData["MensajeError"] = "Ocurrió un error, por favor inicie sesión nuevamente.";
                 return RedirectToAction("Login");
+            }
+            int idUsuario = Convert.ToInt32(contexto);
+
+            // Defensa en profundidad: la cuenta tiene que seguir en estado de primer inicio o con clave expirada.
+            var usuarioBd = await _repositorioUsuarios.ObtenerPorId(idUsuario);
+            if (usuarioBd == null || !RequiereCambioDeClave(usuarioBd))
+            {
+                TempData.Remove(TempDataCambioClave);
+                TempData["MensajeError"] = "Ocurrió un error, por favor inicie sesión nuevamente.";
+                return RedirectToAction("Login");
+            }
+
+            if (!ModelState.IsValid)
+            {
+                return View(model);
             }
 
             // Calcula el hash de la nueva contraseña.
             string hashedPassword = HashPassword(model.NuevaContrasena);
 
             // Se llama al método actualizado del repositorio enviando tanto el hash como la contraseña original
-            bool actualizado = await _repositorioUsuarios.ActualizarPasswordPrimerInicio(model.IdUsuario, hashedPassword, model.NuevaContrasena);
+            bool actualizado = await _repositorioUsuarios.ActualizarPasswordPrimerInicio(idUsuario, hashedPassword, model.NuevaContrasena);
 
             if (actualizado)
             {
+                TempData.Remove(TempDataCambioClave);
                 TempData["Mensaje"] = "Contraseña actualizada correctamente. Por favor, inicie sesión.";
                 return RedirectToAction("Login");
             }
@@ -287,6 +297,18 @@ namespace ABM.Controllers
             }
         }       
 
+
+        // Misma regla que usa Login() para derivar al usuario a este flujo.
+        private static bool RequiereCambioDeClave(Usuario usuario)
+        {
+            if (usuario.primerInicio)
+            {
+                return true;
+            }
+
+            return usuario.FechaCambioPassword.HasValue
+                && DateTime.Now >= usuario.FechaCambioPassword.Value.AddMonths(usuario.MesesExpiracionClave);
+        }
 
         private string HashPassword(string password)
         {
