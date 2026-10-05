@@ -81,6 +81,57 @@ namespace ABM.Controllers
             return await MenusSonAsignablesAsync(menusObjetivo);
         }
 
+        // --- Subida de firmas: sólo imágenes, validadas por extensión, tamaño y firma binaria ---
+        private static readonly string[] ExtensionesFirmaPermitidas = { ".jpg", ".jpeg", ".png" };
+        private const long TamanoMaximoFirma = 5 * 1024 * 1024;
+
+        // Devuelve (mensaje de error, null) o (null, extensión normalizada) si el archivo es una imagen aceptable.
+        private static async Task<(string Error, string Extension)> ValidarArchivoFirmaAsync(IFormFile archivo)
+        {
+            var extension = Path.GetExtension(archivo.FileName ?? "").ToLowerInvariant();
+            if (!ExtensionesFirmaPermitidas.Contains(extension))
+            {
+                return ("La firma debe ser una imagen JPG, JPEG o PNG.", null);
+            }
+
+            if (archivo.Length > TamanoMaximoFirma)
+            {
+                return ("La firma no puede superar los 5MB.", null);
+            }
+
+            var cabecera = new byte[8];
+            using (var stream = archivo.OpenReadStream())
+            {
+                var leidos = await stream.ReadAsync(cabecera, 0, cabecera.Length);
+                if (leidos < cabecera.Length)
+                {
+                    return ("El archivo de firma no es una imagen válida.", null);
+                }
+            }
+
+            var esPng = cabecera[0] == 0x89 && cabecera[1] == 0x50 && cabecera[2] == 0x4E && cabecera[3] == 0x47;
+            var esJpeg = cabecera[0] == 0xFF && cabecera[1] == 0xD8 && cabecera[2] == 0xFF;
+            if ((extension == ".png" && !esPng) || (extension != ".png" && !esJpeg))
+            {
+                return ("El archivo de firma no es una imagen válida.", null);
+            }
+
+            return (null, extension);
+        }
+
+        // Resuelve una ruta relativa guardada en BD (ej: /firmas/xxx.png) y la acepta sólo si cae dentro de wwwroot/firmas.
+        private string ResolverRutaFirma(string rutaRelativa)
+        {
+            if (string.IsNullOrWhiteSpace(rutaRelativa))
+            {
+                return null;
+            }
+
+            var carpetaFirmas = Path.GetFullPath(Path.Combine(_webHostEnvironment.WebRootPath, "firmas")) + Path.DirectorySeparatorChar;
+            var rutaCompleta = Path.GetFullPath(Path.Combine(_webHostEnvironment.WebRootPath, rutaRelativa.TrimStart('/', '\\')));
+            return rutaCompleta.StartsWith(carpetaFirmas, StringComparison.OrdinalIgnoreCase) ? rutaCompleta : null;
+        }
+
         private async Task<IEnumerable<MenuModel>> ObtenerMenusAsignablesAsync()
         {
             var menusActor = await ObtenerMenusDelActorAsync();
@@ -144,6 +195,21 @@ namespace ABM.Controllers
                 return View(model);
             }
 
+            string extensionFirma = null;
+            if (model.Firma != null && model.Firma.Length > 0)
+            {
+                var (errorFirma, ext) = await ValidarArchivoFirmaAsync(model.Firma);
+                if (errorFirma != null)
+                {
+                    ModelState.AddModelError("Firma", errorFirma);
+                    model.RolesDisponibles = await _repositorioUsuarios.ObtenerRoles();
+                    model.GerenciasDisponibles = (await _repositorioConfiguracion.ObtenerGerencias())
+                                                     .Select(g => new SelectListItem { Value = g.IdGerencia.ToString(), Text = g.Nom_Gerencia }).ToList();
+                    return View(model);
+                }
+                extensionFirma = ext;
+            }
+
             // (Aquí puedes agregar otras validaciones como verificar si el correo o usuario ya existen)
 
 
@@ -165,7 +231,7 @@ namespace ABM.Controllers
                     }
 
                     // Se crea un nombre de archivo único para prevenir conflictos y sobreescrituras
-                    string nombreArchivoUnico = Guid.NewGuid().ToString() + "_" + Path.GetFileName(model.Firma.FileName);
+                    string nombreArchivoUnico = Guid.NewGuid().ToString("N") + extensionFirma;
                     string rutaCompletaArchivo = Path.Combine(carpetaDestino, nombreArchivoUnico);
 
                     // Se guarda el archivo físicamente en el servidor
@@ -369,6 +435,14 @@ public async Task<IActionResult> EditarUsuario(int id)
             // Se comprueba si el usuario ha subido un archivo nuevo en el formulario.
             if (model.NuevaFirma != null && model.NuevaFirma.Length > 0)
             {
+                var (errorFirma, extensionFirma) = await ValidarArchivoFirmaAsync(model.NuevaFirma);
+                if (errorFirma != null)
+                {
+                    ModelState.AddModelError("NuevaFirma", errorFirma);
+                    await PopulateDropdowns(model);
+                    return View(model);
+                }
+
                 string carpetaDestino = Path.Combine(_webHostEnvironment.WebRootPath, "firmas");
                 if (!Directory.Exists(carpetaDestino))
                 {
@@ -376,18 +450,15 @@ public async Task<IActionResult> EditarUsuario(int id)
                 }
 
                 // Si ya existía una firma, se elimina el archivo antiguo del servidor para no dejar basura.
-                if (!string.IsNullOrEmpty(model.FirmaActual))
+                // La ruta sale de la BD (nunca del formulario) y sólo se acepta si está dentro de wwwroot/firmas.
+                var rutaAntigua = ResolverRutaFirma(usuarioExistente.firma);
+                if (rutaAntigua != null && System.IO.File.Exists(rutaAntigua))
                 {
-                    // Se construye la ruta completa del archivo antiguo.
-                    var rutaAntigua = Path.Combine(_webHostEnvironment.WebRootPath, model.FirmaActual.TrimStart('/'));
-                    if (System.IO.File.Exists(rutaAntigua))
-                    {
-                        System.IO.File.Delete(rutaAntigua);
-                    }
+                    System.IO.File.Delete(rutaAntigua);
                 }
 
-                // Se guarda el nuevo archivo con un nombre único.
-                string nombreArchivoUnico = Guid.NewGuid().ToString() + "_" + Path.GetFileName(model.NuevaFirma.FileName);
+                // Se guarda el nuevo archivo con un nombre único (el nombre original del cliente no se usa).
+                string nombreArchivoUnico = Guid.NewGuid().ToString("N") + extensionFirma;
                 string rutaCompletaArchivo = Path.Combine(carpetaDestino, nombreArchivoUnico);
                 using (var fileStream = new FileStream(rutaCompletaArchivo, FileMode.Create))
                 {
