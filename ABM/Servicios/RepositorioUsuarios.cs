@@ -376,8 +376,8 @@ WHERE idUsuario = @idUsuario";
             }
         }
 
-        // Un OTC sirve una sola vez: al validarlo (o al bloquear por intentos) se deja en vacío.
-        // '' en vez de NULL para no depender de que la columna admita nulos; nunca coincide con un código de 6 dígitos.
+        // Un OTC sirve una sola vez: al validarlo (o al bloquear por intentos) se deja en 0 (la columna es int).
+        // 0 en vez de NULL para no depender de que la columna admita nulos; nunca coincide con un código de 6 dígitos.
         // La antigüedad se calcula con el reloj de la BD (el mismo que escribió inicioOtc), no con el del servidor web:
         // si los relojes difieren unos minutos, comparar contra DateTime.Now dejaría a todos los usuarios afuera.
         public async Task<bool> OtcVigente(int idUsuario, int segundos)
@@ -398,7 +398,7 @@ WHERE idUsuario = @idUsuario";
         {
             using (IDbConnection dbdapper = new SqlConnection(connectionString))
             {
-                string query = "UPDATE ftc_usuario SET otc = '' WHERE idUsuario = @idUsuario";
+                string query = "UPDATE ftc_usuario SET otc = 0 WHERE idUsuario = @idUsuario";
                 int filas = await dbdapper.ExecuteAsync(query, new { idUsuario });
                 return filas > 0;
             }
