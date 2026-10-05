@@ -82,6 +82,9 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
 
 var app = builder.Build();
 
+// Primero de todo: así las cabeceras de seguridad también salen en archivos estáticos y páginas de error.
+app.UseMiddleware<CabecerasSeguridadMiddleware>();
+
 // Configurar la canalización de solicitudes HTTP
 if (!app.Environment.IsDevelopment())
 {
