@@ -125,7 +125,7 @@ namespace ABM.Controllers
                 return StatusCode(StatusCodes.Status403Forbidden);
             }
 
-            var datos = await _repositorioDescargas.ObtenerDatosAD();
+            var datos = await _repositorioDescargas.ObtenerDatosAD(ObtenerIdUsuarioActual());
             return GenerarRespuestaCsv(datos, "DatosAD", downloadId);
         }
 

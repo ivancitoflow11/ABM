@@ -13,7 +13,7 @@ namespace ABM.Servicios
     {
         Task<IEnumerable<dynamic>> ObtenerDatosFiniquitados();
         Task<IEnumerable<dynamic>> ObtenerDatosActivosFalanet();
-        Task<IEnumerable<dynamic>> ObtenerDatosAD();
+        Task<IEnumerable<dynamic>> ObtenerDatosAD(int idUsuario);
     }
 
     public class RepositorioDescargas : IRepositorioDescargas
@@ -80,17 +80,43 @@ namespace ABM.Servicios
             }
         }
 
-        public async Task<IEnumerable<dynamic>> ObtenerDatosAD()
+        public async Task<IEnumerable<dynamic>> ObtenerDatosAD(int idUsuario)
         {
             using (IDbConnection db = new SqlConnection(connectionString))
             {
+                // Alcance del operador, calculado en el servidor: los países de los PNS asignados a su rol.
+                // ftc_ad.c y ftc_pns_2.codPais usan el mismo código de 2 letras (CL, AR, ...). "SP" (SIN PAIS)
+                // habilita además los objetos de AD sin país informado.
+                var paisesDelRol = (await db.QueryAsync<string>(@"
+                    SELECT DISTINCT UPPER(LTRIM(RTRIM(pns.codPais)))
+                    FROM ftc_usuario u
+                    JOIN ftc_detalle_rol dr ON dr.idRol = u.idRol
+                    JOIN ftc_pns_2 pns ON pns.idPaisNegocioSistema = dr.idPaisNegocioSistema
+                    WHERE u.idUsuario = @idUsuario AND pns.codPais IS NOT NULL",
+                    new { idUsuario })).ToList();
+
+                var incluirSinPais = paisesDelRol.Contains("SP");
+                var codigosPais = paisesDelRol.Where(p => p != "SP").ToArray();
+
+                if (codigosPais.Length == 0 && !incluirSinPais)
+                {
+                    _logger.LogWarning("Export AD: el usuario {IdUsuario} no tiene países asignados en su rol; no se exporta nada.", idUsuario);
+                    return new List<dynamic>();
+                }
+
                 // Se agrega GETDATE() como Fecha_Descarga
                 var query = @"
                     SELECT *,
                            FORMAT(GETDATE(), 'dd-MM-yyyy HH:mm:ss') AS Fecha_Descarga
-                    FROM ftc_ad;";
+                    FROM ftc_ad
+                    WHERE UPPER(LTRIM(RTRIM(c))) IN @codigosPais
+                       OR (@incluirSinPais = 1 AND (c IS NULL OR LTRIM(RTRIM(c)) = ''));";
 
-                var filas = (await db.QueryAsync<dynamic>(query)).Cast<IDictionary<string, object>>().ToList();
+                var filas = (await db.QueryAsync<dynamic>(query, new { codigosPais, incluirSinPais = incluirSinPais ? 1 : 0 }))
+                    .Cast<IDictionary<string, object>>().ToList();
+
+                _logger.LogInformation("Export AD: usuario {IdUsuario}, países {Paises}, sin país {SinPais}, filas {Filas}.",
+                    idUsuario, string.Join(",", codigosPais), incluirSinPais, filas.Count);
                 if (filas.Count == 0)
                 {
                     return filas;
