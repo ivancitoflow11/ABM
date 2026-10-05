@@ -1,6 +1,7 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using ABM.Filters;
 using ABM.Servicios;
+using System.Security.Claims;
 using System.Threading.Tasks;
 using System.Text;
 using System.Linq;
@@ -14,15 +15,50 @@ namespace ABM.Controllers
 	[AutorizarMenu]
 	public class DescargasController : Controller
 	{
-		private readonly IRepositorioDescargas _repositorioDescargas;
+		private const string RecursoDatosAD = "DatosAD";
+		private const string RecursoFiniquitados = "FiniquitadosGeneral";
+		private const string RecursoActivosFalanet = "ActivosFalanet";
 
-		public DescargasController(IRepositorioDescargas repositorioDescargas)
+		private static readonly string[] RecursosPermitidos = { RecursoDatosAD, RecursoFiniquitados, RecursoActivosFalanet };
+
+		private readonly IRepositorioDescargas _repositorioDescargas;
+		private readonly IDescargaTokenService _tokenService;
+
+		public DescargasController(IRepositorioDescargas repositorioDescargas, IDescargaTokenService tokenService)
 		{
 			_repositorioDescargas = repositorioDescargas;
+			_tokenService = tokenService;
+		}
+
+		private int ObtenerIdUsuarioActual()
+		{
+			int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var idUsuario);
+			return idUsuario;
+		}
+
+		// Emite un token firmado (atado al usuario y al recurso, vigencia corta, un solo uso) que el cliente
+		// debe presentar al pedir el CSV. "id" es el identificador que usa el JS para las cookies de progreso.
+		[HttpGet]
+		[ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
+		public IActionResult EmitirToken(string recurso)
+		{
+			if (!RecursosPermitidos.Contains(recurso))
+			{
+				return BadRequest();
+			}
+
+			var idUsuario = ObtenerIdUsuarioActual();
+			if (idUsuario <= 0)
+			{
+				return Unauthorized();
+			}
+
+			var (token, id) = _tokenService.Emitir(idUsuario, recurso);
+			return Json(new { downloadToken = token, id });
 		}
 
 		// Método privado refactorizado para generar CSV y establecer cookie
-		private IActionResult GenerarRespuestaCsv(IEnumerable<dynamic> datos, string nombreBaseArchivo, string downloadToken)
+		private IActionResult GenerarRespuestaCsv(IEnumerable<dynamic> datos, string nombreBaseArchivo, string downloadId)
 		{
 			// Cookie options: HttpOnly = false para que JS pueda leerla (solo necesitamos verificar su existencia)
 			// Path = "/" para que sea accesible en toda la aplicación.
@@ -32,11 +68,7 @@ namespace ABM.Controllers
 			if (datos == null || !datos.Any())
 			{
 				TempData["ErrorMessage"] = $"No hay datos para descargar de '{nombreBaseArchivo}'.";
-				if (!string.IsNullOrEmpty(downloadToken))
-				{
-					// Establecer cookie de error si no hay datos
-					Response.Cookies.Append($"download_error_{downloadToken}", "nodata", cookieOptions);
-				}
+				Response.Cookies.Append($"download_error_{downloadId}", "nodata", cookieOptions);
 				return RedirectToAction("Index", "Home"); // O la vista actual
 			}
 
@@ -46,11 +78,7 @@ namespace ABM.Controllers
 			if (firstItem == null)
 			{
 				TempData["ErrorMessage"] = $"Error al procesar los datos para CSV de '{nombreBaseArchivo}'.";
-				if (!string.IsNullOrEmpty(downloadToken))
-				{
-					// Establecer cookie de error si hay problemas con los datos
-					Response.Cookies.Append($"download_error_{downloadToken}", "processing", cookieOptions);
-				}
+				Response.Cookies.Append($"download_error_{downloadId}", "processing", cookieOptions);
 				return RedirectToAction("Index", "Home");
 			}
 
@@ -70,10 +98,7 @@ namespace ABM.Controllers
 			}
 
 			// Establecer cookie de éxito ANTES de devolver el archivo
-			if (!string.IsNullOrEmpty(downloadToken))
-			{
-				Response.Cookies.Append($"download_status_{downloadToken}", "completed", cookieOptions);
-			}
+			Response.Cookies.Append($"download_status_{downloadId}", "completed", cookieOptions);
 
 			string fechaActual = System.DateTime.Now.ToString("yyyyMMdd_HHmmss");
 			string fileName = $"{nombreBaseArchivo}_{fechaActual}.csv";
@@ -95,26 +120,41 @@ namespace ABM.Controllers
         [Monitoreo("DescargarDatosADCSV", "SELECT", "descargarDatosADCSV")]
         public async Task<IActionResult> DescargarDatosADCSV(string downloadToken)
         {
+            if (!_tokenService.TryConsumir(downloadToken, ObtenerIdUsuarioActual(), RecursoDatosAD, out var downloadId))
+            {
+                return StatusCode(StatusCodes.Status403Forbidden);
+            }
+
             var datos = await _repositorioDescargas.ObtenerDatosAD();
-            return GenerarRespuestaCsv(datos, "DatosAD", downloadToken);
+            return GenerarRespuestaCsv(datos, "DatosAD", downloadId);
         }
 
         // Acción para Finiquitados
         [HttpGet]
         [Monitoreo("DescargarFiniquitadosCSV", "SELECT", "descargarFiniquitadosCSV")]
-        public async Task<IActionResult> DescargarFiniquitadosCSV(string downloadToken) // Aceptar token
+        public async Task<IActionResult> DescargarFiniquitadosCSV(string downloadToken)
 		{
+			if (!_tokenService.TryConsumir(downloadToken, ObtenerIdUsuarioActual(), RecursoFiniquitados, out var downloadId))
+			{
+				return StatusCode(StatusCodes.Status403Forbidden);
+			}
+
 			var datos = await _repositorioDescargas.ObtenerDatosFiniquitados();
-			return GenerarRespuestaCsv(datos, "FiniquitadosGeneral", downloadToken); // Pasar token
+			return GenerarRespuestaCsv(datos, "FiniquitadosGeneral", downloadId);
 		}
 
 		// Acción para Activos Falanet
 		[HttpGet]
         [Monitoreo("DescargarActivosFalanetCSV", "SELECT", "descargarActivosFalanetCSV")]
-        public async Task<IActionResult> DescargarActivosFalanetCSV(string downloadToken) // Aceptar token
+        public async Task<IActionResult> DescargarActivosFalanetCSV(string downloadToken)
 		{
+			if (!_tokenService.TryConsumir(downloadToken, ObtenerIdUsuarioActual(), RecursoActivosFalanet, out var downloadId))
+			{
+				return StatusCode(StatusCodes.Status403Forbidden);
+			}
+
 			var datos = await _repositorioDescargas.ObtenerDatosActivosFalanet();
-			return GenerarRespuestaCsv(datos, "ActivosFalanet", downloadToken); // Pasar token
+			return GenerarRespuestaCsv(datos, "ActivosFalanet", downloadId);
 		}
 	}
 }

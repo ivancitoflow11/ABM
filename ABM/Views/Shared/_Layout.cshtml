@@ -1351,18 +1351,7 @@
 		}
 
 		// 2. Lógica central de descarga (GENÉRICA)
-		function ejecutarDescarga(url, descripcionArchivo) {
-			const downloadToken = new Date().getTime().toString();
-			const successCookieName = `download_status_${downloadToken}`;
-			const errorCookieName = `download_error_${downloadToken}`;
-
-			deleteCookie(successCookieName);
-			deleteCookie(errorCookieName);
-
-			// Agregamos el token a la URL
-			const separator = url.includes('?') ? '&' : '?';
-			const downloadUrlWithToken = `${url}${separator}downloadToken=${downloadToken}`;
-
+		async function ejecutarDescarga(url, descripcionArchivo, recurso) {
 			Swal.fire({
 				title: 'Procesando descarga...',
 				html: `Preparando tu archivo de <b>${descripcionArchivo}</b>.<br/>Por favor, espera.`,
@@ -1370,6 +1359,32 @@
 				allowEscapeKey: false,
 				didOpen: () => { Swal.showLoading(); }
 			});
+
+			// El servidor emite un token firmado, atado a la sesión y al recurso, de vigencia corta y un solo uso.
+			const urlEmitirToken = '@Url.Action("EmitirToken", "Descargas")';
+			let emitido;
+			try {
+				const resp = await fetch(`${urlEmitirToken}?recurso=${encodeURIComponent(recurso)}`, {
+					credentials: 'same-origin',
+					headers: { 'Accept': 'application/json' }
+				});
+				if (!resp.ok) throw new Error('No se pudo emitir el token');
+				emitido = await resp.json();
+			} catch (err) {
+				Swal.fire({ icon: 'error', title: 'Error', text: `No se pudo iniciar la descarga de ${descripcionArchivo}.` });
+				return;
+			}
+
+			const downloadId = emitido.id;
+			const successCookieName = `download_status_${downloadId}`;
+			const errorCookieName = `download_error_${downloadId}`;
+
+			deleteCookie(successCookieName);
+			deleteCookie(errorCookieName);
+
+			// Agregamos el token firmado a la URL
+			const separator = url.includes('?') ? '&' : '?';
+			const downloadUrlWithToken = `${url}${separator}downloadToken=${encodeURIComponent(emitido.downloadToken)}`;
 
 			const iframe = document.createElement('iframe');
 			iframe.style.display = 'none';
@@ -1425,17 +1440,17 @@
 					// Finiquitados
 					if (link.href.includes('DescargarFiniquitadosCSV')) {
 						e.preventDefault();
-						ejecutarDescarga(link.href, 'Finiquitados General');
+						ejecutarDescarga(link.href, 'Finiquitados General', 'FiniquitadosGeneral');
 					}
 					// Activos Falanet
 					else if (link.href.includes('DescargarActivosFalanetCSV')) {
 						e.preventDefault();
-						ejecutarDescarga(link.href, 'Activos Falanet');
+						ejecutarDescarga(link.href, 'Activos Falanet', 'ActivosFalanet');
 					}
 					// NUEVO: Datos AD
 					else if (link.href.includes('DescargarDatosADCSV')) {
 						e.preventDefault();
-						ejecutarDescarga(link.href, 'Datos Active Directory');
+						ejecutarDescarga(link.href, 'Datos Active Directory', 'DatosAD');
 					}
 				}
 			});
