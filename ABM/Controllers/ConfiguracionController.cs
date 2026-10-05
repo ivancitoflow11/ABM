@@ -13,6 +13,7 @@ using Microsoft.Data.SqlClient;
 namespace ABM.Controllers
 {
     [Authorize]
+    [AutorizarMenu]
     public class ConfiguracionController : Controller
     {
         private readonly IRepositorioConfiguracion _repo;

@@ -10,6 +10,7 @@ namespace ABM.Servicios
 	public interface IRepositorioMenus
 	{
 		Task<IEnumerable<MenuViewModel>> ObtenerMenusPorRol(int idRol);
+		Task<bool> UsuarioTieneAccesoAControlador(int idUsuario, string controlador);
 	}
 	public class RepositorioMenus : IRepositorioMenus
 	{
@@ -76,6 +77,36 @@ ORDER BY s.COD_Menu, s.ID_Submenu;";
 			}
 
 			return menus;
+		}
+
+		// Misma regla con la que se arma el sidebar: el rol del usuario accede a un controller si tiene
+		// permitido un menú cuyo CONTROLADOR coincide, o un menú permitido que tenga un submenú de ese controller.
+		public async Task<bool> UsuarioTieneAccesoAControlador(int idUsuario, string controlador)
+		{
+			using var db = new SqlConnection(connectionString);
+
+			var sql = @"
+SELECT COUNT(1)
+FROM ftc_usuario u
+WHERE u.idUsuario = @IdUsuario
+  AND EXISTS (
+      SELECT 1
+      FROM ftc_PermisosMenu pm
+      INNER JOIN ftc_MENU m ON m.ID_Menu = pm.COD_Menu AND m.Estado = 1
+      WHERE pm.idRol = u.idRol
+        AND pm.PERMITIDO = 1
+        AND (
+              UPPER(m.CONTROLADOR) = UPPER(@Controlador)
+           OR EXISTS (
+                  SELECT 1 FROM ftc_SUBMENU s
+                  WHERE s.COD_Menu = m.ID_Menu
+                    AND UPPER(s.CONTROLADOR) = UPPER(@Controlador)
+              )
+        )
+  );";
+
+			var conteo = await db.ExecuteScalarAsync<int>(sql, new { IdUsuario = idUsuario, Controlador = controlador });
+			return conteo > 0;
 		}
 
 	}

@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.Http; // Necesario para CookieOptions
 namespace ABM.Controllers
 {
 	[Authorize]
+	[AutorizarMenu]
 	public class DescargasController : Controller
 	{
 		private readonly IRepositorioDescargas _repositorioDescargas;

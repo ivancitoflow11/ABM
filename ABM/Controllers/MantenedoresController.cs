@@ -20,6 +20,7 @@ using static System.Runtime.InteropServices.JavaScript.JSType;
 namespace ABM.Controllers
 {
     [Authorize]
+    [AutorizarMenu]
     public class MantenedoresController : Controller
     {
         private readonly IRepositorioUsuarios _repositorioUsuarios;
