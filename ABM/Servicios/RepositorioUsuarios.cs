@@ -26,6 +26,8 @@ namespace ABM.Servicios
 
         Task<List<ListaUsuariosViewModel>> ObtenerTodosLosUsuariosYRoles();
         Task<bool> ActualizarOTC(int idUsuario, int codigoOTC);
+        Task<bool> InvalidarOTC(int idUsuario);
+        Task<bool> OtcVigente(int idUsuario, int segundos);
         Task<int?> ObtenerIdRolDeUsuario(int idUsuario);
 
         // Nuevos métodos para olvido de contraseña:
@@ -370,6 +372,34 @@ WHERE idUsuario = @idUsuario";
             {
                 string query = "UPDATE ftc_usuario SET otc = @codigoOTC, inicioOtc = GETDATE() WHERE idUsuario = @idUsuario";
                 int filas = await dbdapper.ExecuteAsync(query, new { idUsuario, codigoOTC });
+                return filas > 0;
+            }
+        }
+
+        // Un OTC sirve una sola vez: al validarlo (o al bloquear por intentos) se deja en vacío.
+        // '' en vez de NULL para no depender de que la columna admita nulos; nunca coincide con un código de 6 dígitos.
+        // La antigüedad se calcula con el reloj de la BD (el mismo que escribió inicioOtc), no con el del servidor web:
+        // si los relojes difieren unos minutos, comparar contra DateTime.Now dejaría a todos los usuarios afuera.
+        public async Task<bool> OtcVigente(int idUsuario, int segundos)
+        {
+            using (IDbConnection dbdapper = new SqlConnection(connectionString))
+            {
+                string query = @"
+                    SELECT CASE WHEN inicioOtc IS NOT NULL
+                                 AND DATEDIFF(SECOND, inicioOtc, GETDATE()) BETWEEN -60 AND @segundos
+                                THEN 1 ELSE 0 END
+                    FROM ftc_usuario WHERE idUsuario = @idUsuario";
+                var vigente = await dbdapper.ExecuteScalarAsync<int?>(query, new { idUsuario, segundos });
+                return vigente == 1;
+            }
+        }
+
+        public async Task<bool> InvalidarOTC(int idUsuario)
+        {
+            using (IDbConnection dbdapper = new SqlConnection(connectionString))
+            {
+                string query = "UPDATE ftc_usuario SET otc = '' WHERE idUsuario = @idUsuario";
+                int filas = await dbdapper.ExecuteAsync(query, new { idUsuario });
                 return filas > 0;
             }
         }

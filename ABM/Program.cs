@@ -69,6 +69,7 @@ builder.Services.AddTransient<IRepositorioResumen, RepositorioResumen>();
 builder.Services.AddTransient<IRepositorioSolicitudes, RepositorioSolicitudes>();
 builder.Services.AddMemoryCache();
 builder.Services.AddSingleton<IDescargaTokenService, DescargaTokenService>();
+builder.Services.AddSingleton<IOtcIntentosService, OtcIntentosService>();
 builder.Services.AddAutoMapper(typeof(Program));
 
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)

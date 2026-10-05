@@ -12,6 +12,9 @@ using ExcelDataReader.Log;
 using Microsoft.AspNetCore.Hosting;
 using System.Drawing;
 using System.Net.Mime;
+using System.Security.Cryptography;
+using System.Text;
+using System.Text.RegularExpressions;
 
 namespace ABM.Controllers
 {
@@ -27,13 +30,78 @@ namespace ABM.Controllers
         // (primer inicio o clave expirada). El usuario a modificar sale de acá, nunca del cuerpo del POST.
         private const string TempDataCambioClave = "idUsuarioCambioClave";
 
-		public AccesoController(IRepositorioUsuarios repositorioUsuarios, IRepositorioRoles repositorioRoles, IConfiguration configuration, IWebHostEnvironment hostingEnvironment)
+        // Segundo factor (OTC). Tras validar la contraseña NO se emite la cookie de autenticación: sólo queda un
+        // "ticket parcial" en la Session del servidor, que habilita únicamente EnviarOTC/ValidarOTC. La cookie real
+        // se emite en ValidarOTC, cuando el código se verifica en el servidor.
+        private const string SesionMfaUsuario = "mfa_idUsuario";
+        private const string SesionMfaInicio = "mfa_inicio";
+        private const int LongitudOtc = 6;
+        private const int MaxFallosPorUsuario = 5;
+        private const int MaxFallosPorIp = 20;
+        private const string MensajeBloqueo = "Demasiados intentos fallidos. Vuelva a iniciar sesión para solicitar un nuevo código.";
+        private static readonly TimeSpan VigenciaOtc = TimeSpan.FromMinutes(5);
+        private static readonly TimeSpan VigenciaMfaPendiente = TimeSpan.FromMinutes(10);
+
+        private readonly IOtcIntentosService _otcIntentos;
+
+		public AccesoController(IRepositorioUsuarios repositorioUsuarios, IRepositorioRoles repositorioRoles, IConfiguration configuration, IWebHostEnvironment hostingEnvironment, IOtcIntentosService otcIntentos)
         {
             _repositorioUsuarios = repositorioUsuarios;
             _repositorioRoles = repositorioRoles;
             _configuration = configuration;
 			_hostingEnvironment = hostingEnvironment;
+            _otcIntentos = otcIntentos;
 		}
+
+        private void IniciarMfaPendiente(int idUsuario)
+        {
+            HttpContext.Session.SetInt32(SesionMfaUsuario, idUsuario);
+            HttpContext.Session.SetString(SesionMfaInicio, DateTime.UtcNow.Ticks.ToString());
+        }
+
+        private void LimpiarMfaPendiente()
+        {
+            HttpContext.Session.Remove(SesionMfaUsuario);
+            HttpContext.Session.Remove(SesionMfaInicio);
+        }
+
+        private int? ObtenerMfaPendiente()
+        {
+            var idUsuario = HttpContext.Session.GetInt32(SesionMfaUsuario);
+            if (idUsuario == null || !long.TryParse(HttpContext.Session.GetString(SesionMfaInicio), out var ticks))
+            {
+                return null;
+            }
+
+            if (DateTime.UtcNow - new DateTime(ticks, DateTimeKind.Utc) > VigenciaMfaPendiente)
+            {
+                LimpiarMfaPendiente();
+                return null;
+            }
+
+            return idUsuario;
+        }
+
+        private string ObtenerIpCliente() => HttpContext.Connection.RemoteIpAddress?.ToString() ?? "desconocida";
+
+        private async Task<List<PaisNegocioViewModel>> ObtenerPaisesNegociosDelRolAsync(int? idRol)
+        {
+            var roles = await _repositorioRoles.ObtenerRolesConPNS();
+            return roles.FirstOrDefault(r => r.idRol == idRol)?.PaisesNegocios ?? new List<PaisNegocioViewModel>();
+        }
+
+        private static bool CodigoOtcCoincide(string otcGuardado, string otcIngresado)
+        {
+            if (string.IsNullOrWhiteSpace(otcGuardado) || string.IsNullOrEmpty(otcIngresado)
+                || !Regex.IsMatch(otcIngresado, $@"^\d{{{LongitudOtc}}}$"))
+            {
+                return false;
+            }
+
+            var esperado = Encoding.UTF8.GetBytes(otcGuardado.Trim());
+            var recibido = Encoding.UTF8.GetBytes(otcIngresado);
+            return esperado.Length == recibido.Length && CryptographicOperations.FixedTimeEquals(esperado, recibido);
+        }
 
         [AllowAnonymous]
         [HttpGet]
@@ -74,35 +142,18 @@ namespace ABM.Controllers
                     }
                 }
 
-                // Cargar la información de países y negocios según el rol
-                var rolesConPNS = await _repositorioRoles.ObtenerRolesConPNS();
-                var rolConPNS = rolesConPNS.FirstOrDefault(r => r.idRol == usuario.idRol);
-                if (rolConPNS != null)
-                {
-                    ViewBag.PaisesNegocios = rolConPNS.PaisesNegocios; // List< PaisNegocioViewModel >
-                }
+                // Países y negocios que el rol puede elegir (el modal los muestra; ValidarOTC los vuelve a verificar).
+                ViewBag.PaisesNegocios = await ObtenerPaisesNegociosDelRolAsync(usuario.idRol);
 
-                // Crear la sesión sin enviar el OTC todavía
-                var claims = new List<Claim>
-        {
-            new Claim(ClaimTypes.NameIdentifier, usuario.idUsuario.ToString()),
-            new Claim(ClaimTypes.Name, usuario.nombre),
-        };
-
-                var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
-                var authProperties = new AuthenticationProperties { IsPersistent = true };
-
-                await HttpContext.SignInAsync(
-                    CookieAuthenticationDefaults.AuthenticationScheme,
-                    new ClaimsPrincipal(claimsIdentity),
-                    authProperties);
+                // Contraseña correcta, pero todavía NO hay sesión: se descarta cualquier sesión previa y se deja
+                // un ticket parcial en el servidor. La cookie de autenticación se emite recién al validar el OTC.
+                await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+                HttpContext.Session.Clear();
+                IniciarMfaPendiente(usuario.idUsuario);
 
                 // Indicador para que se muestre el modal en la vista
                 ViewBag.PedirOTC = true;
-                ViewBag.IdUsuario = usuario.idUsuario;
-
-                // Guardamos el id en TempData para poder usarlo en la acción EnviarOTC (opcionalmente también en Session)
-                TempData["idUsuario"] = usuario.idUsuario;
+                ViewBag.LongitudOtc = LongitudOtc;
 
                 return View(model);
             }
@@ -130,7 +181,7 @@ namespace ABM.Controllers
             <p>Tu código de verificación para ingresar al sistema es:</p>
             <p style='font-size: 24px; font-weight: bold; color: #4CAF50;'>{codigo}</p>
             <hr />
-            <p style='font-size: 12px; color: #888;'>Este código es válido por un tiempo limitado. No lo compartas con nadie.</p>
+            <p style='font-size: 12px; color: #888;'>Este código es válido por 5 minutos y sólo puede usarse una vez. No lo compartas con nadie.</p>
             <p style='font-size: 12px;'>Gracias por usar nuestro sistema.</p>
         </div>
     ";
@@ -159,16 +210,29 @@ namespace ABM.Controllers
 
         [AllowAnonymous]
         [HttpPost]
+        [ValidateAntiForgeryToken]
         [Monitoreo("LOGIN", "SELECT", "enviarOtc")]
         public async Task<IActionResult> EnviarOTC()
         {
-            // Recupera el id del usuario
-            if (TempData["idUsuario"] == null)
+            // El usuario sale del ticket parcial que dejó Login() tras validar la contraseña, nunca de un parámetro.
+            var idUsuarioPendiente = ObtenerMfaPendiente();
+            if (idUsuarioPendiente == null)
             {
-                return Json(new { success = false, message = "Usuario no encontrado." });
+                return Json(new { success = false, expirado = true, message = "Su sesión de acceso expiró. Vuelva a iniciar sesión." });
             }
 
-            int idUsuario = Convert.ToInt32(TempData["idUsuario"]);
+            int idUsuario = idUsuarioPendiente.Value;
+
+            if (_otcIntentos.EstaBloqueado($"usuario:{idUsuario}", MaxFallosPorUsuario))
+            {
+                return StatusCode(StatusCodes.Status429TooManyRequests, new { success = false, message = MensajeBloqueo });
+            }
+
+            if (!_otcIntentos.TryReservarEnvio($"usuario:{idUsuario}"))
+            {
+                return Json(new { success = false, reintentar = true, message = "Espere unos segundos antes de solicitar otro código." });
+            }
+
             var usuario = await _repositorioUsuarios.ObtenerPorId(idUsuario);
             if (usuario == null)
             {
@@ -184,9 +248,8 @@ namespace ABM.Controllers
                 return Json(new { success = false, message = "Acceso denegado. Su correo no está autorizado para acceder al sistema." });
             }
 
-            // Genera el código OTC aleatorio de 4 dígitos
-            var random = new Random();
-            int codigoOTC = random.Next(1000, 10000);
+            // Código aleatorio de 6 dígitos con generador criptográfico (rango 100000-999999, sin ceros a la izquierda)
+            int codigoOTC = RandomNumberGenerator.GetInt32(100000, 1000000);
 
             // Actualiza el OTC en la base de datos
             await _repositorioUsuarios.ActualizarOTC(usuario.idUsuario, codigoOTC);
@@ -194,33 +257,83 @@ namespace ABM.Controllers
             // Envía el código OTC por correo
             await EnviarCorreoOTC(usuario.correo, codigoOTC);
 
-            TempData["idUsuario"] = usuario.idUsuario;
-
             return Json(new { success = true });
         }
 
 
+        // Segundo factor, verificado en el servidor. Es la única puerta por la que se emite la cookie de autenticación.
         [AllowAnonymous]
-        [HttpGet]
+        [HttpPost]
+        [ValidateAntiForgeryToken]
         [Monitoreo("LOGIN", "VALIDATE", "validarOtc")]
-        public async Task<IActionResult> ValidarOTC(int idUsuario, string otcIngresado, int idPais, string pais, int idNegocio, string negocio)
+        public async Task<IActionResult> ValidarOTC(string otcIngresado, int idPais, int idNegocio)
         {
-            var usuario = await _repositorioUsuarios.ObtenerPorId(idUsuario);
-            if (usuario == null)
-                return Json(new { valido = false });
-
-            bool esValido = usuario.otc.ToString() == otcIngresado;
-
-            if (esValido)
+            var idUsuarioPendiente = ObtenerMfaPendiente();
+            if (idUsuarioPendiente == null)
             {
-                // Guardar los valores de país y negocio en la sesión
-                HttpContext.Session.SetString("Pais", pais);
-                HttpContext.Session.SetString("Negocio", negocio);
-                HttpContext.Session.SetInt32("IdPais", idPais);
-                HttpContext.Session.SetInt32("IdNegocio", idNegocio);
+                return Json(new { valido = false, expirado = true, mensaje = "Su sesión de acceso expiró. Vuelva a iniciar sesión." });
             }
 
-            return Json(new { valido = esValido });
+            int idUsuario = idUsuarioPendiente.Value;
+            var claveUsuario = $"usuario:{idUsuario}";
+            var claveIp = $"ip:{ObtenerIpCliente()}";
+
+            if (_otcIntentos.EstaBloqueado(claveUsuario, MaxFallosPorUsuario) || _otcIntentos.EstaBloqueado(claveIp, MaxFallosPorIp))
+            {
+                return StatusCode(StatusCodes.Status429TooManyRequests, new { valido = false, bloqueado = true, mensaje = MensajeBloqueo });
+            }
+
+            var usuario = await _repositorioUsuarios.ObtenerPorId(idUsuario);
+
+            // País y negocio se aceptan sólo si pertenecen al rol del usuario; los nombres salen del servidor.
+            var seleccion = usuario == null
+                ? null
+                : (await ObtenerPaisesNegociosDelRolAsync(usuario.idRol)).FirstOrDefault(x => x.idPais == idPais && x.idNegocio == idNegocio);
+
+            var codigoCorrecto = usuario != null
+                && CodigoOtcCoincide(usuario.otc, otcIngresado)
+                && await _repositorioUsuarios.OtcVigente(idUsuario, (int)VigenciaOtc.TotalSeconds);
+
+            if (usuario == null || seleccion == null || !codigoCorrecto)
+            {
+                _otcIntentos.RegistrarFallo(claveUsuario);
+                _otcIntentos.RegistrarFallo(claveIp);
+
+                if (_otcIntentos.EstaBloqueado(claveUsuario, MaxFallosPorUsuario))
+                {
+                    // Intentos agotados: el código se descarta y hay que volver a iniciar sesión para pedir otro.
+                    await _repositorioUsuarios.InvalidarOTC(idUsuario);
+                    LimpiarMfaPendiente();
+                    return StatusCode(StatusCodes.Status429TooManyRequests, new { valido = false, bloqueado = true, mensaje = MensajeBloqueo });
+                }
+
+                return Json(new { valido = false });
+            }
+
+            // Segundo factor correcto: el código se consume (un solo uso) y recién ahora se emite la sesión real.
+            _otcIntentos.Reiniciar(claveUsuario);
+            await _repositorioUsuarios.InvalidarOTC(idUsuario);
+
+            HttpContext.Session.Clear();
+
+            var claims = new List<Claim>
+            {
+                new Claim(ClaimTypes.NameIdentifier, usuario.idUsuario.ToString()),
+                new Claim(ClaimTypes.Name, usuario.nombre),
+            };
+            var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+            await HttpContext.SignInAsync(
+                CookieAuthenticationDefaults.AuthenticationScheme,
+                new ClaimsPrincipal(claimsIdentity),
+                new AuthenticationProperties { IsPersistent = true });
+
+            // País y negocio elegidos (ya verificados contra el rol) quedan en la sesión
+            HttpContext.Session.SetString("Pais", seleccion.pais);
+            HttpContext.Session.SetString("Negocio", seleccion.negocio);
+            HttpContext.Session.SetInt32("IdPais", seleccion.idPais);
+            HttpContext.Session.SetInt32("IdNegocio", seleccion.idNegocio);
+
+            return Json(new { valido = true });
         }
 
 
