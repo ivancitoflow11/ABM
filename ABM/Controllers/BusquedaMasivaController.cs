@@ -15,6 +15,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace ABM.Controllers
 {
     [Authorize]
+    [AutorizarMenu]
     public class BusquedaMasivaController : Controller
     {
         private readonly IRepositorioConsultaUsuario _repositorio;

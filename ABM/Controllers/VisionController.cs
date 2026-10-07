@@ -10,6 +10,7 @@ using ABM.ViewModels;
 namespace ABM.Controllers
 {
     [Authorize]
+    [AutorizarMenu]
     public class VisionController : Controller
     {
         private readonly ILogger<HomeController> _logger;

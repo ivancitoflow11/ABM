@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace ABM.Controllers
 {
     [Authorize]
+    [AutorizarMenu]
     public class BuscadorController : Controller
     {
         private readonly IRepositorioBuscador _repositorioBuscador;

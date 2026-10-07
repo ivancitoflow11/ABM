@@ -15,6 +15,7 @@ using Rotativa.AspNetCore;
 namespace ABM.Controllers
 {
     [Authorize] 
+    [AutorizarMenu]
     public class MatrizController : Controller
     {
         private readonly IRepositorioMatriz _repositorioMatriz;

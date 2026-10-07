@@ -16,6 +16,7 @@ using System.Threading.Tasks;
 namespace ABM.Controllers
 {
     [Authorize]
+    [AutorizarMenu]
     public class AlertasController : Controller
     {
         private readonly ILogger<HomeController> _logger;

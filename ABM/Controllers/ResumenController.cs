@@ -1,8 +1,12 @@
-﻿using ABM.Servicios; 
+﻿using ABM.Filters;
+using ABM.Servicios;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ABM.Controllers
 {
+    [Authorize]
+    [AutorizarMenu]
     public class ResumenController : Controller
     {
         private readonly IRepositorioResumen _repositorio;

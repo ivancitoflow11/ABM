@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace ABM.Controllers
 {
     [Authorize]
+    [AutorizarMenu]
     public class HistorialController : Controller
     {
         private readonly IRepositorioMatriz _repositorioMatriz;

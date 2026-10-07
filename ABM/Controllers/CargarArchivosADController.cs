@@ -15,6 +15,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 namespace ABM.Controllers
 {
     [Authorize]
+    [AutorizarMenu]
     public class CargarArchivosADController : Controller
     {
         private readonly IRepositorioCargarArchivosAD _repo;

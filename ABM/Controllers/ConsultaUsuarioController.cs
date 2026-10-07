@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace ABM.Controllers
 {
     [Authorize]
+    [AutorizarMenu]
     public class ConsultaUsuarioController : Controller
     {
         private readonly IRepositorioConsultaUsuario _repositorio;

@@ -55,7 +55,7 @@ namespace ABM.Controllers
                     viewModel.UltimoAcceso = usuarioDb.inicioOtc;
                     viewModel.RolNombre = usuarioDb.RolNombre;
 
-                    // si es 0 o negativo, no se debe calcular la expiración o significa que no expira.
+                    // si es 0 o negativo, no se debe calcular la expiraciï¿½n o significa que no expira.
                     if (usuarioDb.FechaCambioPassword.HasValue && usuarioDb.MesesExpiracionClave > 0)
                     {
                         viewModel.FechaExpiracionPassword = usuarioDb.FechaCambioPassword.Value.AddMonths(usuarioDb.MesesExpiracionClave);
@@ -75,7 +75,7 @@ namespace ABM.Controllers
         }
 
 
-        // 1. Acción GET que devuelve la lista para el modal
+        // 1. Acciï¿½n GET que devuelve la lista para el modal
         [HttpGet]
         [Monitoreo("PnsSelectorPartial", "SELECT", "verPnsSelectorPartial")]
         public async Task<IActionResult> PnsSelectorPartial()
@@ -89,7 +89,7 @@ namespace ABM.Controllers
             var rolesConPNS = await repositorioRoles.ObtenerRolesConPNS();
             var rolConPNS = rolesConPNS.FirstOrDefault(r => r.idRol == usuario.idRol);
 
-            // Si sólo tiene un par país-negocio, no mostramos nada
+            // Si sï¿½lo tiene un par paï¿½s-negocio, no mostramos nada
             if (rolConPNS == null || rolConPNS.PaisesNegocios.Count <= 1)
                 return Content("");
 
@@ -97,7 +97,7 @@ namespace ABM.Controllers
             return PartialView("_PnsSelectorPartial", rolConPNS.PaisesNegocios);
         }
 
-		// 2. Acción POST que recibe la selección y actualiza la sesión
+		// 2. Acciï¿½n POST que recibe la selecciï¿½n y actualiza la sesiï¿½n
 		[Authorize]
 		[HttpPost]
         [Monitoreo("CambiarPns", "SELECT", "cambiarPns")]
@@ -132,15 +132,6 @@ namespace ABM.Controllers
         {
             await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
             return RedirectToAction("Login", "Acceso");
-        }
-
-        [Monitoreo("ListaUsuarios", "SELECT", "verListaUsuarios")]
-        public async Task<IActionResult> ListaUsuarios()
-
-        {
-            var usuarios = await repositorioUsuarios.ObtenerTodosLosUsuarios();
-
-            return View(usuarios);
         }
 
 

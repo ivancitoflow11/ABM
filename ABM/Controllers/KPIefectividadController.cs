@@ -14,6 +14,7 @@ using AutoMapper;
 namespace ABM.Controllers
 {
     [Authorize]
+    [AutorizarMenu]
     public class KPIefectividadController : Controller
     {
         private readonly ILogger<HomeController> _logger;

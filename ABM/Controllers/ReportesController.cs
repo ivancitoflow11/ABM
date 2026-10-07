@@ -13,6 +13,7 @@ using ABM.ViewModels;
 namespace ABM.Controllers
 {
     [Authorize]
+    [AutorizarMenu]
     public class ReportesController : Controller
     {
         private readonly ILogger<HomeController> _logger;

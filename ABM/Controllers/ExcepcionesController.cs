@@ -17,6 +17,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace ABM.Controllers
 {
     [Authorize]
+    [AutorizarMenu]
     public class ExcepcionesController : Controller
     {
         private readonly IRepositorioExcepciones _repositorioExcepciones;
