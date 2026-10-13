@@ -37,9 +37,7 @@ namespace ABM.Servicios
         {
             using (IDbConnection dbdapper = new SqlConnection(connectionString))
             {
-                // Esta lógica hace magia:
-                // Si @Fecha es NULL, usa la subconsulta (MAX).
-                // Si @Fecha TIENE valor, usa ese valor directamente.
+
                 string query = @"
             SELECT 
                 Sistema,
