@@ -30,6 +30,18 @@ builder.Services.AddSession(options =>
     options.IdleTimeout = TimeSpan.FromMinutes(60); // Ajusta el tiempo según sea necesario
     options.Cookie.HttpOnly = true;
     options.Cookie.IsEssential = true;
+    options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest; // Secure cuando la petición llega por HTTPS
+});
+
+// Las cookies de antiforgery y de TempData no salían con el atributo Secure (la de sesión tampoco):
+// con SameAsRequest quedan Secure en producción (HTTPS) y siguen funcionando por HTTP en desarrollo.
+builder.Services.AddAntiforgery(options =>
+{
+    options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
+});
+builder.Services.Configure<Microsoft.AspNetCore.Mvc.CookieTempDataProviderOptions>(options =>
+{
+    options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
 });
 
 // Si no usas Entity Framework, ya no es necesario registrar el DbContext

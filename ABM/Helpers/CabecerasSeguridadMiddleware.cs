@@ -7,8 +7,11 @@ namespace ABM.Helpers
     // - Content-Security-Policy (bloqueante): sólo las directivas que no dependen del JavaScript inline de las vistas.
     // - Content-Security-Policy-Report-Only: la política estricta, para catalogar en la consola del navegador qué
     //   scripts/estilos inline y qué orígenes externos hay que ajustar antes de pasarla a modo bloqueo.
-    // - X-Frame-Options no se agrega acá: ASP.NET la agrega solo (SAMEORIGIN) en las páginas con antiforgery,
-    //   que es la única que vio el informe; duplicarla invalidaría el valor. frame-ancestors la cubre en el resto.
+    // - X-Frame-Options: SAMEORIGIN en todas las respuestas. ASP.NET la agrega sola solo cuando crea la cookie
+    //   antiforgery (primera visita de un navegador a una página con formulario); en las visitas siguientes, en las
+    //   páginas internas y en los archivos estáticos no salía. Se asigna por indexador, así que reemplaza el valor del
+    //   framework en vez de duplicarlo. frame-ancestors cubre a los navegadores actuales; esta cubre a los antiguos
+    //   y a los escáneres que buscan la cabecera por nombre.
     // - Strict-Transport-Security queda apagada hasta corregir el certificado TLS: se activa con "Seguridad:Hsts": true.
     public class CabecerasSeguridadMiddleware
     {
@@ -42,6 +45,7 @@ namespace ABM.Helpers
                 var cabeceras = context.Response.Headers;
 
                 cabeceras["X-Content-Type-Options"] = "nosniff";
+                cabeceras["X-Frame-Options"] = "SAMEORIGIN";
                 cabeceras["Referrer-Policy"] = "strict-origin-when-cross-origin";
                 cabeceras["Permissions-Policy"] = PermissionsPolicy;
                 cabeceras["Cross-Origin-Opener-Policy"] = "same-origin";
