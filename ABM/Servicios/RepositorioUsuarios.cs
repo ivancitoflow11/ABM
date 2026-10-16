@@ -30,6 +30,10 @@ namespace ABM.Servicios
         Task<bool> OtcVigente(int idUsuario, int segundos);
         Task<int?> ObtenerIdRolDeUsuario(int idUsuario);
 
+        // Habilitar / deshabilitar cuentas. 'estado' guarda '1' (habilitado) o '0' (deshabilitado).
+        Task<bool> EstaHabilitado(int idUsuario);
+        Task<bool> CambiarEstado(int idUsuario, bool habilitado);
+
         // Nuevos métodos para olvido de contraseña:
         Task<Usuario> ObtenerUsuarioPorCorreo(string correo);
         Task<bool> ActualizarTokenRestablecimiento(int idUsuario, string token, DateTime tokenExpiry);
@@ -47,6 +51,10 @@ namespace ABM.Servicios
 
     public class RepositorioUsuarios : IRepositorioUsuarios
     {
+        // 'estado' se compara como texto para no depender del tipo de la columna ('1' = habilitado).
+        public const string ConsultaUsuarioHabilitado =
+            "SELECT COUNT(1) FROM ftc_usuario WHERE idUsuario = @idUsuario AND CAST(estado AS varchar(10)) = '1'";
+
         private readonly string connectionString;
         private readonly HttpContext httpContext;
 
@@ -168,7 +176,8 @@ namespace ABM.Servicios
                 u.correo, 
                 u.rut,
                 u.telefono,
-                r.nombre AS RolNombre
+                r.nombre AS RolNombre,
+                CASE WHEN CAST(u.estado AS varchar(10)) = '1' THEN 1 ELSE 0 END AS Habilitado
             FROM ftc_usuario u
             INNER JOIN ftc_rol r ON u.idRol = r.idRol
             ORDER BY u.nombre ASC, u.apellidos ASC;
@@ -262,10 +271,32 @@ namespace ABM.Servicios
         {
             using (IDbConnection dbdapper = new SqlConnection(connectionString))
             {
+                // Una cuenta deshabilitada no pasa de aquí: el login responde "Credenciales inválidas" igual que con una clave errónea.
                 string query = @"SELECT * FROM ftc_usuario 
                                  WHERE correo = @correo 
-                                 AND repeat_password = @repeat_password";
+                                 AND repeat_password = @repeat_password
+                                 AND CAST(estado AS varchar(10)) = '1'";
                 return await dbdapper.QueryFirstOrDefaultAsync<Usuario>(query, new { correo, repeat_password });
+            }
+        }
+
+        public async Task<bool> EstaHabilitado(int idUsuario)
+        {
+            using (IDbConnection dbdapper = new SqlConnection(connectionString))
+            {
+                int cantidad = await dbdapper.ExecuteScalarAsync<int>(ConsultaUsuarioHabilitado, new { idUsuario });
+                return cantidad > 0;
+            }
+        }
+
+        public async Task<bool> CambiarEstado(int idUsuario, bool habilitado)
+        {
+            using (IDbConnection dbdapper = new SqlConnection(connectionString))
+            {
+                int filas = await dbdapper.ExecuteAsync(
+                    "UPDATE ftc_usuario SET estado = @estado, FultimaModificacion = GETDATE() WHERE idUsuario = @idUsuario",
+                    new { idUsuario, estado = habilitado ? "1" : "0" });
+                return filas > 0;
             }
         }
 

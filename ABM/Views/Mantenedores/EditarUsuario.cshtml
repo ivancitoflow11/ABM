@@ -45,6 +45,13 @@
                     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
                 </div>
             }
+            @if (TempData["SuccessMessage"] != null)
+            {
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    @TempData["SuccessMessage"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+                </div>
+            }
 
             <form asp-controller="Mantenedores" asp-action="EditarUsuario" method="post" enctype="multipart/form-data">
                 @Html.AntiForgeryToken()
@@ -139,10 +146,87 @@
 
                 </div>
             </form>
+
+            @* Estado de la cuenta. Va fuera del formulario de edición: es su propio POST, con confirmación. *@
+            <hr class="my-3" />
+            <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
+                <div>
+                    <span class="fw-semibold me-2">Estado de la cuenta</span>
+                    @if (Model.Habilitado)
+                    {
+                        <span class="badge bg-success">Habilitado</span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-danger">Deshabilitado</span>
+                    }
+                    <div class="text-muted small mt-1">
+                        @(Model.Habilitado
+                            ? "Puede iniciar sesión con normalidad."
+                            : "No puede iniciar sesión ni completar el código OTC. Sus sesiones abiertas se cierran.")
+                    </div>
+                    @if (Model.ResponsableFirma)
+                    {
+                        <div class="text-muted small">
+                            @(Model.Habilitado
+                                ? "Es responsable de firma: si se deshabilita, dejará de poder firmar."
+                                : "Es responsable de firma, y mientras esté deshabilitada no puede firmar.")
+                        </div>
+                    }
+                </div>
+
+                @if (Model.EsCuentaPropia)
+                {
+                    <span class="text-muted small">No puede deshabilitar su propia cuenta.</span>
+                }
+                else
+                {
+                    <form id="formEstado" asp-controller="Mantenedores" asp-action="CambiarEstadoUsuario" method="post">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="id" value="@Model.IdUsuario" />
+                        <input type="hidden" name="habilitar" value="@(Model.Habilitado ? "false" : "true")" />
+                        <button type="button" id="btnCambiarEstado" class="btn @(Model.Habilitado ? "btn-outline-danger" : "btn-outline-success")" style="border-radius: 40px; width: 200px;">
+                            <i class="fas @(Model.Habilitado ? "fa-user-slash" : "fa-user-check")"></i>
+                            @(Model.Habilitado ? "Deshabilitar usuario" : "Habilitar usuario")
+                        </button>
+                    </form>
+                }
+            </div>
         </div>
     </div>
 </div>
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <script>
+        (function () {
+            var form = document.getElementById('formEstado');
+            var boton = document.getElementById('btnCambiarEstado');
+            if (!form || !boton) { return; }
+
+            // Valor guardado en la base (no el de la casilla del formulario, que puede estar sin guardar).
+            var esResponsableFirma = @(Model.ResponsableFirma ? "true" : "false");
+
+            boton.addEventListener('click', function () {
+                var deshabilitar = form.querySelector('input[name="habilitar"]').value === 'false';
+                var aviso = deshabilitar
+                    ? 'No podrá iniciar sesión y se cerrarán sus sesiones abiertas.'
+                    : 'Podrá volver a iniciar sesión.';
+                if (deshabilitar && esResponsableFirma) {
+                    aviso += '<br><br><b>Esta persona es responsable de firma:</b> dejará de poder firmar mientras esté deshabilitada.';
+                }
+                Swal.fire({
+                    icon: 'warning',
+                    title: deshabilitar ? '¿Deshabilitar este usuario?' : '¿Habilitar este usuario?',
+                    html: aviso,
+                    showCancelButton: true,
+                    confirmButtonText: deshabilitar ? 'Sí, deshabilitar' : 'Sí, habilitar',
+                    cancelButtonText: 'Cancelar',
+                    confirmButtonColor: deshabilitar ? '#dc3545' : '#28a745'
+                }).then(function (resultado) {
+                    if (resultado.isConfirmed) { form.submit(); }
+                });
+            });
+        })();
+    </script>
 }

@@ -13,5 +13,8 @@
         public string correo { get; set; }
 
         public string RolNombre { get; set; }
+
+        // true si la cuenta está habilitada (ftc_usuario.estado = '1')
+        public bool Habilitado { get; set; }
     }
 }

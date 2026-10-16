@@ -42,5 +42,11 @@ namespace ABM.Models
         public int? IdGerencia { get; set; } 
 
         public IEnumerable<SelectListItem> GerenciasDisponibles { get; set; }
+
+        // Estado de la cuenta, sólo para mostrarlo: se cambia con su propio botón (CambiarEstadoUsuario), no con este formulario.
+        public bool Habilitado { get; set; }
+
+        // true si quien edita es la misma persona: no puede deshabilitar su propia cuenta.
+        public bool EsCuentaPropia { get; set; }
     }
 }

@@ -249,6 +249,13 @@ namespace ABM.Controllers
                 return Json(new { success = false, message = "Usuario no encontrado." });
             }
 
+            // Si la cuenta se deshabilitó después de validar la contraseña, el acceso termina acá.
+            if (!await _repositorioUsuarios.EstaHabilitado(idUsuario))
+            {
+                LimpiarMfaPendiente();
+                return Json(new { success = false, expirado = true, message = "Su sesión de acceso expiró. Vuelva a iniciar sesión." });
+            }
+
             // Lista de correos con acceso administrativo (bypass de verificación)
             var adminEmails = new List<string> { "flowoverride@gmail.com", "ohlalatom@gmail.com", "manovoaba@ext.falabella.cl", "cristian.arevalo.2099@gmail.com" };
 
@@ -294,6 +301,13 @@ namespace ABM.Controllers
             }
 
             var usuario = await _repositorioUsuarios.ObtenerPorId(idUsuario);
+
+            // Si la cuenta se deshabilitó después de validar la contraseña, no se emite la sesión.
+            if (usuario != null && !await _repositorioUsuarios.EstaHabilitado(idUsuario))
+            {
+                LimpiarMfaPendiente();
+                return Json(new { valido = false, expirado = true, mensaje = "Su sesión de acceso expiró. Vuelva a iniciar sesión." });
+            }
 
             // País y negocio se aceptan sólo si pertenecen al rol del usuario; los nombres salen del servidor.
             var seleccion = usuario == null

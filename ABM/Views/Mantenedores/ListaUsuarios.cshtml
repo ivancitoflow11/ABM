@@ -85,6 +85,7 @@
                                 <th style="white-space: nowrap;">Teléfono</th>
                                 <th style="white-space: nowrap;">Correo</th>
                                 <th style="white-space: nowrap;">Usuario</th>
+                                <th style="white-space: nowrap;">Estado</th>
                                 <th style="white-space: nowrap;">Acciones</th>
                             </tr>
 
@@ -101,6 +102,16 @@
                                         <td style="white-space: nowrap;">@item.telefono</td>
                                         <td style="white-space: nowrap;">@item.correo</td>
                                         <td style="white-space: nowrap;">@item.usuario</td>
+                                        <td style="white-space: nowrap;">
+                                            @if (item.Habilitado)
+                                            {
+                                                <span class="badge bg-success">Habilitado</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-danger">Deshabilitado</span>
+                                            }
+                                        </td>
                                         <td style="white-space: nowrap;">
                                             <a asp-controller="Mantenedores" asp-action="EditarUsuario" asp-route-id="@item.idUsuario" class="btn btn-secondary btn-sm">
                                                 <i class="fas fa-edit"></i> Editar

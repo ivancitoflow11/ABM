@@ -82,6 +82,7 @@ builder.Services.AddTransient<IRepositorioSolicitudes, RepositorioSolicitudes>()
 builder.Services.AddMemoryCache();
 builder.Services.AddSingleton<IDescargaTokenService, DescargaTokenService>();
 builder.Services.AddSingleton<IOtcIntentosService, OtcIntentosService>();
+builder.Services.AddSingleton<IEstadoUsuarioService, EstadoUsuarioService>();
 builder.Services.AddAutoMapper(typeof(Program));
 
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
@@ -90,6 +91,10 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         options.LoginPath = "/Acceso/Login";
         options.ExpireTimeSpan = TimeSpan.FromMinutes(60); // Ajusta este valor según tu necesidad
         options.SlidingExpiration = true; // Renueva la cookie si el usuario está activo
+
+        // Una cuenta que se deshabilita pierde las sesiones que tenga abiertas: se revisa en cada petición
+        // autenticada, con un caché de pocos segundos (EstadoUsuarioService).
+        options.Events.OnValidatePrincipal = ValidacionDeSesion.CerrarSiCuentaDeshabilitadaAsync;
     });
 
 var app = builder.Build();

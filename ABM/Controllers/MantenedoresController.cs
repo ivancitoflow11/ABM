@@ -30,9 +30,11 @@ namespace ABM.Controllers
         private readonly IRepositorioGlosaNegocios _repositorioGlosaNegocios;
         private readonly IConfiguration _configuration;
         private readonly IWebHostEnvironment _webHostEnvironment;
+        private readonly IServicioMonitoreo _servicioMonitoreo;
+        private readonly IEstadoUsuarioService _estadoUsuario;
 
         private IEnumerable<PaisNegocioSistemaModel> _cachedPnsList;
-        public MantenedoresController(IRepositorioUsuarios repositorioUsuarios, IRepositorioRoles repositorioRoles, IRepositorioListaBlanca repositorioListaBlanca, IRepositorioConfiguracion repositorioConfiguracion, IRepositorioGlosaNegocios repositorioGlosaNegocios, IConfiguration configuration, IWebHostEnvironment webHostEnvironment)
+        public MantenedoresController(IRepositorioUsuarios repositorioUsuarios, IRepositorioRoles repositorioRoles, IRepositorioListaBlanca repositorioListaBlanca, IRepositorioConfiguracion repositorioConfiguracion, IRepositorioGlosaNegocios repositorioGlosaNegocios, IConfiguration configuration, IWebHostEnvironment webHostEnvironment, IServicioMonitoreo servicioMonitoreo, IEstadoUsuarioService estadoUsuario)
         {
             _repositorioUsuarios = repositorioUsuarios;
             _repositorioRoles = repositorioRoles;
@@ -41,6 +43,8 @@ namespace ABM.Controllers
             _repositorioGlosaNegocios = repositorioGlosaNegocios;
             _configuration = configuration;
             _webHostEnvironment = webHostEnvironment;
+            _servicioMonitoreo = servicioMonitoreo;
+            _estadoUsuario = estadoUsuario;
         }
 
         private const string MensajeRolSuperior = "No puede asignar ni modificar un rol (o a un usuario con un rol) que tenga más permisos de menú que el suyo.";
@@ -68,6 +72,12 @@ namespace ABM.Controllers
 
             var menusActor = await ObtenerMenusDelActorAsync();
             return menus.All(menusActor.Contains);
+        }
+
+        // Id de la persona que tiene la sesión iniciada (el claim lo emite ValidarOTC).
+        private int? ObtenerIdUsuarioActual()
+        {
+            return int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var id) ? id : (int?)null;
         }
 
         private async Task<bool> PuedeOtorgarRolAsync(int? idRolObjetivo)
@@ -387,7 +397,9 @@ public async Task<IActionResult> EditarUsuario(int id)
                 }),
                 // Se cargan los nuevos campos desde el objeto 'usuario' obtenido de la BD.
                 ResponsableFirma = usuario.ResponsableFirma,
-                FirmaActual = usuario.firma
+                FirmaActual = usuario.firma,
+                Habilitado = await _repositorioUsuarios.EstaHabilitado(usuario.idUsuario),
+                EsCuentaPropia = usuario.idUsuario == ObtenerIdUsuarioActual()
             };
 
             // Envía el modelo a la vista para que se muestre el formulario.
@@ -405,6 +417,8 @@ public async Task<IActionResult> EditarUsuario(int id)
                 m.RolesDisponibles = await _repositorioUsuarios.ObtenerRoles();
                 m.GerenciasDisponibles = (await _repositorioConfiguracion.ObtenerGerencias())
                                          .Select(g => new SelectListItem { Value = g.IdGerencia.ToString(), Text = g.Nom_Gerencia });
+                m.Habilitado = await _repositorioUsuarios.EstaHabilitado(m.IdUsuario);
+                m.EsCuentaPropia = m.IdUsuario == ObtenerIdUsuarioActual();
             }
 
             // Si los datos enviados desde el formulario no son válidos (ej. falta un campo requerido),
@@ -497,6 +511,49 @@ public async Task<IActionResult> EditarUsuario(int id)
             }
         }
 
+
+        // Habilita o deshabilita una cuenta (ftc_usuario.estado). Una cuenta deshabilitada no puede iniciar sesión
+        // ni completar el OTC, y pierde las sesiones que tenga abiertas.
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [Monitoreo("CambiarEstadoUsuario", "UPDATE", "cambiarEstadoUsuario")]
+        public async Task<IActionResult> CambiarEstadoUsuario(int id, bool habilitar)
+        {
+            var usuario = await _repositorioUsuarios.ObtenerPorId(id);
+            if (usuario == null)
+            {
+                TempData["ErrorMessage"] = "Usuario no encontrado.";
+                return RedirectToAction("ListaUsuarios");
+            }
+
+            // Misma regla de jerarquía que al editar: no se administra a quien tiene más permisos de menú que uno.
+            if (!await PuedeOtorgarRolAsync(usuario.idRol))
+            {
+                TempData["ErrorMessage"] = MensajeRolSuperior;
+                return RedirectToAction("ListaUsuarios");
+            }
+
+            // Nadie puede deshabilitar su propia cuenta: se quedaría sin acceso.
+            if (!habilitar && id == ObtenerIdUsuarioActual())
+            {
+                TempData["ErrorMessage"] = "No puede deshabilitar su propia cuenta.";
+                return RedirectToAction("EditarUsuario", new { id });
+            }
+
+            if (!await _repositorioUsuarios.CambiarEstado(id, habilitar))
+            {
+                TempData["ErrorMessage"] = "No se pudo cambiar el estado del usuario.";
+                return RedirectToAction("EditarUsuario", new { id });
+            }
+
+            // Para que el cambio rija de inmediato en las sesiones abiertas de esa cuenta.
+            _estadoUsuario.Invalidar(id);
+
+            await _servicioMonitoreo.RegistrarActividad("CambiarEstadoUsuario", "UPDATE", habilitar ? $"Usuario {id} habilitado" : $"Usuario {id} deshabilitado");
+
+            TempData["SuccessMessage"] = habilitar ? "Usuario habilitado correctamente." : "Usuario deshabilitado correctamente.";
+            return RedirectToAction("EditarUsuario", new { id });
+        }
 
         [HttpGet]
         [Monitoreo("ListarRoles", "SELECT", "verListarRoles")]
