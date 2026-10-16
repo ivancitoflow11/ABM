@@ -38,7 +38,7 @@ namespace ABM.Controllers
         private const int LongitudOtc = 6;
         private const int MaxFallosPorUsuario = 5;
         private const int MaxFallosPorIp = 20;
-        private const string MensajeBloqueo = "Demasiados intentos fallidos. Vuelva a iniciar sesión para solicitar un nuevo código.";
+        private const string MensajeBloqueo = "Demasiados intentos fallidos. Espere unos minutos e inicie sesión nuevamente para solicitar un nuevo código.";
         private static readonly TimeSpan VigenciaOtc = TimeSpan.FromMinutes(5);
         private static readonly TimeSpan VigenciaMfaPendiente = TimeSpan.FromMinutes(10);
 
@@ -107,6 +107,16 @@ namespace ABM.Controllers
         [HttpGet]
         public IActionResult Login()
         {
+            // Con la sesión ya iniciada (OTC validado y país/negocio guardados en el servidor) no se vuelve a mostrar
+            // el formulario: se lleva al Home. Si la cookie sigue viva pero la sesión del servidor se perdió (por
+            // ejemplo, tras reciclar el sitio), se deja ver el login para que la persona pueda entrar de nuevo.
+            if (User.Identity?.IsAuthenticated == true
+                && HttpContext.Session.GetInt32("IdPais") != null
+                && HttpContext.Session.GetInt32("IdNegocio") != null)
+            {
+                return RedirectToAction("Index", "Home");
+            }
+
             return View();
         }
 

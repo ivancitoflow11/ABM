@@ -426,7 +426,7 @@ public async Task<IActionResult> EditarUsuario(int id)
             // El rol actual sale de la BD (no del formulario) y el nuevo se valida antes de tocar archivos o datos.
             if (!await PuedeOtorgarRolAsync(usuarioExistente.idRol) || !await PuedeOtorgarRolAsync(model.RolId))
             {
-                ModelState.AddModelError("", MensajeRolSuperior);
+                ModelState.AddModelError("RolId", MensajeRolSuperior); // la vista sólo muestra errores por campo
                 await PopulateDropdowns(model);
                 return View(model);
             }
